@@ -84,7 +84,7 @@ export type FanMoment = {
   location: string;
   caption: string;
   time: string;
-  source: "Tribün" | "Şehir Meydanı" | "Ev/İzleme";
+  source: "Tribun" | "Sehir Meydani" | "Ev/Izleme";
   image?: ImageSourcePropType;
 };
 
@@ -465,64 +465,67 @@ export const fanMoments: FanMoment[] = [
   {
     id: "fm1",
     user: "IzmirWave-35",
-    location: "İzmir - Kordon",
-    caption: "Dev ekran kuruldu, yeşil kırmızı atkılar hazır!",
+    location: "Izmir - Kordon",
+    caption: "Dev ekran kuruldu, yesil kirmizi atklar hazir!",
     time: "10dk",
-    source: "Şehir Meydanı",
+    source: "Sehir Meydani",
     image: require("../assets/footboll/3.jpg"),
   },
   {
     id: "fm2",
     user: "KapaliC1",
-    location: "Diyarbakır Stadyumu - Kapalı C",
-    caption: "Koreografi provası sonrası tribün alev aldı.",
+    location: "Diyarbakir Stadyumu - Kapali C",
+    caption: "Koreografi provasi sonrasinda tribunun atesi yandi.",
     time: "22dk",
-    source: "Tribün",
+    source: "Tribun",
     image: require("../assets/footboll/2.jpg"),
   },
   {
     id: "fm3",
     user: "BerlinAmed",
     location: "Berlin Fan Zone",
-    caption: "Projeksiyon yansıtıldı, 40 kişiyiz. Sesimizi duyuyor musunuz?",
+    caption: "Projeksiyon yansitildi, 40 kisiyiz. Sesimizi duyuyor musunuz?",
     time: "35dk",
-    source: "Ev/İzleme",
+    source: "Ev/Izleme",
     image: require("../assets/footboll/1.jpg"),
   },
   {
     id: "fm4",
     user: "MaratonG",
-    location: "Diyarbakır - Maraton G",
-    caption: "Dakika 74, tezahürat sesi kesilmiyor!",
+    location: "Diyarbakir - Maraton G",
+    caption: "Dakika 74, tezahurat sesi kesilmiyor!",
     time: "48dk",
-    source: "Tribün",
+    source: "Tribun",
     image: "../assets/footboll/4.jpg",
   },
   {
     id: "fm5",
     user: "IzmirWave-35",
-    location: "İzmir - Kordon",
-    caption: "Gol anında sahile düşen meşale dumanı!",
+    location: "Izmir - Kordon",
+    caption: "Gol aninda sahile dusen mesale dumani!",
     time: "1s",
-    source: "Şehir Meydanı",
+    source: "Sehir Meydani",
     image: "../assets/footboll/3.jpg",
   },
   {
     id: "fm6",
     user: "MaratonG",
-    location: "Diyarbakır - Maraton G",
-    caption: "Dakika 74, tezahürat sesi kesilmiyor!",
+    location: "Diyarbakir - Maraton G",
+    caption: "Dakika 74, tezahurat sesi kesilmiyor!",
     time: "48dk",
-    source: "Tribün",
+    source: "Tribun",
     image: "../assets/footboll/3.jpg",
   },
   {
     id: "fm7",
     user: "IzmirWave-35",
-    location: "İzmir - Kordon",
-    caption: "Gol anında sahile düşen meşale dumanı!",
+    location: "Izmir - Kordon",
+    caption: "Gol aninda sahile dusen mesale dumani!",
     time: "1s",
-    source: "Şehir Meydanı",
+    source: "Sehir Meydani",
     image: "../assets/footboll/1.jpg",
   },
 ];
+
+
+

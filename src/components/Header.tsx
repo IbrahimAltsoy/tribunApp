@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { LinearGradient } from "expo-linear-gradient";
 
 type HeaderProps = {
   onPressNotifications?: () => void;
