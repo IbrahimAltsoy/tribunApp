@@ -87,8 +87,8 @@ const FixtureScreen: React.FC = () => {
 
                 <Text style={styles.cardTitle}>Maç Takvimi</Text>
                 <Text style={styles.cardSubtitle}>
-                  Yakında tüm fikstür bilgilerine, maç skorlarına ve detaylı
-                  istatistiklere buradan ulaşabileceksiniz.
+                  Yakında tüm fikstür bilgilerine, maçtytytyutuy skorlarına ve
+                  detaylı istatistiklere buradan ulaşabileceksiniz.
                 </Text>
 
                 <View style={styles.featureList}>
