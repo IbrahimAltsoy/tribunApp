@@ -1,0 +1,16 @@
+{
+  "extends": "./node_modules/expo/tsconfig.base",
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "strict": true,
+    "types": ["react", "react-native"],
+    "ignoreDeprecations": "5.0"
+  },
+  "include": ["src", "index.js"],
+  "exclude": ["node_modules"]
+}
