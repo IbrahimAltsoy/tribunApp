@@ -1,83 +1,70 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  StyleSheet,
-  View,
+  Animated,
   FlatList,
-  TextInput,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
-  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { Ionicons, Feather } from "@expo/vector-icons";
 import ChatBubble, { Message } from "../components/ChatBubble";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import randomNameGenerator from "../utils/randomNameGenerator";
-
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: "1",
-    text: "Bugünkü maç harikaydı! Tribünler coştu! 🔥",
-    sender: "AmedLion-456",
-    timestamp: "14:23",
-    isMine: false,
-  },
-  {
-    id: "2",
-    text: "Kesinlikle! Takımımız muhteşem oynadı 💚",
-    sender: "Sen",
-    timestamp: "14:24",
-    isMine: true,
-    isRead: true,
-  },
-  {
-    id: "3",
-    text: "Şampiyonluk yolunda ilerliyoruz!",
-    sender: "GreenWave-789",
-    timestamp: "14:25",
-    isMine: false,
-  },
-  {
-    id: "4",
-    text: "Önümüzdeki maç için hazır mısınız? 🎯",
-    sender: "Sen",
-    timestamp: "14:26",
-    isMine: true,
-    isRead: true,
-  },
-];
+import { matchRooms, polls } from "../data/mockData";
 
 const ChatScreen: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [nickname, setNickname] = useState(randomNameGenerator());
   const [inputText, setInputText] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState(matchRooms[0].id);
+  const [pollState, setPollState] = useState(polls[1]);
+
+  const initialRoomState = Object.fromEntries(
+    matchRooms.map((room) => [
+      room.id,
+      room.messages.map((m) => ({
+        ...m,
+        isMine: m.sender === nickname,
+      })) as Message[],
+    ])
+  );
+
+  const [roomMessages, setRoomMessages] = useState<Record<string, Message[]>>(
+    initialRoomState
+  );
+
   const flatListRef = useRef<FlatList>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Scroll to bottom on mount
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-  }, []);
+    setRoomMessages((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((msg) => ({
+          ...msg,
+          isMine: msg.sender === nickname,
+        }));
+      });
+      return updated;
+    });
+  }, [nickname]);
 
-  const handleSend = async () => {
+  const currentMessages = roomMessages[selectedRoom] ?? [];
+
+  const handleSend = () => {
     if (inputText.trim().length === 0) return;
 
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (error) {
-      console.log("Haptics not available");
-    }
-
-    // Animate send button
     Animated.sequence([
       Animated.spring(sendButtonScale, {
-        toValue: 0.8,
+        toValue: 0.85,
         useNativeDriver: true,
       }),
       Animated.spring(sendButtonScale, {
@@ -89,58 +76,36 @@ const ChatScreen: React.FC = () => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text: inputText,
-      sender: "Sen",
+      sender: nickname,
       timestamp: new Date().toLocaleTimeString("tr-TR", {
         hour: "2-digit",
         minute: "2-digit",
       }),
       isMine: true,
-      isRead: false,
     };
 
-    setMessages((prev) => [...prev, newMessage]);
+    setRoomMessages((prev) => ({
+      ...prev,
+      [selectedRoom]: [...(prev[selectedRoom] || []), newMessage],
+    }));
     setInputText("");
 
-    // Scroll to bottom
     setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-
-    // Simulate other user response after 2 seconds
-    setTimeout(() => {
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: getRandomResponse(),
-        sender: randomNameGenerator(),
-        timestamp: new Date().toLocaleTimeString("tr-TR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isMine: false,
-      };
-      setMessages((prev) => [...prev, responseMessage]);
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 2000);
+    }, 80);
   };
 
-  const getRandomResponse = () => {
-    const responses = [
-      "Katılıyorum! 👍",
-      "Harika bir gözlem!",
-      "Maç için sabırsızlanıyorum! ⚽",
-      "Tribün ruhu burada! 💚",
-      "AMEDSPOR! 🔥",
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const handleLongPress = (messageId: string) => {
-    console.log("Long press on message:", messageId);
-    // Here you can add context menu for delete, copy, etc.
+  const handleVote = (optionId: string) => {
+    setPollState((prev) => ({
+      ...prev,
+      options: prev.options.map((opt) =>
+        opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt
+      ),
+    }));
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
-    <ChatBubble message={item} onLongPress={handleLongPress} />
+    <ChatBubble message={item} />
   );
 
   return (
@@ -155,10 +120,89 @@ const ChatScreen: React.FC = () => {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           keyboardVerticalOffset={Platform.OS === "ios" ? 88 : 0}
         >
-          {/* Chat List */}
+          <ScrollView
+            style={styles.topScroll}
+            contentContainerStyle={{ paddingBottom: spacing.md }}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={styles.pageTitle}>Maç Odaları</Text>
+            <Text style={styles.pageSubtitle}>
+              Takma isimle anonim katılım, mock mesajlar ve canlı anketler
+            </Text>
+
+            <View style={styles.nicknameCard}>
+              <View style={styles.nicknameRow}>
+                <Ionicons name="person-circle-outline" size={24} color={colors.text} />
+                <TextInput
+                  style={styles.nicknameInput}
+                  value={nickname}
+                  onChangeText={setNickname}
+                  placeholder="Takma ismin"
+                  placeholderTextColor={colors.mutedText}
+                />
+                <Pressable
+                  onPress={() => setNickname(randomNameGenerator())}
+                  style={styles.refreshBtn}
+                >
+                  <Feather name="shuffle" size={16} color={colors.text} />
+                </Pressable>
+              </View>
+              <Text style={styles.nicknameHint}>Giriş gerektirmez, sadece görünür ad.</Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.roomRow}
+            >
+              {matchRooms.map((room) => (
+                <Pressable
+                  key={room.id}
+                  style={[
+                    styles.roomChip,
+                    selectedRoom === room.id && styles.roomChipActive,
+                  ]}
+                  onPress={() => setSelectedRoom(room.id)}
+                >
+                  <Text style={styles.roomChipTitle}>{room.title}</Text>
+                  <Text style={styles.roomChipMeta}>{room.time}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+
+            <View style={styles.pollCard}>
+              <View style={styles.pollHeader}>
+                <Text style={styles.pollTitle}>{pollState.question}</Text>
+                <Text style={styles.pollMeta}>{pollState.closesIn} kaldı</Text>
+              </View>
+              {pollState.options.map((opt) => {
+                const total = pollState.options.reduce(
+                  (sum, item) => sum + item.votes,
+                  0
+                );
+                const pct = Math.round((opt.votes / total) * 100);
+                return (
+                  <Pressable
+                    key={opt.id}
+                    onPress={() => handleVote(opt.id)}
+                    style={styles.pollOption}
+                  >
+                    <View style={styles.pollRow}>
+                      <Text style={styles.pollOptionText}>{opt.text}</Text>
+                      <Text style={styles.pollOptionText}>{pct}%</Text>
+                    </View>
+                    <View style={styles.pollBarBackground}>
+                      <View style={[styles.pollBarFill, { width: `${pct}%` }]} />
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+
           <FlatList
             ref={flatListRef}
-            data={messages}
+            data={currentMessages}
             renderItem={renderMessage}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.messagesContainer}
@@ -166,9 +210,9 @@ const ChatScreen: React.FC = () => {
             onContentSizeChange={() =>
               flatListRef.current?.scrollToEnd({ animated: true })
             }
+            style={styles.chatList}
           />
 
-          {/* Input Area */}
           <View style={styles.inputContainer}>
             <LinearGradient
               colors={[
@@ -178,24 +222,18 @@ const ChatScreen: React.FC = () => {
               style={styles.inputGradient}
             >
               <View style={styles.inputWrapper}>
-                <Pressable style={styles.emojiButton}>
-                  <Ionicons
-                    name="happy-outline"
-                    size={24}
-                    color={colors.mutedText}
-                  />
+                <Pressable style={styles.iconButton}>
+                  <Ionicons name="happy-outline" size={20} color={colors.mutedText} />
                 </Pressable>
-
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Mesajınızı yazın..."
+                  placeholder="Mesajını yaz..."
                   placeholderTextColor={colors.mutedText}
                   value={inputText}
                   onChangeText={setInputText}
                   multiline
-                  maxLength={500}
+                  maxLength={280}
                 />
-
                 <Pressable onPress={handleSend}>
                   <Animated.View
                     style={[
@@ -206,11 +244,9 @@ const ChatScreen: React.FC = () => {
                   >
                     <Ionicons
                       name="send"
-                      size={20}
+                      size={18}
                       color={
-                        inputText.trim().length > 0
-                          ? colors.text
-                          : colors.mutedText
+                        inputText.trim().length > 0 ? colors.text : colors.mutedText
                       }
                     />
                   </Animated.View>
@@ -235,10 +271,134 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
+  topScroll: {
+    flexGrow: 0,
+    maxHeight: 360,
+  },
+  pageTitle: {
+    color: colors.text,
+    fontSize: fontSizes.xxl,
+    fontFamily: typography.bold,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+  },
+  pageSubtitle: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  nicknameCard: {
+    marginHorizontal: spacing.lg,
+    padding: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+  },
+  nicknameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  nicknameInput: {
+    flex: 1,
+    color: colors.text,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+  },
+  refreshBtn: {
+    padding: spacing.xs,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  nicknameHint: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    marginTop: spacing.xs,
+  },
+  roomRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  roomChip: {
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: 240,
+  },
+  roomChipActive: {
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+  },
+  roomChipTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  roomChipMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    marginTop: spacing.xs / 2,
+  },
+  pollCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+  },
+  pollHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  pollTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+    flex: 1,
+  },
+  pollMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+  },
+  pollOption: {
+    gap: spacing.xs,
+  },
+  pollRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  pollOptionText: {
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  pollBarBackground: {
+    height: 8,
+    borderRadius: 8,
+    backgroundColor: colors.borderLight,
+    overflow: "hidden",
+  },
+  pollBarFill: {
+    height: 8,
+    backgroundColor: colors.primary,
+  },
   messagesContainer: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  chatList: {
+    flex: 1,
   },
   inputContainer: {
     paddingHorizontal: spacing.lg,
@@ -257,7 +417,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     gap: spacing.xs,
   },
-  emojiButton: {
+  iconButton: {
     padding: spacing.xs,
   },
   textInput: {

@@ -1,17 +1,101 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { fontSizes, typography } from '../theme/typography';
+import React, { useMemo, useState } from "react";
+import {
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { fontSizes, typography } from "../theme/typography";
+import { newsData } from "../data/mockData";
+
+const categories = ["Tümü", ...Array.from(new Set(newsData.map((n) => n.category)))];
 
 const FeedScreen: React.FC = () => {
+  const [selected, setSelected] = useState<string>("Tümü");
+
+  const filteredNews = useMemo(() => {
+    if (selected === "Tümü") return newsData;
+    return newsData.filter((item) => item.category === selected);
+  }, [selected]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Feed UI later</Text>
-        <Text style={styles.subtitle}>Haber akışı ve tribün duyuruları eklenecek.</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Haberler</Text>
+        <Text style={styles.subtitle}>
+          Mock verilerle güncel Amedspor gündemi ve tribün duyuruları
+        </Text>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipRow}
+        >
+          {categories.map((cat) => (
+            <Pressable
+              key={cat}
+              style={[
+                styles.chip,
+                selected === cat && styles.chipActive,
+                { borderColor: selected === cat ? colors.primary : colors.border },
+              ]}
+              onPress={() => setSelected(cat)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  selected === cat && { color: colors.text },
+                ]}
+              >
+                {cat}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.list}>
+          {filteredNews.map((news) => (
+            <View key={news.id} style={styles.card}>
+              <ImageBackground
+                source={news.image}
+                style={styles.cardImage}
+                imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+              >
+                <LinearGradient
+                  colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.cardImageContent}>
+                  <View style={styles.cardBadge}>
+                    <Text style={styles.cardBadgeText}>{news.category}</Text>
+                  </View>
+                  <Text style={styles.cardTitle}>{news.title}</Text>
+                </View>
+              </ImageBackground>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardSummary}>{news.summary}</Text>
+                <View style={styles.cardFooter}>
+                  <View style={styles.footerMeta}>
+                    <Ionicons name="time-outline" size={16} color={colors.mutedText} />
+                    <Text style={styles.cardMeta}>{news.time} önce</Text>
+                  </View>
+                  <View style={styles.footerMeta}>
+                    <Ionicons name="eye-outline" size={16} color={colors.mutedText} />
+                    <Text style={styles.cardMeta}>Mock okuma</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -22,19 +106,95 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   container: {
-    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
   },
   title: {
     color: colors.text,
-    fontSize: fontSizes.lg,
-    fontFamily: typography.semiBold,
-    marginBottom: spacing.sm,
+    fontSize: fontSizes.xxl,
+    fontFamily: typography.bold,
+    marginTop: spacing.lg,
   },
   subtitle: {
     color: colors.mutedText,
-    fontSize: fontSizes.md,
+    fontFamily: typography.medium,
+    marginBottom: spacing.lg,
+  },
+  chipRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  chip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 16,
+    borderWidth: 1,
+    backgroundColor: colors.card,
+  },
+  chipActive: {
+    backgroundColor: "rgba(15,169,88,0.1)",
+  },
+  chipText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+  },
+  list: {
+    gap: spacing.md,
+  },
+  card: {
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  cardImage: {
+    height: 160,
+  },
+  cardImageContent: {
+    flex: 1,
+    padding: spacing.md,
+    justifyContent: "flex-end",
+    gap: spacing.xs,
+  },
+  cardBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(209,14,14,0.8)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 12,
+  },
+  cardBadgeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  cardTitle: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+  },
+  cardBody: {
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  cardSummary: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    lineHeight: 22,
+  },
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  footerMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+  },
+  cardMeta: {
+    color: colors.mutedText,
     fontFamily: typography.medium,
   },
 });

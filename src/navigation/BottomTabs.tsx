@@ -1,14 +1,14 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Feather } from '@expo/vector-icons';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Feather } from "@expo/vector-icons";
 import { View, StyleSheet, Platform } from "react-native";
 import { BlurView } from "expo-blur";
-import HomeScreen from '../screens/HomeScreen';
-import FixtureScreen from '../screens/FixtureScreen';
-import FeedScreen from '../screens/FeedScreen';
-import ChatScreen from '../screens/ChatScreen';
-import MarsScreen from '../screens/MarsScreen';
-import { colors } from '../theme/colors';
+import HomeScreen from "../screens/HomeScreen";
+import FixtureScreen from "../screens/FixtureScreen";
+import FeedScreen from "../screens/FeedScreen";
+import ChatScreen from "../screens/ChatScreen";
+import MarsScreen from "../screens/MarsScreen";
+import { colors } from "../theme/colors";
 
 export type BottomTabParamList = {
   Home: undefined;
@@ -20,13 +20,14 @@ export type BottomTabParamList = {
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
-const iconMap: Record<keyof BottomTabParamList, keyof typeof Feather.glyphMap> = {
-  Home: 'home',
-  Fixture: 'calendar',
-  Feed: 'rss',
-  Chat: 'message-circle',
-  Mars: 'hexagon',
-};
+const iconMap: Record<keyof BottomTabParamList, keyof typeof Feather.glyphMap> =
+  {
+    Home: "home",
+    Fixture: "bar-chart-2",
+    Feed: "rss",
+    Chat: "message-circle",
+    Mars: "archive",
+  };
 
 const BottomTabs: React.FC = () => (
   <Tab.Navigator
@@ -65,6 +66,10 @@ const BottomTabs: React.FC = () => (
           </View>
         );
       },
+      tabBarBackground: () =>
+        Platform.OS === "ios" ? (
+          <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : undefined,
     })}
   >
     <Tab.Screen
@@ -75,12 +80,12 @@ const BottomTabs: React.FC = () => (
     <Tab.Screen
       name="Fixture"
       component={FixtureScreen}
-      options={{ tabBarLabel: "Fikstür" }}
+      options={{ tabBarLabel: "Maç Merkezi" }}
     />
     <Tab.Screen
       name="Feed"
       component={FeedScreen}
-      options={{ tabBarLabel: "Akış" }}
+      options={{ tabBarLabel: "Haberler" }}
     />
     <Tab.Screen
       name="Chat"
@@ -90,7 +95,7 @@ const BottomTabs: React.FC = () => (
     <Tab.Screen
       name="Mars"
       component={MarsScreen}
-      options={{ tabBarLabel: "Marşlar" }}
+      options={{ tabBarLabel: "Arşiv" }}
     />
   </Tab.Navigator>
 );

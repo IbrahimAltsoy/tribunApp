@@ -1,48 +1,19 @@
-import React, { useRef, useEffect } from "react";
-import { StyleSheet, Text, View, Animated, ScrollView } from "react-native";
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, Feather } from "@expo/vector-icons";
+import {
+  fixtureData,
+  liveMatch,
+  standings,
+  LiveEvent,
+} from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 
 const FixtureScreen: React.FC = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 50,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -51,69 +22,139 @@ const FixtureScreen: React.FC = () => {
       />
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Animated.View
-            style={[
-              styles.contentContainer,
-              {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }],
-              },
-            ]}
-          >
-            <View style={styles.header}>
-              <Text style={styles.title}>Fikstür</Text>
-              <View style={styles.titleUnderline} />
-            </View>
+          <Text style={styles.pageTitle}>Maç Merkezi</Text>
+          <Text style={styles.pageSubtitle}>
+            Fikstür, canlı olaylar ve puan durumu
+          </Text>
 
-            <View style={styles.card}>
-              <LinearGradient
-                colors={["rgba(15, 169, 88, 0.1)", "rgba(15, 169, 88, 0.02)"]}
-                style={styles.cardGradient}
-              >
-                <Animated.View
-                  style={[
-                    styles.iconWrapper,
-                    { transform: [{ scale: pulseAnim }] },
-                  ]}
-                >
-                  <View style={styles.iconCircle}>
-                    <Ionicons
-                      name="calendar"
-                      size={48}
-                      color={colors.primary}
-                    />
-                  </View>
-                </Animated.View>
+          <LiveMatchCard />
 
-                <Text style={styles.cardTitle}>Maç Takvimi</Text>
-                <Text style={styles.cardSubtitle}>
-                  Yakında tüm fikstür bilgilerine, maçtytytyutuy skorlarına ve
-                  detaylı istatistiklere buradan ulaşabileceksiniz.
-                </Text>
-
-                <View style={styles.featureList}>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureDot} />
-                    <Text style={styles.featureText}>Canlı Skorlar</Text>
+          <SectionHeader
+            title="Yaklaşan Maçlar"
+            icon={<Ionicons name="calendar-outline" size={18} color={colors.text} />}
+          />
+          <View style={styles.fixtureList}>
+            {fixtureData.map((item) => (
+              <View key={item.id} style={styles.fixtureCard}>
+                <View style={styles.fixtureRow}>
+                  <View>
+                    <Text style={styles.fixtureTeams}>Amedspor vs {item.opponent}</Text>
+                    <Text style={styles.fixtureMeta}>
+                      {item.date} • {item.time}
+                    </Text>
+                    <Text style={styles.fixtureMeta}>{item.venue}</Text>
+                    <Text style={styles.fixtureCompetition}>{item.competition}</Text>
                   </View>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureDot} />
-                    <Text style={styles.featureText}>Maç Detayları</Text>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <View style={styles.featureDot} />
-                    <Text style={styles.featureText}>Takım İstatistikleri</Text>
+                  <View
+                    style={[
+                      styles.fixtureBadge,
+                      { backgroundColor: item.isHome ? "#12381f" : "#2d1111" },
+                    ]}
+                  >
+                    <Text style={styles.fixtureBadgeText}>
+                      {item.isHome ? "İç Saha" : "Deplasman"}
+                    </Text>
                   </View>
                 </View>
-              </LinearGradient>
-              <View style={styles.cardBorder} />
+              </View>
+            ))}
+          </View>
+
+          <SectionHeader
+            title="Puan Durumu"
+            icon={<Feather name="bar-chart-2" size={18} color={colors.text} />}
+          />
+          <View style={styles.table}>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableText, styles.tableColTeam]}>Takım</Text>
+              <Text style={styles.tableText}>O</Text>
+              <Text style={styles.tableText}>A</Text>
+              <Text style={styles.tableText}>Y</Text>
+              <Text style={styles.tableText}>P</Text>
             </View>
-          </Animated.View>
+            {standings.map((row) => (
+              <View key={row.team} style={styles.tableRow}>
+                <View style={styles.teamCell}>
+                  <Text
+                    style={[
+                      styles.tableText,
+                      row.team === "Amedspor" && styles.highlight,
+                    ]}
+                  >
+                    {row.pos}. {row.team}
+                  </Text>
+                  <View style={styles.progressBackground}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        { width: `${Math.min((row.pts / 40) * 100, 100)}%` },
+                      ]}
+                    />
+                  </View>
+                </View>
+                <Text style={styles.tableText}>{row.mp}</Text>
+                <Text style={styles.tableText}>{row.gf}</Text>
+                <Text style={styles.tableText}>{row.ga}</Text>
+                <Text style={[styles.tableText, styles.highlight]}>{row.pts}</Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
   );
 };
+
+const SectionHeader = ({
+  title,
+  icon,
+}: {
+  title: string;
+  icon: React.ReactNode;
+}) => (
+  <View style={styles.sectionHeader}>
+    <View style={styles.sectionIcon}>{icon}</View>
+    <Text style={styles.sectionTitle}>{title}</Text>
+  </View>
+);
+
+const LiveMatchCard = () => (
+  <View style={styles.liveCard}>
+    <View style={styles.liveHeader}>
+      <View style={styles.liveBadge}>
+        <Text style={styles.liveBadgeText}>{liveMatch.status}</Text>
+      </View>
+      <Text style={styles.liveMinute}>{liveMatch.minute}'</Text>
+    </View>
+    <View style={styles.liveScoreRow}>
+      <Text style={styles.liveTeam}>Amedspor</Text>
+      <Text style={styles.liveScore}>{liveMatch.score}</Text>
+      <Text style={styles.liveTeam}>{liveMatch.away}</Text>
+    </View>
+    <View style={styles.eventList}>
+      {liveMatch.events.map((event: LiveEvent) => (
+        <View key={event.id} style={styles.eventRow}>
+          <View style={styles.eventMinute}>
+            <Text style={styles.eventMinuteText}>{event.minute}'</Text>
+          </View>
+          <View
+            style={[
+              styles.eventType,
+              event.type === "goal" && { backgroundColor: "#12381f" },
+              event.type === "card" && { backgroundColor: "#3a1a1a" },
+            ]}
+          >
+            <Text style={styles.eventTypeText}>{event.type.toUpperCase()}</Text>
+          </View>
+          <View style={styles.eventDetail}>
+            <Text style={styles.eventPlayer}>{event.player}</Text>
+            <Text style={styles.eventDesc}>{event.detail}</Text>
+          </View>
+        </View>
+      ))}
+    </View>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -123,102 +164,212 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-  },
-  contentContainer: {
-    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
   },
-  header: {
-    marginBottom: spacing.xl,
-  },
-  title: {
+  pageTitle: {
     color: colors.text,
     fontSize: fontSizes.xxl,
     fontFamily: typography.bold,
-    letterSpacing: 0.5,
+    marginTop: spacing.lg,
   },
-  titleUnderline: {
-    marginTop: spacing.sm,
-    height: 3,
-    width: 80,
-    backgroundColor: colors.primary,
-    borderRadius: 3,
-  },
-  card: {
-    borderRadius: 24,
-    overflow: "hidden",
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 6,
-    position: "relative",
-  },
-  cardGradient: {
-    padding: spacing.xl,
-    alignItems: "center",
-    backgroundColor: colors.card,
-  },
-  iconWrapper: {
+  pageSubtitle: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
     marginBottom: spacing.lg,
   },
-  iconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: "rgba(15, 169, 88, 0.15)",
-    borderWidth: 2,
-    borderColor: "rgba(15, 169, 88, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: fontSizes.xl,
-    fontFamily: typography.bold,
-    marginBottom: spacing.sm,
-    textAlign: "center",
-  },
-  cardSubtitle: {
-    color: colors.mutedText,
-    fontSize: fontSizes.md,
-    fontFamily: typography.medium,
-    textAlign: "center",
-    lineHeight: 24,
+  liveCard: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.xl,
-  },
-  featureList: {
-    width: "100%",
     gap: spacing.md,
   },
-  featureItem: {
+  liveHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  liveBadge: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 14,
+  },
+  liveBadgeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  liveMinute: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+  },
+  liveScoreRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  liveTeam: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.lg,
+  },
+  liveScore: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.xl,
+  },
+  eventList: {
+    gap: spacing.sm,
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+  },
+  eventMinute: {
+    width: 48,
+    alignItems: "center",
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+    backgroundColor: colors.borderLight,
+  },
+  eventMinuteText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  eventType: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+    backgroundColor: colors.borderLight,
+  },
+  eventTypeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  eventDetail: {
+    flex: 1,
+    gap: spacing.xs / 2,
+  },
+  eventPlayer: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  eventDesc: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
   },
-  featureDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
+  sectionIcon: {
+    backgroundColor: colors.card,
+    padding: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  featureText: {
+  sectionTitle: {
     color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.lg,
+  },
+  fixtureList: {
+    gap: spacing.sm,
+  },
+  fixtureCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  fixtureRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  fixtureTeams: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
     fontSize: fontSizes.md,
+  },
+  fixtureMeta: {
+    color: colors.mutedText,
     fontFamily: typography.medium,
   },
-  cardBorder: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 24,
+  fixtureCompetition: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    marginTop: spacing.xs,
+  },
+  fixtureBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+  },
+  fixtureBadgeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  table: {
+    marginTop: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    pointerEvents: "none",
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  tableHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
+  tableRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tableText: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    width: 32,
+    textAlign: "center",
+  },
+  tableColTeam: {
+    width: "45%",
+    textAlign: "left",
+  },
+  teamCell: {
+    width: "45%",
+    gap: spacing.xs / 2,
+  },
+  progressBackground: {
+    height: 6,
+    borderRadius: 6,
+    backgroundColor: colors.borderLight,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: 6,
+    backgroundColor: colors.primary,
+  },
+  highlight: {
+    color: colors.primary,
   },
 });
 
