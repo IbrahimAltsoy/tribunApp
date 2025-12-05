@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import {
   ImageBackground,
+  Image,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableOpacity,
   View,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,6 +30,43 @@ const HomeScreen: React.FC = () => {
   const featuredNews = newsData.slice(0, 3);
   const featuredPoll = polls[0];
   const headlineAnnouncement = announcements[0];
+  const [moments, setMoments] = useState(fanMoments);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [allMomentsVisible, setAllMomentsVisible] = useState(false);
+  const [selectedMoment, setSelectedMoment] =
+    useState<(typeof fanMoments)[0]>();
+  const [newCity, setNewCity] = useState("");
+  const [newCaption, setNewCaption] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+
+  const momentList = useMemo(() => moments, [moments]);
+
+  const handleOpenDetail = (moment: (typeof fanMoments)[0]) => {
+    setSelectedMoment(moment);
+    setDetailModalVisible(true);
+  };
+
+  const handleAddMoment = () => {
+    const trimmedCity = newCity.trim();
+    const trimmedCaption = newCaption.trim();
+    const id = `local-${Date.now()}`;
+    const next = {
+      id,
+      user: "Sen",
+      location: trimmedCity || "Şehir belirtilmedi",
+      caption: trimmedCaption || "Yeni paylaşım",
+      time: "şimdi",
+      source: "Tribün",
+      image: imageUrl ? { uri: imageUrl } : undefined,
+    } as (typeof fanMoments)[0];
+
+    setMoments((prev) => [next, ...prev]);
+    setShareModalVisible(false);
+    setNewCity("");
+    setNewCaption("");
+    setImageUrl("");
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -39,8 +82,24 @@ const HomeScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.momentsRow}
         >
-          {fanMoments.map((moment) => (
-            <Pressable key={moment.id} style={styles.momentCard}>
+          <Pressable
+            style={styles.momentAddCard}
+            onPress={() => setShareModalVisible(true)}
+          >
+            <View style={styles.momentAddIcon}>
+              <Ionicons name="add" size={20} color={colors.text} />
+            </View>
+            <Text style={styles.momentAddTitle}>Anı Paylaş</Text>
+            <Text style={styles.momentAddSub}>
+              Şehir, kısa not ve görsel ekle
+            </Text>
+          </Pressable>
+          {momentList.slice(0, 5).map((moment) => (
+            <Pressable
+              key={moment.id}
+              style={styles.momentCard}
+              onPress={() => handleOpenDetail(moment)}
+            >
               {moment.image ? (
                 <ImageBackground
                   source={moment.image}
@@ -71,15 +130,20 @@ const HomeScreen: React.FC = () => {
               )}
             </Pressable>
           ))}
-          <Pressable style={styles.momentCTA}>
-            <Ionicons
-              name="cloud-upload-outline"
-              size={20}
-              color={colors.text}
-            />
-            <Text style={styles.momentCTATitle}>Anı ekle</Text>
-            <Text style={styles.momentCTASub}>Foto/video + kısa not</Text>
-          </Pressable>
+          {momentList.length > 5 && (
+            <Pressable
+              style={styles.momentMoreCard}
+              onPress={() => setAllMomentsVisible(true)}
+            >
+              <Ionicons
+                name="albums-outline"
+                size={22}
+                color={colors.accentLight}
+              />
+              <Text style={styles.momentMoreTitle}>Daha fazlası</Text>
+              <Text style={styles.momentMoreSub}>Tüm tribün anlarını gör</Text>
+            </Pressable>
+          )}
         </ScrollView>
 
         <SectionHeader
@@ -156,6 +220,177 @@ const HomeScreen: React.FC = () => {
           </Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={shareModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.modalCard}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Tribün Anı Paylaş</Text>
+              <TouchableOpacity onPress={() => setShareModalVisible(false)}>
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              placeholder="Şehir / Lokasyon"
+              placeholderTextColor={colors.mutedText}
+              value={newCity}
+              onChangeText={setNewCity}
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="Kısa açıklama"
+              placeholderTextColor={colors.mutedText}
+              value={newCaption}
+              onChangeText={setNewCaption}
+              style={[styles.modalInput, { height: 80 }]}
+              multiline
+            />
+            <TextInput
+              placeholder="Görsel URL (opsiyonel)"
+              placeholderTextColor={colors.mutedText}
+              value={imageUrl}
+              onChangeText={setImageUrl}
+              style={styles.modalInput}
+              autoCapitalize="none"
+            />
+            {imageUrl ? (
+              <View style={styles.previewBox}>
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
+              </View>
+            ) : null}
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleAddMoment}
+            >
+              <Text style={styles.modalButtonText}>Ekle</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={detailModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDetailModalVisible(false)}
+      >
+        <View style={styles.detailOverlay}>
+          <View style={styles.detailCard}>
+            <TouchableOpacity
+              style={styles.detailClose}
+              onPress={() => setDetailModalVisible(false)}
+            >
+              <Ionicons name="close" size={22} color={colors.text} />
+            </TouchableOpacity>
+            {selectedMoment?.image ? (
+              <ImageBackground
+                source={selectedMoment.image}
+                style={styles.detailImage}
+                imageStyle={{ borderRadius: 16 }}
+              >
+                <LinearGradient
+                  colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.25)"]}
+                  style={StyleSheet.absoluteFillObject}
+                />
+              </ImageBackground>
+            ) : (
+              <View style={[styles.detailImage, styles.momentFallback]}>
+                <Text style={styles.momentCaption}>
+                  {selectedMoment?.caption}
+                </Text>
+              </View>
+            )}
+            <View style={styles.detailContent}>
+              <View style={styles.momentSourcePill}>
+                <Text style={styles.momentSourceText}>
+                  {selectedMoment?.source}
+                </Text>
+              </View>
+              <Text style={styles.detailCaption}>
+                {selectedMoment?.caption}
+              </Text>
+              <Text style={styles.detailMeta}>
+                {selectedMoment?.location} · {selectedMoment?.time} önce
+              </Text>
+              <Text style={styles.detailMeta}>
+                Paylaşan: {selectedMoment?.user}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={allMomentsVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAllMomentsVisible(false)}
+      >
+        <View style={styles.allOverlay}>
+          <View style={styles.allCard}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>TÇ¬m TribÇ¬n AnlarŽñ</Text>
+              <TouchableOpacity onPress={() => setAllMomentsVisible(false)}>
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              contentContainerStyle={styles.allList}
+              showsVerticalScrollIndicator={false}
+            >
+              {momentList.map((moment) => (
+                <Pressable
+                  key={moment.id}
+                  style={styles.allItem}
+                  onPress={() => {
+                    setSelectedMoment(moment);
+                    setAllMomentsVisible(false);
+                    setDetailModalVisible(true);
+                  }}
+                >
+                  {moment.image ? (
+                    <ImageBackground
+                      source={moment.image}
+                      style={styles.allImage}
+                      imageStyle={{ borderRadius: 12 }}
+                    >
+                      <LinearGradient
+                        colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0.25)"]}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                    </ImageBackground>
+                  ) : (
+                    <View style={[styles.allImage, styles.momentFallback]} />
+                  )}
+                  <View style={styles.allText}>
+                    <View style={styles.momentSourcePill}>
+                      <Text style={styles.momentSourceText}>
+                        {moment.source}
+                      </Text>
+                    </View>
+                    <Text style={styles.allCaption}>{moment.caption}</Text>
+                    <Text style={styles.allMeta}>
+                      {moment.location} ƒ?½ {moment.time} Çônce
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -482,6 +717,56 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     overflow: "hidden",
   },
+  momentAddCard: {
+    width: 180,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "rgba(15,169,88,0.08)",
+    padding: spacing.md,
+    gap: spacing.xs,
+    justifyContent: "center",
+  },
+  momentAddIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    // borderColor: colors.primary,
+    borderColor: "red",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  momentAddTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+  },
+  momentAddSub: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  momentMoreCard: {
+    width: 160,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    backgroundColor: colors.card,
+    padding: spacing.md,
+    gap: spacing.xs,
+    justifyContent: "center",
+  },
+  momentMoreTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+  },
+  momentMoreSub: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
   momentImage: {
     height: 200,
   },
@@ -526,26 +811,149 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.xs,
   },
-  momentCTA: {
-    width: 200,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderStyle: "dashed",
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.xs,
-    padding: spacing.md,
-    backgroundColor: "rgba(15,169,88,0.05)",
+    padding: spacing.lg,
   },
-  momentCTATitle: {
+  modalCard: {
+    width: "100%",
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalTitle: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+  },
+  modalInput: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: spacing.sm,
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  previewBox: {
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  previewImage: {
+    width: "100%",
+    height: 160,
+  },
+  modalButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 14,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+    marginTop: spacing.xs,
+  },
+  modalButtonText: {
     color: colors.text,
     fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
   },
-  momentCTASub: {
+  allOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: spacing.lg,
+  },
+  allCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 18,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  allList: {
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+  },
+  allItem: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: colors.background,
+  },
+  allImage: {
+    width: 110,
+    height: 90,
+  },
+  allText: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    paddingRight: spacing.sm,
+    gap: spacing.xs,
+    justifyContent: "center",
+  },
+  allCaption: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+  },
+  allMeta: {
     color: colors.mutedText,
     fontFamily: typography.medium,
     fontSize: fontSizes.sm,
+  },
+  detailOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.lg,
+  },
+  detailCard: {
+    width: "100%",
+    backgroundColor: colors.card,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  detailClose: {
+    position: "absolute",
+    right: spacing.sm,
+    top: spacing.sm,
+    zIndex: 2,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    borderRadius: 14,
+    padding: spacing.xs,
+  },
+  detailImage: {
+    height: 260,
+  },
+  detailContent: {
+    padding: spacing.lg,
+    gap: spacing.xs,
+  },
+  detailCaption: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+  },
+  detailMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
   },
 });
 

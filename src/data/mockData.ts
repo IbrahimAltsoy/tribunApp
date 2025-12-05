@@ -496,6 +496,7 @@ export const fanMoments: FanMoment[] = [
     caption: "Dakika 74, tezahürat sesi kesilmiyor!",
     time: "48dk",
     source: "Tribün",
+    image: "../assets/footboll/4.jpg",
   },
   {
     id: "fm5",
@@ -504,5 +505,24 @@ export const fanMoments: FanMoment[] = [
     caption: "Gol anında sahile düşen meşale dumanı!",
     time: "1s",
     source: "Şehir Meydanı",
+    image: "../assets/footboll/3.jpg",
+  },
+  {
+    id: "fm6",
+    user: "MaratonG",
+    location: "Diyarbakır - Maraton G",
+    caption: "Dakika 74, tezahürat sesi kesilmiyor!",
+    time: "48dk",
+    source: "Tribün",
+    image: "../assets/footboll/3.jpg",
+  },
+  {
+    id: "fm7",
+    user: "IzmirWave-35",
+    location: "İzmir - Kordon",
+    caption: "Gol anında sahile düşen meşale dumanı!",
+    time: "1s",
+    source: "Şehir Meydanı",
+    image: "../assets/footboll/1.jpg",
   },
 ];
