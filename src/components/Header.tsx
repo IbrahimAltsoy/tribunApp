@@ -56,7 +56,7 @@ const Header: React.FC<HeaderProps> = ({ onPressNotifications }) => {
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>AMEDSPOR</Text>
+          <Text style={styles.title}>AMED FAN OFFCİAL</Text>
           <Animated.View
             style={[
               styles.shimmer,

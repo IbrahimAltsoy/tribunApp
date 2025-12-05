@@ -78,6 +78,16 @@ export type Announcement = {
   note: string;
 };
 
+export type FanMoment = {
+  id: string;
+  user: string;
+  location: string;
+  caption: string;
+  time: string;
+  source: "Tribün" | "Şehir Meydanı" | "Ev/İzleme";
+  image?: ImageSourcePropType;
+};
+
 export type ChatMessage = {
   id: string;
   text: string;
@@ -99,7 +109,7 @@ export const newsData: NewsItem[] = [
     id: "n1",
     title: "Derbi Öncesi Son Dokunuşlar",
     summary:
-      "Takım son idmanında tempolu pres ve geçiş oyunu üzerine çalıştı. Kalabalık tribün provası yapıldı.",
+      "Takım son idmanında tempolu pres ve geçiş oyunu üzerine çalıştı. Tribün provası yapıldı.",
     time: "2s",
     category: "Kulüp",
     image: require("../assets/dummy/slide1.png"),
@@ -208,11 +218,61 @@ export const liveMatch = {
 };
 
 export const standings: StandingRow[] = [
-  { pos: 1, team: "Amedspor", mp: 14, w: 9, d: 3, l: 2, gf: 24, ga: 12, pts: 30 },
-  { pos: 2, team: "Sakaryaspor", mp: 14, w: 8, d: 4, l: 2, gf: 22, ga: 11, pts: 28 },
-  { pos: 3, team: "Kocaelispor", mp: 14, w: 8, d: 2, l: 4, gf: 21, ga: 14, pts: 26 },
-  { pos: 4, team: "Erzurumspor", mp: 14, w: 7, d: 4, l: 3, gf: 18, ga: 12, pts: 25 },
-  { pos: 5, team: "Bandırmaspor", mp: 14, w: 7, d: 3, l: 4, gf: 17, ga: 13, pts: 24 },
+  {
+    pos: 1,
+    team: "Amedspor",
+    mp: 14,
+    w: 9,
+    d: 3,
+    l: 2,
+    gf: 24,
+    ga: 12,
+    pts: 30,
+  },
+  {
+    pos: 2,
+    team: "Sakaryaspor",
+    mp: 14,
+    w: 8,
+    d: 4,
+    l: 2,
+    gf: 22,
+    ga: 11,
+    pts: 28,
+  },
+  {
+    pos: 3,
+    team: "Kocaelispor",
+    mp: 14,
+    w: 8,
+    d: 2,
+    l: 4,
+    gf: 21,
+    ga: 14,
+    pts: 26,
+  },
+  {
+    pos: 4,
+    team: "Erzurumspor",
+    mp: 14,
+    w: 7,
+    d: 4,
+    l: 3,
+    gf: 18,
+    ga: 12,
+    pts: 25,
+  },
+  {
+    pos: 5,
+    team: "Bandırmaspor",
+    mp: 14,
+    w: 7,
+    d: 3,
+    l: 4,
+    gf: 17,
+    ga: 13,
+    pts: 24,
+  },
 ];
 
 export const legends: Legend[] = [
@@ -398,5 +458,51 @@ export const archiveHighlights = [
     title: "Deplasman ruhu",
     detail:
       "Anadolu şehirlerinde renkleriyle yankılanan taraftar kortejleri, dayanışma hikayeleri.",
+  },
+];
+
+export const fanMoments: FanMoment[] = [
+  {
+    id: "fm1",
+    user: "IzmirWave-35",
+    location: "İzmir - Kordon",
+    caption: "Dev ekran kuruldu, yeşil kırmızı atkılar hazır!",
+    time: "10dk",
+    source: "Şehir Meydanı",
+    image: require("../assets/footboll/3.jpg"),
+  },
+  {
+    id: "fm2",
+    user: "KapaliC1",
+    location: "Diyarbakır Stadyumu - Kapalı C",
+    caption: "Koreografi provası sonrası tribün alev aldı.",
+    time: "22dk",
+    source: "Tribün",
+    image: require("../assets/footboll/2.jpg"),
+  },
+  {
+    id: "fm3",
+    user: "BerlinAmed",
+    location: "Berlin Fan Zone",
+    caption: "Projeksiyon yansıtıldı, 40 kişiyiz. Sesimizi duyuyor musunuz?",
+    time: "35dk",
+    source: "Ev/İzleme",
+    image: require("../assets/footboll/1.jpg"),
+  },
+  {
+    id: "fm4",
+    user: "MaratonG",
+    location: "Diyarbakır - Maraton G",
+    caption: "Dakika 74, tezahürat sesi kesilmiyor!",
+    time: "48dk",
+    source: "Tribün",
+  },
+  {
+    id: "fm5",
+    user: "IzmirWave-35",
+    location: "İzmir - Kordon",
+    caption: "Gol anında sahile düşen meşale dumanı!",
+    time: "1s",
+    source: "Şehir Meydanı",
   },
 ];

@@ -15,6 +15,7 @@ import {
   archiveHighlights,
   kits,
   legends,
+  fanMoments,
 } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -104,6 +105,22 @@ const MarsScreen: React.FC = () => {
               <Text style={styles.kitPalette}>{kit.palette}</Text>
               <Text style={styles.kitNote}>{kit.note}</Text>
             </LinearGradient>
+          ))}
+        </ScrollView>
+
+        <SectionHeading title="Tribün Seçkisi" icon="camera-outline" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.momentRow}
+        >
+          {fanMoments.slice(0, 4).map((moment) => (
+            <View key={moment.id} style={styles.momentCard}>
+              <Text style={styles.momentUser}>{moment.user}</Text>
+              <Text style={styles.momentCaption}>{moment.caption}</Text>
+              <Text style={styles.momentMeta}>{moment.location}</Text>
+              <Text style={styles.momentMeta}>{moment.time} önce</Text>
+            </View>
           ))}
         </ScrollView>
 
@@ -345,6 +362,32 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     marginTop: spacing.xs,
+  },
+  momentRow: {
+    gap: spacing.sm,
+    marginBottom: spacing.xl,
+  },
+  momentCard: {
+    width: 220,
+    padding: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.xs / 2,
+  },
+  momentUser: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  momentCaption: {
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  momentMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
   announcementList: {
     gap: spacing.sm,

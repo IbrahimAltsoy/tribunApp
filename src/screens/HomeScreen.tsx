@@ -8,19 +8,19 @@ import {
   Text,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/Header";
 import { BottomTabParamList } from "../navigation/BottomTabs";
 import { announcements, fixtureData, newsData, polls } from "../data/mockData";
+import { fanMoments } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<BottomTabParamList>>();
-  const nextMatch = fixtureData[0];
   const featuredNews = newsData.slice(0, 3);
   const featuredPoll = polls[0];
   const headlineAnnouncement = announcements[0];
@@ -30,73 +30,57 @@ const HomeScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Header />
 
-        <LinearGradient
-          colors={["#103522", "#0D0D0D"]}
-          style={styles.heroCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.heroTopRow}>
-            <Text style={styles.heroBadge}>Maç Günü</Text>
-            <Pressable onPress={() => navigation.navigate("Fixture")}>
-              <Feather name="external-link" color={colors.text} size={18} />
-            </Pressable>
-          </View>
-          <Text style={styles.heroTitle}>Amedspor vs {nextMatch.opponent}</Text>
-          <Text style={styles.heroMeta}>
-            {nextMatch.date} • {nextMatch.time} • {nextMatch.venue}
-          </Text>
-          <View style={styles.heroActions}>
-            <Pressable
-              style={styles.heroAction}
-              onPress={() => navigation.navigate("Chat")}
-            >
-              <Ionicons name="chatbubbles-outline" size={18} color={colors.text} />
-              <Text style={styles.heroActionText}>Maç Odası</Text>
-            </Pressable>
-            <Pressable
-              style={styles.heroAction}
-              onPress={() => navigation.navigate("Fixture")}
-            >
-              <Ionicons name="calendar-outline" size={18} color={colors.text} />
-              <Text style={styles.heroActionText}>Maç Merkezi</Text>
-            </Pressable>
-            <Pressable
-              style={styles.heroAction}
-              onPress={() => navigation.navigate("Feed")}
-            >
-              <Ionicons name="newspaper-outline" size={18} color={colors.text} />
-              <Text style={styles.heroActionText}>Haberler</Text>
-            </Pressable>
-          </View>
-        </LinearGradient>
-
         <SectionHeader
-          title="Hızlı Erişim"
-          subtitle="Tüm alanlara tek dokunuş"
+          title="Maç Günü Tribün Anları"
+          subtitle="Sağa kaydırarak taraftar videoları ve kareler"
         />
-        <View style={styles.quickGrid}>
-          <QuickLink
-            icon="bar-chart-2"
-            label="Maç Merkezi"
-            onPress={() => navigation.navigate("Fixture")}
-          />
-          <QuickLink
-            icon="rss"
-            label="Haberler"
-            onPress={() => navigation.navigate("Feed")}
-          />
-          <QuickLink
-            icon="message-square"
-            label="Sohbet"
-            onPress={() => navigation.navigate("Chat")}
-          />
-          <QuickLink
-            icon="archive"
-            label="Arşiv & Duyuru"
-            onPress={() => navigation.navigate("Mars")}
-          />
-        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.momentsRow}
+        >
+          {fanMoments.map((moment) => (
+            <Pressable key={moment.id} style={styles.momentCard}>
+              {moment.image ? (
+                <ImageBackground
+                  source={moment.image}
+                  style={styles.momentImage}
+                  imageStyle={{ borderRadius: 16 }}
+                >
+                  <LinearGradient
+                    colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.25)"]}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <View style={styles.momentContent}>
+                    <View style={styles.momentSourcePill}>
+                      <Text style={styles.momentSourceText}>
+                        {moment.source}
+                      </Text>
+                    </View>
+                    <Text style={styles.momentCaption}>{moment.caption}</Text>
+                    <Text style={styles.momentLocation}>{moment.location}</Text>
+                    <Text style={styles.momentTime}>{moment.time} önce</Text>
+                  </View>
+                </ImageBackground>
+              ) : (
+                <View style={[styles.momentImage, styles.momentFallback]}>
+                  <Text style={styles.momentCaption}>{moment.caption}</Text>
+                  <Text style={styles.momentLocation}>{moment.location}</Text>
+                  <Text style={styles.momentTime}>{moment.time} önce</Text>
+                </View>
+              )}
+            </Pressable>
+          ))}
+          <Pressable style={styles.momentCTA}>
+            <Ionicons
+              name="cloud-upload-outline"
+              size={20}
+              color={colors.text}
+            />
+            <Text style={styles.momentCTATitle}>Anı ekle</Text>
+            <Text style={styles.momentCTASub}>Foto/video + kısa not</Text>
+          </Pressable>
+        </ScrollView>
 
         <SectionHeader
           title="Haber Akışı"
@@ -134,7 +118,9 @@ const HomeScreen: React.FC = () => {
                   </Text>
                 </View>
               </View>
-              <Text style={styles.fixtureCompetition}>{fixture.competition}</Text>
+              <Text style={styles.fixtureCompetition}>
+                {fixture.competition}
+              </Text>
             </View>
           ))}
         </View>
@@ -151,14 +137,20 @@ const HomeScreen: React.FC = () => {
         />
         <View style={styles.announcementCard}>
           <View style={styles.announcementHeader}>
-            <Text style={styles.announcementTitle}>{headlineAnnouncement.title}</Text>
+            <Text style={styles.announcementTitle}>
+              {headlineAnnouncement.title}
+            </Text>
             <Ionicons name="map-outline" size={20} color={colors.text} />
           </View>
           <Text style={styles.announcementMeta}>
             {headlineAnnouncement.city} • {headlineAnnouncement.date}
           </Text>
-          <Text style={styles.announcementMeta}>{headlineAnnouncement.location}</Text>
-          <Text style={styles.announcementNote}>{headlineAnnouncement.note}</Text>
+          <Text style={styles.announcementMeta}>
+            {headlineAnnouncement.location}
+          </Text>
+          <Text style={styles.announcementNote}>
+            {headlineAnnouncement.note}
+          </Text>
           <Text style={styles.announcementContact}>
             İletişim: {headlineAnnouncement.contact}
           </Text>
@@ -182,21 +174,6 @@ const SectionHeader = ({
     </View>
     <View style={styles.sectionAccent} />
   </View>
-);
-
-const QuickLink = ({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  onPress: () => void;
-}) => (
-  <Pressable onPress={onPress} style={styles.quickLink}>
-    <Feather name={icon} size={18} color={colors.text} />
-    <Text style={styles.quickLinkText}>{label}</Text>
-  </Pressable>
 );
 
 const NewsCard = ({ item }: { item: (typeof newsData)[0] }) => {
@@ -276,65 +253,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xxl,
   },
-  heroCard: {
-    marginHorizontal: spacing.lg,
-    padding: spacing.lg,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    marginTop: spacing.xl,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-  },
-  heroTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  heroBadge: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: 12,
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
-  },
-  heroTitle: {
-    color: colors.text,
-    fontSize: fontSizes.xl,
-    fontFamily: typography.bold,
-    marginBottom: spacing.xs,
-  },
-  heroMeta: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    marginBottom: spacing.md,
-  },
-  heroActions: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    flexWrap: "wrap",
-  },
-  heroAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  heroActionText: {
-    color: colors.text,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-  },
   sectionHeader: {
     marginTop: spacing.xl,
     marginHorizontal: spacing.lg,
@@ -358,28 +276,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: colors.primary,
     opacity: 0.8,
-  },
-  quickGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: spacing.lg,
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  quickLink: {
-    width: "48%",
-    padding: spacing.md,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  quickLinkText: {
-    color: colors.text,
-    fontFamily: typography.medium,
   },
   newsRow: {
     paddingHorizontal: spacing.lg,
@@ -572,6 +468,84 @@ const styles = StyleSheet.create({
   announcementContact: {
     color: colors.text,
     fontFamily: typography.semiBold,
+  },
+  momentsRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  momentCard: {
+    width: 220,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  momentImage: {
+    height: 200,
+  },
+  momentContent: {
+    flex: 1,
+    padding: spacing.md,
+    justifyContent: "flex-end",
+    gap: spacing.xs,
+  },
+  momentSourcePill: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(15,169,88,0.8)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 12,
+  },
+  momentSourceText: {
+    color: colors.text,
+
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  momentCaption: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+  },
+  momentLocation: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  momentTime: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+  },
+  momentFallback: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  momentCTA: {
+    width: 200,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    padding: spacing.md,
+    backgroundColor: "rgba(15,169,88,0.05)",
+  },
+  momentCTATitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  momentCTASub: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
 });
 

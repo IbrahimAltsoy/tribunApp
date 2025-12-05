@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { newsData } from "../data/mockData";
+import { newsData, fanMoments } from "../data/mockData";
 
 const categories = ["Tümü", ...Array.from(new Set(newsData.map((n) => n.category)))];
 
@@ -95,6 +95,51 @@ const FeedScreen: React.FC = () => {
             </View>
           ))}
         </View>
+
+        <Text style={styles.sectionTitle}>Tribün Anları</Text>
+        <Text style={styles.sectionSubtitle}>
+          Taraftarların bulunduğu yerden canlı paylaşımlar
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.momentsRow}
+        >
+          {fanMoments.map((moment) => (
+            <View key={moment.id} style={styles.momentCard}>
+              <LinearGradient
+                colors={["rgba(15,169,88,0.15)", "rgba(0,0,0,0.4)"]}
+                style={styles.momentMedia}
+              >
+                {moment.image && (
+                  <ImageBackground
+                    source={moment.image}
+                    style={StyleSheet.absoluteFill}
+                    imageStyle={{ borderRadius: 14 }}
+                  />
+                )}
+                <View style={styles.momentBadge}>
+                  <Text style={styles.momentBadgeText}>{moment.source}</Text>
+                </View>
+              </LinearGradient>
+              <View style={styles.momentBody}>
+                <View style={styles.momentHeader}>
+                  <Text style={styles.momentUser}>{moment.user}</Text>
+                  <Text style={styles.momentTime}>{moment.time} önce</Text>
+                </View>
+                <Text style={styles.momentCaption}>{moment.caption}</Text>
+                <View style={styles.momentLocationRow}>
+                  <Ionicons name="location-outline" size={14} color={colors.mutedText} />
+                  <Text style={styles.momentLocation}>{moment.location}</Text>
+                </View>
+              </View>
+            </View>
+          ))}
+          <Pressable style={styles.momentCTA}>
+            <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
+            <Text style={styles.momentCTAText}>Sen de paylaş</Text>
+          </Pressable>
+        </ScrollView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -119,6 +164,17 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.lg,
+    marginTop: spacing.xl,
+  },
+  sectionSubtitle: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    marginBottom: spacing.md,
   },
   chipRow: {
     flexDirection: "row",
@@ -196,6 +252,87 @@ const styles = StyleSheet.create({
   cardMeta: {
     color: colors.mutedText,
     fontFamily: typography.medium,
+  },
+  momentsRow: {
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  momentCard: {
+    width: 240,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+  },
+  momentMedia: {
+    height: 120,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: "hidden",
+  },
+  momentBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  momentBadgeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  momentBody: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  momentHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  momentUser: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  momentTime: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+  },
+  momentCaption: {
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  momentLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+  },
+  momentLocation: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  momentCTA: {
+    width: 200,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    padding: spacing.md,
+    backgroundColor: "rgba(15,169,88,0.05)",
+  },
+  momentCTAText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
   },
 });
 

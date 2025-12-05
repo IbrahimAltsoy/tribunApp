@@ -19,7 +19,7 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import randomNameGenerator from "../utils/randomNameGenerator";
-import { matchRooms, polls } from "../data/mockData";
+import { matchRooms, polls, fanMoments } from "../data/mockData";
 
 const ChatScreen: React.FC = () => {
   const [nickname, setNickname] = useState(randomNameGenerator());
@@ -198,6 +198,47 @@ const ChatScreen: React.FC = () => {
                 );
               })}
             </View>
+          </ScrollView>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.momentShareRow}
+          >
+            {fanMoments.slice(0, 4).map((moment) => (
+              <Pressable
+                key={moment.id}
+                style={styles.momentShareCard}
+                onPress={() => {
+                  const text = `Tribün Anı • ${moment.location}: ${moment.caption}`;
+                  const newMessage: Message = {
+                    id: `${moment.id}-${Date.now()}`,
+                    text,
+                    sender: nickname,
+                    timestamp: new Date().toLocaleTimeString("tr-TR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }),
+                    isMine: true,
+                  };
+                  setRoomMessages((prev) => ({
+                    ...prev,
+                    [selectedRoom]: [...(prev[selectedRoom] || []), newMessage],
+                  }));
+                  setTimeout(() => {
+                    flatListRef.current?.scrollToEnd({ animated: true });
+                  }, 60);
+                }}
+              >
+                <Text style={styles.momentShareTitle}>{moment.source}</Text>
+                <Text style={styles.momentShareCaption}>{moment.caption}</Text>
+                <Text style={styles.momentShareMeta}>{moment.location}</Text>
+              </Pressable>
+            ))}
+            <Pressable style={styles.momentShareCTA}>
+              <Ionicons name="cloud-upload-outline" size={18} color={colors.text} />
+              <Text style={styles.momentShareCTAText}>Anını ekle</Text>
+            </Pressable>
           </ScrollView>
 
           <FlatList
@@ -391,6 +432,49 @@ const styles = StyleSheet.create({
   pollBarFill: {
     height: 8,
     backgroundColor: colors.primary,
+  },
+  momentShareRow: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  momentShareCard: {
+    width: 220,
+    padding: spacing.md,
+    borderRadius: 14,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.xs,
+  },
+  momentShareTitle: {
+    color: colors.primary,
+    fontFamily: typography.semiBold,
+  },
+  momentShareCaption: {
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  momentShareMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  momentShareCTA: {
+    width: 140,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing.md,
+    gap: spacing.xs,
+    backgroundColor: "rgba(15,169,88,0.05)",
+  },
+  momentShareCTAText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
   },
   messagesContainer: {
     paddingHorizontal: spacing.lg,
