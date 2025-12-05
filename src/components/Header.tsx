@@ -1,27 +1,95 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { fontSizes, typography } from '../theme/typography';
+import React, { useRef, useEffect } from "react";
+import { StyleSheet, Text, View, Animated, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../theme/colors";
+import { spacing } from "../theme/spacing";
+import { fontSizes, typography } from "../theme/typography";
+import { LinearGradient } from "expo-linear-gradient";
 
 type HeaderProps = {
   onPressNotifications?: () => void;
 };
 
 const Header: React.FC<HeaderProps> = ({ onPressNotifications }) => {
+  const notificationScale = useRef(new Animated.Value(1)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerAnim, {
+          toValue: 0,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const handlePressIn = () => {
+    Animated.spring(notificationScale, {
+      toValue: 0.85,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(notificationScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const shimmerTranslate = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-100, 100],
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text style={styles.title}>AMEDSPOR</Text>
-        <Ionicons
-          name="notifications-outline"
-          size={26}
-          color={colors.text}
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>AMEDSPOR</Text>
+          <Animated.View
+            style={[
+              styles.shimmer,
+              {
+                transform: [{ translateX: shimmerTranslate }],
+              },
+            ]}
+          />
+        </View>
+        <Pressable
           onPress={onPressNotifications}
-        />
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+        >
+          <Animated.View
+            style={[
+              styles.notificationButton,
+              { transform: [{ scale: notificationScale }] },
+            ]}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={24}
+              color={colors.text}
+            />
+            <View style={styles.notificationBadge} />
+          </Animated.View>
+        </Pressable>
       </View>
-      <View style={styles.underline} />
+      <View style={styles.underlineContainer}>
+        <View style={styles.underline} />
+        <View style={styles.underlineGlow} />
+      </View>
     </View>
   );
 };
@@ -30,24 +98,80 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  titleContainer: {
+    position: "relative",
+    overflow: "hidden",
   },
   title: {
     color: colors.text,
     fontSize: fontSizes.xl,
     fontFamily: typography.bold,
-    letterSpacing: 0.5,
+    letterSpacing: 1.2,
+    textShadowColor: "rgba(15, 169, 88, 0.3)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  shimmer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    width: 50,
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent,
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  underlineContainer: {
+    marginTop: spacing.md,
+    position: "relative",
   },
   underline: {
-    marginTop: spacing.sm,
     height: 3,
-    width: 110,
+    width: 120,
     backgroundColor: colors.primary,
     borderRadius: 3,
+  },
+  underlineGlow: {
+    position: "absolute",
+    top: -2,
+    left: 0,
+    height: 7,
+    width: 120,
+    backgroundColor: colors.primary,
+    borderRadius: 3,
+    opacity: 0.3,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
   },
 });
 
