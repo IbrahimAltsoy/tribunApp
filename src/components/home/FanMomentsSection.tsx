@@ -62,7 +62,15 @@ const FanMomentsSection: React.FC<Props> = ({
                 style={StyleSheet.absoluteFillObject}
               />
               <View style={styles.momentContent}>
-                <View style={styles.momentSourcePill}>
+                {/* <View style={styles.momentSourcePill}> */}
+                <View
+                  style={[
+                    styles.momentSourcePill,
+                    moment.source === "Tribun" && {
+                      backgroundColor: colors.accent,
+                    },
+                  ]}
+                >
                   <Text style={styles.momentSourceText}>{moment.source}</Text>
                 </View>
                 <Text style={styles.momentCaption}>{moment.caption}</Text>
@@ -82,13 +90,9 @@ const FanMomentsSection: React.FC<Props> = ({
 
       {moments.length > 5 && (
         <Pressable style={styles.momentMoreCard} onPress={onPressMore}>
-          <Ionicons
-            name="albums-outline"
-            size={22}
-            color={colors.accentLight}
-          />
+          <Ionicons name="albums-outline" size={22} color={colors.primary} />
           <Text style={styles.momentMoreTitle}>Daha fazlası</Text>
-          <Text style={styles.momentMoreSub}>Tüm tribün anlarını gör</Text>
+          {/* <Text style={styles.momentMoreSub}>Tüm tribün anlarını gör</Text> */}
         </Pressable>
       )}
     </ScrollView>

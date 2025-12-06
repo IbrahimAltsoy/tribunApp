@@ -77,7 +77,7 @@ const HomeScreen: React.FC = () => {
 
         <SectionHeader
           title="Maç Günü Tribün Anları"
-          subtitle="Sağa kaydırarak taraftar videoları ve kareleri gör"
+          // subtitle="Sağa kaydırarak taraftar videoları ve kareleri gör"
         />
         <FanMomentsSection
           moments={momentList}

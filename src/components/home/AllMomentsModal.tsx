@@ -39,7 +39,7 @@ const AllMomentsModal: React.FC<Props> = ({
     <View style={styles.allOverlay}>
       <View style={styles.allCard}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>TÇÅ¶ªm TribÇÅ¶ªn Anlar«Çñ</Text>
+          <Text style={styles.modalTitle}>Tüm Tribün Anları</Text>
           <Pressable onPress={onClose}>
             <Ionicons name="close" size={22} color={colors.text} />
           </Pressable>
@@ -69,12 +69,19 @@ const AllMomentsModal: React.FC<Props> = ({
                 <View style={[styles.allImage, styles.momentFallback]} />
               )}
               <View style={styles.allText}>
-                <View style={styles.momentSourcePill}>
+                <View
+                  style={[
+                    styles.momentSourcePill,
+                    moment.source === "Tribun" && {
+                      backgroundColor: colors.accent,
+                    },
+                  ]}
+                >
                   <Text style={styles.momentSourceText}>{moment.source}</Text>
                 </View>
                 <Text style={styles.allCaption}>{moment.caption}</Text>
                 <Text style={styles.allMeta}>
-                  {moment.location} ’'?¶« {moment.time} ÇÅÇïnce
+                  {moment.location} • {moment.time} önce
                 </Text>
               </View>
             </Pressable>
@@ -159,8 +166,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
-    gap: spacing.xs,
   },
 });
 

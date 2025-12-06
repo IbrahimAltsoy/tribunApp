@@ -6,7 +6,7 @@ import { fontSizes, typography } from "../../theme/typography";
 
 type Props = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
 };
 
 const SectionHeader: React.FC<Props> = ({ title, subtitle }) => (
@@ -38,10 +38,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs / 2,
   },
   sectionAccent: {
-    width: 48,
-    height: 4,
+    width: "40%",
+    height: 1,
     borderRadius: 4,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
     opacity: 0.8,
   },
 });

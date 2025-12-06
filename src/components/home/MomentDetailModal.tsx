@@ -51,7 +51,14 @@ const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose }) => (
           </View>
         )}
         <View style={styles.detailContent}>
-          <View style={styles.momentSourcePill}>
+          <View
+            style={[
+              styles.momentSourcePill,
+              moment?.source === "Tribun" && {
+                backgroundColor: colors.accent,
+              },
+            ]}
+          >
             <Text style={styles.momentSourceText}>{moment?.source}</Text>
           </View>
           <Text style={styles.detailCaption}>{moment?.caption}</Text>
