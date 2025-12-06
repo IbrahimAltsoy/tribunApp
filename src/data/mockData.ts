@@ -97,10 +97,14 @@ export type ChatMessage = {
   isRead?: boolean;
 };
 
+export type MatchRoomPhase = "pre" | "post";
+
 export type MatchRoom = {
   id: string;
   title: string;
   time: string;
+  phase: MatchRoomPhase;
+  status?: "upcoming" | "live" | "finished";
   messages: ChatMessage[];
 };
 
@@ -397,9 +401,11 @@ export const announcements: Announcement[] = [
 
 export const matchRooms: MatchRoom[] = [
   {
-    id: "r1",
-    title: "Amedspor vs Kocaelispor",
-    time: "Bugün 19:00",
+    id: "pre-r1",
+    title: "Maç Öncesi Lobi",
+    time: "Bugün 18:00 - 19:00",
+    phase: "pre",
+    status: "upcoming",
     messages: [
       {
         id: "m1",
@@ -415,25 +421,34 @@ export const matchRooms: MatchRoom[] = [
         timestamp: "18:12",
         isMine: false,
       },
+      {
+        id: "m3",
+        text: "Biletiniz, pankartınız tamam mı? Tribün planını konuşalım.",
+        sender: "KapaliC1",
+        timestamp: "18:18",
+        isMine: false,
+      },
     ],
   },
   {
-    id: "r2",
-    title: "Bandırmaspor deplasmanı",
-    time: "14 Aralık 16:00",
+    id: "post-r1",
+    title: "Maç Sonrası Sohbet",
+    time: "Maç bitti • 90+",
+    phase: "post",
+    status: "finished",
     messages: [
       {
-        id: "m3",
-        text: "Deplasman otobüsü listesi dolmak üzere, DM atın.",
-        sender: "EastCrew-456",
-        timestamp: "13:40",
+        id: "m4",
+        text: "Son düdük! Tribün sesi kulağımda çınlıyor.",
+        sender: "MaratonG",
+        timestamp: "21:05",
         isMine: false,
       },
       {
-        id: "m4",
-        text: "Kırmızı formalar bu maçta da giyilecek.",
-        sender: "NorthWall-332",
-        timestamp: "13:55",
+        id: "m5",
+        text: "Maç sonu buluşma için Kapaı C'deyiz.",
+        sender: "IzmirWave-35",
+        timestamp: "21:12",
         isMine: false,
       },
     ],
