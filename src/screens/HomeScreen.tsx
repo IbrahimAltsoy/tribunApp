@@ -1,29 +1,36 @@
 import React, { useMemo, useState } from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import {
+  ImageBackground,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
 import FixtureList from "../components/home/FixtureList";
-import PollCard from "../components/home/PollCard";
 import AnnouncementCard from "../components/home/AnnouncementCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
-import {
-  announcements,
-  fanMoments,
-  fixtureData,
-  newsData,
-  polls,
-} from "../data/mockData";
+import { announcements, fanMoments, fixtureData, newsData } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
+import { fontSizes, typography } from "../theme/typography";
+import { BottomTabParamList } from "../navigation/BottomTabs";
+
+const storeImage = require("../assets/footboll/1.jpg");
 
 const HomeScreen: React.FC = () => {
-  const featuredNews = newsData.slice(0, 3);
-  const featuredPoll = polls[0];
+  const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
+  const featuredNews = newsData.slice(0, 5);
   const headlineAnnouncement = announcements[0];
 
   const [moments, setMoments] = useState(fanMoments);
@@ -49,21 +56,19 @@ const HomeScreen: React.FC = () => {
     const trimmedCity = newCity.trim();
     const trimmedCaption = newCaption.trim();
 
-    if (!trimmedCity && !trimmedCaption && !imageUrl) return; // boş paylaşım engelle
+    if (!trimmedCity && !trimmedCaption && !imageUrl) return;
 
     const newMoment = {
       id: `local-${Date.now()}`,
       user: "Sen",
-      location: trimmedCity || "Şehir belirtilmedi",
-      caption: trimmedCaption || "Yeni paylaşım",
-      time: "Şimdi",
-      source: "Tribun" as const, // tip ile %100 uyumlu, hata vermez
+      location: trimmedCity || "Sehir belirtilmedi",
+      caption: trimmedCaption || "Yeni paylasim",
+      time: "Simdi",
+      source: "Tribun" as const,
       image: imageUrl ? { uri: imageUrl } : undefined,
-    } satisfies (typeof fanMoments)[0]; // en güvenli TypeScript kontrolü
+    } satisfies (typeof fanMoments)[0];
 
     setMoments((prev) => [newMoment, ...prev]);
-
-    // formu temizle
     setNewCity("");
     setNewCaption("");
     setImageUrl("");
@@ -75,10 +80,7 @@ const HomeScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Header />
 
-        <SectionHeader
-          title="Maç Günü Tribün Anları"
-          // subtitle="Sağa kaydırarak taraftar videoları ve kareleri gör"
-        />
+        <SectionHeader title="Mac Gunu Tribun Anlari" />
         <FanMomentsSection
           moments={momentList}
           onPressAdd={() => setShareModalVisible(true)}
@@ -86,35 +88,49 @@ const HomeScreen: React.FC = () => {
           onSelectMoment={handleOpenDetail}
         />
 
-        <SectionHeader
-          title="Haber Akışı"
-          subtitle="Mock haberler ve tribün gelişmeleri"
-        />
+        <SectionHeader title="Haber Akisi" subtitle="Mock haberler ve tribun gelismeleri" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.newsRow}
         >
           {featuredNews.map((news) => (
-            <NewsCard key={news.id} item={news} />
+            <NewsCard
+              key={news.id}
+              item={news}
+              onPress={(id) => navigation.navigate("Feed", { newsId: id, origin: "Home" })}
+            />
           ))}
         </ScrollView>
 
-        <SectionHeader
-          title="Yaklaşan Maçlar"
-          subtitle="Fikstür ve saat bilgisi"
-        />
+        <SectionHeader title="Yaklasan Maclar" subtitle="Fikstur ve saat bilgisi" />
         <FixtureList fixtures={fixtureData} />
 
-        <SectionHeader
-          title="Anket & Tahmin"
-          subtitle="Maçlara özel soru seti"
-        />
-        <PollCard poll={featuredPoll} />
+        <SectionHeader title="Takimina Destek Ol" subtitle="AmedStore.com ile renklerini tasin" />
+        <Pressable
+          onPress={() => Linking.openURL("https://amedstore.com")}
+          style={styles.supportCard}
+          accessibilityRole="button"
+        >
+          <ImageBackground
+            source={storeImage}
+            style={styles.supportImage}
+            imageStyle={{ borderRadius: 18 }}
+          >
+            <View style={styles.supportOverlay} />
+            <View style={styles.supportContent}>
+              <Text style={styles.supportPill}>Store</Text>
+              <Text style={styles.supportTitle}>AmedStore.com</Text>
+              <Text style={styles.supportSubtitle}>
+                Formalar, atkilar ve lisansli urunler icin tikla.
+              </Text>
+            </View>
+          </ImageBackground>
+        </Pressable>
 
         <SectionHeader
           title="Organizasyon Duyurusu"
-          subtitle="Toplanma noktaları ve iletişim"
+          subtitle="Toplanma noktalarini ve iletisim kanallarini yakala"
         />
         <AnnouncementCard announcement={headlineAnnouncement} />
       </ScrollView>
@@ -162,6 +178,45 @@ const styles = StyleSheet.create({
   newsRow: {
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
+  },
+  supportCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  supportImage: {
+    height: 160,
+    justifyContent: "flex-end",
+  },
+  supportOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.35)",
+  },
+  supportContent: {
+    padding: spacing.lg,
+    gap: spacing.xs,
+  },
+  supportPill: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(15,169,88,0.9)",
+    color: colors.text,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 12,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  supportTitle: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+  },
+  supportSubtitle: {
+    color: colors.text,
+    fontFamily: typography.medium,
   },
 });
 

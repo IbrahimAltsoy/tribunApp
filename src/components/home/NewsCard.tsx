@@ -8,23 +8,33 @@ import { newsData } from "../../data/mockData";
 
 type Props = {
   item: (typeof newsData)[0];
+  onPress?: (id: string) => void;
 };
 
-const NewsCard: React.FC<Props> = ({ item }) => {
+const NewsCard: React.FC<Props> = ({ item, onPress }) => {
+  const summary =
+    item.summary.length > 50
+      ? `${item.summary.slice(0, 50).trimEnd()}...`
+      : item.summary;
+
   const body = (
     <View style={styles.newsContent}>
       <View style={styles.newsPill}>
         <Text style={styles.newsPillText}>{item.category}</Text>
       </View>
       <Text style={styles.newsTitle}>{item.title}</Text>
-      <Text style={styles.newsSummary}>{item.summary}</Text>
-      <Text style={styles.newsMeta}>{item.time} Çônce</Text>
+      <Text style={styles.newsSummary}>{summary}</Text>
+      <Text style={styles.newsMeta}>{item.time} once</Text>
     </View>
   );
 
   if (item.image) {
     return (
-      <Pressable style={styles.newsCard}>
+      <Pressable
+        style={styles.newsCard}
+        onPress={() => onPress?.(item.id)}
+        accessibilityRole="button"
+      >
         <ImageBackground
           source={item.image}
           style={styles.newsImage}
@@ -41,7 +51,11 @@ const NewsCard: React.FC<Props> = ({ item }) => {
   }
 
   return (
-    <Pressable style={[styles.newsCard, styles.newsCardPlain]}>
+    <Pressable
+      style={[styles.newsCard, styles.newsCardPlain]}
+      onPress={() => onPress?.(item.id)}
+      accessibilityRole="button"
+    >
       <LinearGradient
         colors={["rgba(15,169,88,0.15)", "rgba(209,14,14,0.08)"]}
         style={[styles.newsImage, { borderRadius: 16 }]}

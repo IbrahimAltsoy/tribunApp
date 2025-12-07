@@ -13,7 +13,7 @@ import { colors } from "../theme/colors";
 export type BottomTabParamList = {
   Home: undefined;
   Fixture: undefined;
-  Feed: undefined;
+  Feed: { newsId?: string; origin?: "Home" } | undefined;
   Chat: undefined;
   Mars: undefined;
 };

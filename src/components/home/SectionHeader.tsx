@@ -38,8 +38,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs / 2,
   },
   sectionAccent: {
-    width: "40%",
-    height: 1,
+    width: "45%",
+    minWidth: 80,
+    height: 2,
     borderRadius: 4,
     backgroundColor: colors.accent,
     opacity: 0.8,

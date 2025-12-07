@@ -1,37 +1,59 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ImageBackground,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { newsData, fanMoments } from "../data/mockData";
+import { NewsItem, newsData } from "../data/mockData";
+import { BottomTabParamList } from "../navigation/BottomTabs";
 
-const categories = ["Tümü", ...Array.from(new Set(newsData.map((n) => n.category)))];
+const categories = ["Tum", ...Array.from(new Set(newsData.map((n) => n.category)))];
 
 const FeedScreen: React.FC = () => {
-  const [selected, setSelected] = useState<string>("Tümü");
+  const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
+  const route = useRoute<RouteProp<BottomTabParamList, "Feed">>();
+  const [selected, setSelected] = useState<string>("Tum");
+  const [activeNews, setActiveNews] = useState<NewsItem | null>(null);
 
   const filteredNews = useMemo(() => {
-    if (selected === "Tümü") return newsData;
+    if (selected === "Tum") return newsData;
     return newsData.filter((item) => item.category === selected);
   }, [selected]);
+
+  useEffect(() => {
+    const newsId = route.params?.newsId;
+    if (newsId) {
+      const target = newsData.find((n) => n.id === newsId);
+      if (target) setActiveNews(target);
+    }
+  }, [route.params?.newsId]);
+
+  const handleCloseDetail = () => {
+    const origin = route.params?.origin;
+    navigation.setParams({ newsId: undefined, origin: undefined });
+    setActiveNews(null);
+    if (origin === "Home") {
+      navigation.navigate("Home");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Haberler</Text>
-        <Text style={styles.subtitle}>
-          Mock verilerle güncel Amedspor gündemi ve tribün duyuruları
-        </Text>
+        <Text style={styles.subtitle}>Mock verilerle guncel Amedspor gundemi</Text>
 
         <ScrollView
           horizontal
@@ -62,29 +84,40 @@ const FeedScreen: React.FC = () => {
 
         <View style={styles.list}>
           {filteredNews.map((news) => (
-            <View key={news.id} style={styles.card}>
-              <ImageBackground
-                source={news.image}
-                style={styles.cardImage}
-                imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-              >
-                <LinearGradient
-                  colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
-                  style={StyleSheet.absoluteFillObject}
-                />
-                <View style={styles.cardImageContent}>
+            <Pressable
+              key={news.id}
+              onPress={() => setActiveNews(news)}
+              style={styles.card}
+            >
+              {news.image && (
+                <ImageBackground
+                  source={news.image}
+                  style={styles.cardImage}
+                  imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                >
+                  <LinearGradient
+                    colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <View style={styles.cardImageContent}>
+                    <View style={styles.cardBadge}>
+                      <Text style={styles.cardBadgeText}>{news.category}</Text>
+                    </View>
+                    <Text style={styles.cardTitle}>{news.title}</Text>
+                  </View>
+                </ImageBackground>
+              )}
+              <View style={styles.cardBody}>
+                {!news.image && (
                   <View style={styles.cardBadge}>
                     <Text style={styles.cardBadgeText}>{news.category}</Text>
                   </View>
-                  <Text style={styles.cardTitle}>{news.title}</Text>
-                </View>
-              </ImageBackground>
-              <View style={styles.cardBody}>
+                )}
                 <Text style={styles.cardSummary}>{news.summary}</Text>
                 <View style={styles.cardFooter}>
                   <View style={styles.footerMeta}>
                     <Ionicons name="time-outline" size={16} color={colors.mutedText} />
-                    <Text style={styles.cardMeta}>{news.time} önce</Text>
+                    <Text style={styles.cardMeta}>{news.time} once</Text>
                   </View>
                   <View style={styles.footerMeta}>
                     <Ionicons name="eye-outline" size={16} color={colors.mutedText} />
@@ -92,55 +125,77 @@ const FeedScreen: React.FC = () => {
                   </View>
                 </View>
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
-
-        <Text style={styles.sectionTitle}>Tribün Anları</Text>
-        <Text style={styles.sectionSubtitle}>
-          Taraftarların bulunduğu yerden canlı paylaşımlar
-        </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.momentsRow}
-        >
-          {fanMoments.map((moment) => (
-            <View key={moment.id} style={styles.momentCard}>
-              <LinearGradient
-                colors={["rgba(15,169,88,0.15)", "rgba(0,0,0,0.4)"]}
-                style={styles.momentMedia}
-              >
-                {moment.image && (
-                  <ImageBackground
-                    source={moment.image}
-                    style={StyleSheet.absoluteFill}
-                    imageStyle={{ borderRadius: 14 }}
-                  />
-                )}
-                <View style={styles.momentBadge}>
-                  <Text style={styles.momentBadgeText}>{moment.source}</Text>
-                </View>
-              </LinearGradient>
-              <View style={styles.momentBody}>
-                <View style={styles.momentHeader}>
-                  <Text style={styles.momentUser}>{moment.user}</Text>
-                  <Text style={styles.momentTime}>{moment.time} önce</Text>
-                </View>
-                <Text style={styles.momentCaption}>{moment.caption}</Text>
-                <View style={styles.momentLocationRow}>
-                  <Ionicons name="location-outline" size={14} color={colors.mutedText} />
-                  <Text style={styles.momentLocation}>{moment.location}</Text>
-                </View>
-              </View>
-            </View>
-          ))}
-          <Pressable style={styles.momentCTA}>
-            <Ionicons name="cloud-upload-outline" size={20} color={colors.text} />
-            <Text style={styles.momentCTAText}>Sen de paylaş</Text>
-          </Pressable>
-        </ScrollView>
       </ScrollView>
+
+      <Modal
+        visible={!!activeNews}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={handleCloseDetail}
+      >
+        <SafeAreaView style={styles.detailSafeArea}>
+          {activeNews && (
+            <ScrollView contentContainerStyle={styles.detailContainer}>
+              <Pressable
+                onPress={handleCloseDetail}
+                style={styles.closeRow}
+                accessibilityRole="button"
+              >
+                <Ionicons name="arrow-back" size={22} color={colors.text} />
+                <Text style={styles.closeText}>Geri</Text>
+              </Pressable>
+
+              {activeNews.image && (
+                <ImageBackground
+                  source={activeNews.image}
+                  style={styles.detailHero}
+                  imageStyle={{ borderRadius: 20 }}
+                >
+                  <LinearGradient
+                    colors={["rgba(0,0,0,0.55)", "rgba(0,0,0,0.05)"]}
+                    style={StyleSheet.absoluteFillObject}
+                  />
+                  <View style={styles.detailBadge}>
+                    <Text style={styles.detailBadgeText}>{activeNews.category}</Text>
+                  </View>
+                  <View style={styles.detailHeroText}>
+                    <Text style={styles.detailTitle}>{activeNews.title}</Text>
+                    <View style={styles.detailMetaRow}>
+                      <Ionicons name="time-outline" size={16} color={colors.text} />
+                      <Text style={styles.detailMeta}>{activeNews.time} once</Text>
+                    </View>
+                  </View>
+                </ImageBackground>
+              )}
+
+              {!activeNews.image && (
+                <View style={styles.detailHeader}>
+                  <View style={styles.detailBadge}>
+                    <Text style={styles.detailBadgeText}>{activeNews.category}</Text>
+                  </View>
+                  <Text style={styles.detailTitle}>{activeNews.title}</Text>
+                  <View style={styles.detailMetaRow}>
+                    <Ionicons name="time-outline" size={16} color={colors.mutedText} />
+                    <Text style={styles.detailMeta}>{activeNews.time} once</Text>
+                  </View>
+                </View>
+              )}
+
+              {(activeNews.body?.length
+                ? activeNews.body
+                : [activeNews.summary]
+              ).map((paragraph, idx) => (
+                <Text key={idx} style={styles.detailBody}>
+                  {paragraph}
+                </Text>
+              ))}
+            </ScrollView>
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -164,17 +219,6 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     marginBottom: spacing.lg,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.lg,
-    marginTop: spacing.xl,
-  },
-  sectionSubtitle: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    marginBottom: spacing.md,
   },
   chipRow: {
     flexDirection: "row",
@@ -253,28 +297,37 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
   },
-  momentsRow: {
-    gap: spacing.sm,
-    paddingBottom: spacing.md,
+  detailSafeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  momentCard: {
-    width: 240,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
+  detailContainer: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  closeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  closeText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
+  detailHero: {
+    height: 240,
+    borderRadius: 20,
     overflow: "hidden",
   },
-  momentMedia: {
-    height: 120,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    overflow: "hidden",
+  detailHeroText: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: spacing.lg,
+    gap: spacing.xs,
   },
-  momentBadge: {
-    position: "absolute",
-    top: spacing.sm,
-    left: spacing.sm,
+  detailBadge: {
+    alignSelf: "flex-start",
     backgroundColor: "rgba(0,0,0,0.5)",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs / 2,
@@ -282,57 +335,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  momentBadgeText: {
+  detailBadgeText: {
     color: colors.text,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.xs,
   },
-  momentBody: {
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  momentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  momentUser: {
+  detailTitle: {
     color: colors.text,
-    fontFamily: typography.semiBold,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.xl,
   },
-  momentTime: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.xs,
-  },
-  momentCaption: {
-    color: colors.text,
-    fontFamily: typography.medium,
-  },
-  momentLocationRow: {
+  detailMetaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs / 2,
   },
-  momentLocation: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-  },
-  momentCTA: {
-    width: 200,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.xs,
-    padding: spacing.md,
-    backgroundColor: "rgba(15,169,88,0.05)",
-  },
-  momentCTAText: {
+  detailMeta: {
     color: colors.text,
-    fontFamily: typography.semiBold,
+    fontFamily: typography.medium,
+  },
+  detailHeader: {
+    gap: spacing.xs,
+  },
+  detailBody: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    lineHeight: 24,
   },
 });
 

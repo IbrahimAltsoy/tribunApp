@@ -18,13 +18,23 @@ const FixtureList: React.FC<Props> = ({ fixtures }) => (
             <Text style={styles.fixtureOpponent}>Amedspor</Text>
             <Text style={styles.fixtureVs}>vs {fixture.opponent}</Text>
             <Text style={styles.fixtureMeta}>
-              {fixture.date} ƒ?½ {fixture.time}
+              {fixture.date} | {fixture.time}
             </Text>
             <Text style={styles.fixtureVenue}>{fixture.venue}</Text>
           </View>
-          <View style={styles.fixtureTag}>
-            <Text style={styles.fixtureTagText}>
-              {fixture.isHome ? "ŽøÇõ Saha" : "Deplasman"}
+          <View
+            style={[
+              styles.fixtureTag,
+              fixture.isHome ? styles.homeTag : styles.awayTag,
+            ]}
+          >
+            <Text
+              style={[
+                styles.fixtureTagText,
+                fixture.isHome ? styles.homeTagText : styles.awayTagText,
+              ]}
+            >
+              {fixture.isHome ? "Ic Saha" : "Deplasman"}
             </Text>
           </View>
         </View>
@@ -73,17 +83,28 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
   },
   fixtureTag: {
-    backgroundColor: "rgba(209,14,14,0.15)",
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs / 2,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(209,14,14,0.4)",
   },
   fixtureTagText: {
-    color: colors.accent,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.xs,
+  },
+  homeTag: {
+    backgroundColor: "rgba(15,169,88,0.15)",
+    borderColor: "rgba(15,169,88,0.4)",
+  },
+  awayTag: {
+    backgroundColor: "rgba(209,14,14,0.15)",
+    borderColor: "rgba(209,14,14,0.4)",
+  },
+  homeTagText: {
+    color: colors.primary,
+  },
+  awayTagText: {
+    color: colors.accent,
   },
   fixtureCompetition: {
     color: colors.mutedText,
