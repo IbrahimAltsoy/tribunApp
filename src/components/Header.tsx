@@ -8,11 +8,16 @@ import { fontSizes, typography } from "../theme/typography";
 
 type HeaderProps = {
   onPressNotifications?: () => void;
+  onPressLanguage?: () => void;
 };
 
-const Header: React.FC<HeaderProps> = ({ onPressNotifications }) => {
+const Header: React.FC<HeaderProps> = ({
+  onPressNotifications,
+  onPressLanguage,
+}) => {
   const notificationScale = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const languageScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
@@ -52,6 +57,19 @@ const Header: React.FC<HeaderProps> = ({ onPressNotifications }) => {
     outputRange: [-100, 100],
   });
 
+  const handleLangPressIn = () => {
+    Animated.spring(languageScale, { toValue: 0.9, useNativeDriver: true }).start();
+  };
+
+  const handleLangPressOut = () => {
+    Animated.spring(languageScale, {
+      toValue: 1,
+      friction: 4,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -67,25 +85,43 @@ const Header: React.FC<HeaderProps> = ({ onPressNotifications }) => {
           />
         </View>
 
-        <Pressable
-          onPress={onPressNotifications}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-        >
-          <Animated.View
-            style={[
-              styles.notificationButton,
-              { transform: [{ scale: notificationScale }] },
-            ]}
+        <View style={styles.actionsRow}>
+          <Pressable
+            onPress={onPressLanguage}
+            onPressIn={handleLangPressIn}
+            onPressOut={handleLangPressOut}
+            style={styles.iconPressable}
+            accessibilityRole="button"
           >
-            <Ionicons
-              name="notifications-outline"
-              size={24}
-              color={colors.text}
-            />
-            <View style={styles.notificationBadge} />
-          </Animated.View>
-        </Pressable>
+            <Animated.View
+              style={[styles.languageButton, { transform: [{ scale: languageScale }] }]}
+            >
+              <Ionicons name="globe-outline" size={20} color={colors.text} />
+            </Animated.View>
+          </Pressable>
+
+          <Pressable
+            onPress={onPressNotifications}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            style={styles.iconPressable}
+            accessibilityRole="button"
+          >
+            <Animated.View
+              style={[
+                styles.notificationButton,
+                { transform: [{ scale: notificationScale }] },
+              ]}
+            >
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color={colors.text}
+              />
+              <View style={styles.notificationBadge} />
+            </Animated.View>
+          </Pressable>
+        </View>
       </View>
 
       <View style={styles.underlineContainer}>
@@ -133,6 +169,24 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     width: 50,
+  },
+  actionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  iconPressable: {
+    borderRadius: 22,
+  },
+  languageButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
   },
   notificationButton: {
     width: 44,
