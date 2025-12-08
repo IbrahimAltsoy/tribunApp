@@ -1,10 +1,19 @@
 import React, { useRef, useEffect } from "react";
-import { StyleSheet, Text, View, Animated, Pressable } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Animated,
+  Pressable,
+  Image,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { colors } from "../theme/colors"; // DÜZELTİLDİ: 'from' kalktı
+import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+
+const logo = require("../assets/logos/logo.png");
 
 type HeaderProps = {
   onPressNotifications?: () => void;
@@ -58,7 +67,10 @@ const Header: React.FC<HeaderProps> = ({
   });
 
   const handleLangPressIn = () => {
-    Animated.spring(languageScale, { toValue: 0.9, useNativeDriver: true }).start();
+    Animated.spring(languageScale, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleLangPressOut = () => {
@@ -74,7 +86,10 @@ const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>AMED PULSE</Text>
+          <View style={styles.brandRow}>
+            <Image source={logo} style={styles.logo} resizeMode="contain" />
+            <Text style={styles.title}>Bihevra Amed</Text>
+          </View>
           <Animated.View
             style={[
               styles.shimmer,
@@ -129,12 +144,11 @@ const Header: React.FC<HeaderProps> = ({
 
       <View style={styles.underlineContainer}>
         <LinearGradient
-          colors={[colors.accent, colors.primary]} // soldan saga: yesil -> sari/kirmizi
+          colors={[colors.accent, colors.primary]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.underline}
         />
-        {/* <View style={styles.underlineGlow} /> */}
       </View>
     </View>
   );
@@ -154,6 +168,19 @@ const styles = StyleSheet.create({
   titleContainer: {
     position: "relative",
     overflow: "hidden",
+  },
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  logo: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
   },
   title: {
     color: colors.text,
@@ -222,21 +249,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 3,
   },
-  // underlineGlow: {
-  //   position: "absolute",
-  //   top: -3,
-  //   left: 0,
-  //   height: 10,
-  //   width: "1%",
-  //   backgroundColor: colors.primary,
-  //   borderRadius: 5,
-  //   opacity: 0.4,
-  //   shadowColor: colors.primary,
-  //   shadowOffset: { width: 0, height: 0 },
-  //   shadowOpacity: 1,
-  //   shadowRadius: 12,
-  //   elevation: 10,
-  // },
 });
 
 export default Header;

@@ -17,6 +17,7 @@ import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
 import FixtureList from "../components/home/FixtureList";
+import LiveTicker from "../components/home/LiveTicker";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
@@ -121,10 +122,10 @@ const HomeScreen: React.FC = () => {
         </ScrollView>
 
         <SectionHeader
-          title={t("home.fixturesTitle")}
-          subtitle={t("home.fixturesSubtitle")}
+          title="Anlık Gol / Pozisyon"
+          subtitle="Canlı maçlardan gol, kart ve pozisyon akışı"
         />
-        <FixtureList fixtures={fixtureData} />
+        <LiveTicker />
 
         <SectionHeader
           title={t("home.supportTitle")}

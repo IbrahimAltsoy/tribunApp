@@ -29,6 +29,8 @@ export type LiveEvent = {
   type: "goal" | "card" | "var" | "sub";
   player: string;
   detail: string;
+  videoUrl?: string;
+  thumb?: ImageSourcePropType;
 };
 
 export type StandingRow = {
@@ -223,7 +225,9 @@ export const liveMatch = {
       team: "home",
       type: "goal",
       player: "Ahmet Derin",
-      detail: "Sol çaprazdan plase, üst köşe.",
+      detail: "Sol caprazdan plase, ust kose.",
+      videoUrl: "https://fakevideo.link/amedspor-gol1.mp4",
+      thumb: require("../assets/footboll/1.jpg"),
     },
     {
       id: "e2",
@@ -231,15 +235,19 @@ export const liveMatch = {
       team: "away",
       type: "goal",
       player: "Mehmet Kaya",
-      detail: "Kafa vuruşu, skor 1-1.",
+      detail: "Kafa vurus, skor 1-1.",
+      videoUrl: "https://fakevideo.link/rakip-gol.mp4",
+      thumb: require("../assets/footboll/2.jpg"),
     },
     {
       id: "e3",
       minute: 55,
       team: "home",
       type: "goal",
-      player: "Jiyan Karadağ",
-      detail: "Ceza sahası karambolü sonrası tamamladı.",
+      player: "Jiyan Karadayi",
+      detail: "Ceza sahasi karambolu sonrasi tamamlandi.",
+      videoUrl: "https://fakevideo.link/amedspor-gol2.mp4",
+      thumb: require("../assets/footboll/3.jpg"),
     },
     {
       id: "e4",
@@ -247,7 +255,9 @@ export const liveMatch = {
       team: "home",
       type: "card",
       player: "Musa Bulut",
-      detail: "Sert müdahale, sarı kart.",
+      detail: "Sert mudahale, sari kart.",
+      videoUrl: "https://fakevideo.link/sari-kart.mp4",
+      thumb: require("../assets/footboll/4.jpg"),
     },
   ] as LiveEvent[],
 };

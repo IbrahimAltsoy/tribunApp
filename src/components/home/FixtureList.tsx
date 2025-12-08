@@ -18,7 +18,7 @@ const FixtureList: React.FC<Props> = ({ fixtures }) => {
       {fixtures.map((fixture) => (
         <View key={fixture.id} style={styles.fixtureCard}>
           <View style={styles.fixtureRow}>
-            <View>
+            <View style={styles.fixtureContent}>
               <Text style={styles.fixtureOpponent}>Amedspor</Text>
               <Text style={styles.fixtureVs}>
                 {t("fixture.vsDash", {
@@ -69,8 +69,12 @@ const styles = StyleSheet.create({
   },
   fixtureRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
+    position: "relative",
+  },
+  fixtureContent: {
+    flex: 1,
+    paddingRight: spacing.xl,
   },
   fixtureOpponent: {
     color: colors.text,
@@ -93,6 +97,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
   },
   fixtureTag: {
+    position: "absolute",
+    right: 0,
+    top: 0,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs / 2,
     borderRadius: 12,

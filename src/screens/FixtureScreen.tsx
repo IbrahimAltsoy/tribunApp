@@ -124,7 +124,7 @@ const LiveEventRow = ({ event }: { event: LiveEvent }) => {
   }
   if (event.type === "var") {
     tag = styles.varTag;
-    color = "#3b82f6";
+    color = colors.info;
   }
 
   return (
