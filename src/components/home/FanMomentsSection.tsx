@@ -13,6 +13,7 @@ import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
 import { fanMoments } from "../../data/mockData";
+import { useTranslation } from "react-i18next";
 
 type FanMoment = (typeof fanMoments)[0];
 
@@ -29,6 +30,7 @@ const FanMomentsSection: React.FC<Props> = ({
   onPressMore,
   onSelectMoment,
 }) => {
+  const { t } = useTranslation();
   const visibleMoments = moments.slice(0, 5);
 
   return (
@@ -41,8 +43,10 @@ const FanMomentsSection: React.FC<Props> = ({
         <View style={styles.momentAddIcon}>
           <Ionicons name="add" size={20} color={colors.text} />
         </View>
-        <Text style={styles.momentAddTitle}>Anı Paylaş</Text>
-        <Text style={styles.momentAddSub}>Şehir, kısa not ve görsel ekle</Text>
+        <Text style={styles.momentAddTitle}>{t("home.shareMomentTitle")}</Text>
+        <Text style={styles.momentAddSub}>
+          {t("home.shareMomentSubtitle")}
+        </Text>
       </Pressable>
 
       {visibleMoments.map((moment) => (
@@ -91,7 +95,9 @@ const FanMomentsSection: React.FC<Props> = ({
       {moments.length > 5 && (
         <Pressable style={styles.momentMoreCard} onPress={onPressMore}>
           <Ionicons name="albums-outline" size={22} color={colors.primary} />
-          <Text style={styles.momentMoreTitle}>Daha fazlası</Text>
+          <Text style={styles.momentMoreTitle}>
+            {t("home.moreMomentsTitle")}
+          </Text>
           {/* <Text style={styles.momentMoreSub}>Tüm tribün anlarını gör</Text> */}
         </Pressable>
       )}

@@ -9,7 +9,6 @@ import {
   View,
   Modal,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,13 +17,11 @@ import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
 import FixtureList from "../components/home/FixtureList";
-import AnnouncementCard from "../components/home/AnnouncementCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
 import {
-  announcements,
   fanMoments,
   fixtureData,
   newsData,
@@ -34,27 +31,17 @@ import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { BottomTabParamList } from "../navigation/BottomTabs";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
-// Dil seçenekleri (bayrak yerine renk + kod)
-const LANGUAGES = [
-  { code: "TR", label: "Türkçe", active: true, color: "#10b981" },
-  { code: "EN", label: "English", active: true, color: "#3b82f6" },
-  { code: "KR", label: "Kurdî", active: false, color: "#22c55e" },
-  { code: "ZAZ", label: "Zazakî", active: false, color: "#a855f7" },
-  { code: "SOR", label: "Soranî", active: false, color: "#eab308" },
-  { code: "AR", label: "العربية", active: false, color: "#16a34a" },
-  { code: "FA", label: "فارسی", active: false, color: "#f97316" },
-  { code: "DE", label: "Deutsch", active: false, color: "#ef4444" },
-  { code: "FR", label: "Français", active: false, color: "#0ea5e9" },
-];
 
 const HomeScreen: React.FC = () => {
   const navigation =
     useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
+  const { t } = useTranslation();
   const featuredNews = newsData.slice(0, 5);
-  const headlineAnnouncement = announcements[0];
 
   const [moments, setMoments] = useState(fanMoments);
   const [shareModalVisible, setShareModalVisible] = useState(false);
@@ -69,8 +56,6 @@ const HomeScreen: React.FC = () => {
   const [newCaption, setNewCaption] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  // hangi dil kartına basılı tutuluyor (scale animasyonu için)
-  const [pressedLang, setPressedLang] = useState<string | null>(null);
 
   const momentList = useMemo(() => moments, [moments]);
 
@@ -107,7 +92,7 @@ const HomeScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Header onPressLanguage={() => setLanguageModalVisible(true)} />
 
-        <SectionHeader title="Mac Gunu Tribun Anlari" />
+        <SectionHeader title={t("home.momentsTitle")} />
         <FanMomentsSection
           moments={momentList}
           onPressAdd={() => setShareModalVisible(true)}
@@ -116,8 +101,8 @@ const HomeScreen: React.FC = () => {
         />
 
         <SectionHeader
-          title="Haber Akisi"
-          subtitle="Mock haberler ve tribun gelismeleri"
+          title={t("home.newsTitle")}
+          subtitle={t("home.newsSubtitle")}
         />
         <ScrollView
           horizontal
@@ -136,14 +121,14 @@ const HomeScreen: React.FC = () => {
         </ScrollView>
 
         <SectionHeader
-          title="Yaklasan Maclar"
-          subtitle="Fikstur ve saat bilgisi"
+          title={t("home.fixturesTitle")}
+          subtitle={t("home.fixturesSubtitle")}
         />
         <FixtureList fixtures={fixtureData} />
 
         <SectionHeader
-          title="Takimina Destek Ol"
-          subtitle="AmedStore.com ile renklerini tasin"
+          title={t("home.supportTitle")}
+          subtitle={t("home.supportSubtitle")}
         />
         <Pressable
           onPress={() => Linking.openURL("https://amedstore.com")}
@@ -157,20 +142,15 @@ const HomeScreen: React.FC = () => {
           >
             <View style={styles.supportOverlay} />
             <View style={styles.supportContent}>
-              <Text style={styles.supportPill}>Store</Text>
-              <Text style={styles.supportTitle}>AmedStore.com</Text>
+              <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+              <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
               <Text style={styles.supportSubtitle}>
-                Formalar, atkilar ve lisansli urunler icin tikla.
+                {t("home.supportSubtitle")}
               </Text>
             </View>
           </ImageBackground>
         </Pressable>
 
-        <SectionHeader
-          title="Organizasyon Duyurusu"
-          subtitle="Toplanma noktalarini ve iletisim kanallarini yakala"
-        />
-        <AnnouncementCard announcement={headlineAnnouncement} />
       </ScrollView>
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
@@ -203,7 +183,6 @@ const HomeScreen: React.FC = () => {
         }}
       />
 
-      {/* ======== YENİ DİL MODALI (PREMIUM TASARIM) ======== */}
       <Modal
         visible={languageModalVisible}
         transparent
@@ -212,72 +191,19 @@ const HomeScreen: React.FC = () => {
       >
         <BlurView intensity={65} tint="dark" style={styles.modalOverlay}>
           <View style={styles.languageModal}>
-            {/* Başlık Bloğu */}
             <View style={styles.languageHeaderRow}>
               <View style={styles.languageIconCircle}>
                 <Ionicons name="globe-outline" size={20} color={colors.text} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.languageTitle}>Dil ve Bölge</Text>
-                <Text style={styles.languageSubtitle}>
-                  Su anda varsayilan dil kullaniliyor. Cok yakinda coklu dil
-                  seceneklerini burada aktiflestirebileceksin.
-                </Text>
+                <Text style={styles.languageTitle}>{t('change_language')}</Text>
+                <Text style={styles.languageSubtitle}>{t('greeting')}</Text>
               </View>
             </View>
 
-            {/* Dil Kartları Grid */}
-            <View style={styles.languageGrid}>
-              {LANGUAGES.map((lang) => {
-                const isActive = lang.active;
-                const isPressed = pressedLang === lang.code;
-
-                return (
-                  <Pressable
-                    key={lang.code}
-                    onPressIn={() => setPressedLang(lang.code)}
-                    onPressOut={() => setPressedLang(null)}
-                    disabled={!isActive}
-                    style={[
-                      styles.languageCard,
-                      { borderColor: lang.color },
-                      !isActive && styles.languageCardDisabled,
-                      isPressed && styles.languageCardPressed,
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.languageBadge,
-                        { backgroundColor: lang.color },
-                      ]}
-                    >
-                      <Text style={styles.languageBadgeText}>{lang.code}</Text>
-                    </View>
-                    <Text style={styles.langName}>{lang.label}</Text>
-                    <Text style={styles.langHint}>
-                      {isActive ? "Ornek arayuz dili" : "Yakinda"}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Alt Bilgi & Kapat */}
-            <View style={styles.languageFooter}>
-              <View style={styles.languageLegendRow}>
-                <View style={styles.legendDotActive} />
-                <Text style={styles.legendText}>Aktif diller</Text>
-                <View style={styles.legendDotSoon} />
-                <Text style={styles.legendText}>Yakinda acilacak</Text>
-              </View>
-              <Pressable
-                onPress={() => setLanguageModalVisible(false)}
-                style={styles.modalClose}
-                accessibilityRole="button"
-              >
-                <Text style={styles.modalCloseText}>Kapat</Text>
-              </Pressable>
-            </View>
+            <LanguageSwitcher
+              onClose={() => setLanguageModalVisible(false)}
+            />
           </View>
         </BlurView>
       </Modal>
@@ -379,90 +305,6 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     fontSize: fontSizes.xs,
-  },
-  languageGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: spacing.md,
-  },
-  languageCard: {
-    width: "30%",
-    borderRadius: 16,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-    backgroundColor: colors.card,
-    alignItems: "center",
-    gap: spacing.xs / 2,
-    borderWidth: 1,
-  },
-  languageCardDisabled: {
-    opacity: 0.5,
-  },
-  languageCardPressed: {
-    transform: [{ scale: 0.96 }],
-  },
-  languageBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  languageBadgeText: {
-    color: colors.text,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.sm,
-  },
-  langName: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
-  },
-  langHint: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.xs,
-  },
-  languageFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  languageLegendRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs / 2,
-  },
-  legendDotActive: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#10b981",
-  },
-  legendDotSoon: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.mutedText,
-  },
-  legendText: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.xs,
-    marginRight: spacing.sm,
-  },
-  modalClose: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-  },
-  modalCloseText: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
   },
 });
 

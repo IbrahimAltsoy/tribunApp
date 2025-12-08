@@ -1,0 +1,94 @@
+{
+  "greeting": "سلام! به برنامه ما خوش آمدید.",
+  "change_language": "تغییر زبان",
+  "current_language": "زبان فعلی:",
+  "nav": {
+    "home": "خانه",
+    "chat": "اتاق‌های گفتگو",
+    "matches": "برنامه مسابقات",
+    "settings": "تنظیمات"
+  },
+  "feed_latest_news": "آخرین اخبار",
+  "settings_title": "تنظیمات برنامه",
+  "settings_select_lang": "انتخاب زبان",
+  "button_save": "ذخیره",
+  "error_unknown": "خطای غیرمنتظره‌ای رخ داد",
+  "tabs": {
+    "home": "خانه",
+    "fixture": "مرکز مسابقات",
+    "feed": "اخبار",
+    "chat": "گفتگو",
+    "mars": "آرشیو"
+  },
+  "feed": {
+    "title": "اخبار",
+    "subtitle": "آخرین اخبار آمداسپور با داده‌های شبیه‌سازی‌شده",
+    "category_all": "همه",
+    "mock_reads": "خواندن نمونه",
+    "back": "بازگشت",
+    "time_ago": "{{time}} پیش"
+  },
+  "fixture": {
+    "title": "مرکز مسابقات",
+    "subtitle": "نتایج زنده، برنامه بازی‌ها و جدول امتیازات",
+    "tableTitle": "جدول امتیازات",
+    "tableTeam": "تیم",
+    "upcomingTitle": "مسابقات آینده",
+    "home": "میزبان",
+    "away": "مهمان",
+    "guest": "میهمان",
+    "vs": "{{home}} در برابر {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "آرشیو و اطلاعیه‌ها",
+    "heroSubtitle": "تاریخچه، اسطوره‌ها، پیراهن‌های خاطره‌انگیز و لیست رویدادها در یک صفحه.",
+    "sectionArchive": "آرشیو باشگاه",
+    "sectionLegends": "بازیکنان اسطوره‌ای",
+    "sectionKits": "پیراهن و کلکسیون",
+    "sectionMoments": "لحظات سکوها",
+    "sectionAnnouncements": "اطلاعیه‌های سازمانی",
+    "sectionCreate": "ایجاد اطلاعیه جدید",
+    "timeAgo": "{{time}} پیش",
+    "contactLabel": "تماس: {{contact}}",
+    "contactUnknown": "نامشخص",
+    "submit": "افزودن اطلاعیه آزمایشی",
+    "formHint": "این فرم با داده‌های نمونه کار می‌کند و اتصال به سرور ندارد.",
+    "form": {
+      "title": "عنوان",
+      "city": "شهر",
+      "location": "مکان / نقطه",
+      "date": "تاریخ و ساعت",
+      "contact": "تماس",
+      "note": "یادداشت"
+    }
+  },
+  "settings": {
+    "title": "تنظیمات برنامه",
+    "select_language": "زبان را انتخاب کنید",
+    "save": "ذخیره"
+  },
+  "home": {
+    "momentsTitle": "لحظات سکو در روز مسابقه",
+    "newsTitle": "جریان اخبار",
+    "newsSubtitle": "اخبار نمونه و بروزرسانی‌های سکو",
+    "fixturesTitle": "مسابقات آینده",
+    "fixturesSubtitle": "برنامه و زمان بازی‌ها",
+    "supportTitle": "از تیم خود حمایت کنید",
+    "supportSubtitle": "برای خرید پیراهن، شال و محصولات رسمی کلیک کنید.",
+    "supportPill": "فروشگاه",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "اطلاعیه سازمانی",
+    "announcementSubtitle": "نقاط تجمع و مسیرهای تماس را دنبال کنید",
+    "shareMomentTitle": "Share a Moment",
+    "shareMomentSubtitle": "Add city, quick note and photo",
+    "moreMomentsTitle": "See more"
+  },
+  "chat": {
+    "title": "Amedspor Tribun",
+    "subtitle": "Share the match hype, cheer together, ask quick questions.",
+    "placeholder": "Write a message...",
+    "nicknamePlaceholder": "Nickname",
+    "emptyState": "Be the first to drop a message and warm up the tribune."
+  }
+}

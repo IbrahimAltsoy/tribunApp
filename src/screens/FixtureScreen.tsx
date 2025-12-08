@@ -15,6 +15,8 @@ import {
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 
 /*────────────────────────────────────────────────────
  🏆 PUAN TABLO SATIRI
@@ -82,7 +84,7 @@ const StandingRowComponent = ({
   Fixture - Live Components (Aynı)
 ────────────────────────────────*/
 
-const FixtureCard = ({ item }: { item: FixtureItem }) => (
+const FixtureCard = ({ item, t }: { item: FixtureItem; t: TFunction }) => (
   <View style={styles.fixtureCard}>
     <View style={styles.fixtureTopRow}>
       <View style={[styles.pillPrimary, !item.isHome && styles.pillAway]}>
@@ -92,7 +94,7 @@ const FixtureCard = ({ item }: { item: FixtureItem }) => (
           color={colors.text}
         />
         <Text style={styles.pillText}>
-          {item.isHome ? "İç Saha" : "Deplasman"}
+          {item.isHome ? t("fixture.home") : t("fixture.away")}
         </Text>
       </View>
       <View style={styles.pillGhost}>
@@ -100,7 +102,9 @@ const FixtureCard = ({ item }: { item: FixtureItem }) => (
         <Text style={styles.pillText}>{item.time}</Text>
       </View>
     </View>
-    <Text style={styles.fixtureTeams}>Amedspor vs {item.opponent}</Text>
+    <Text style={styles.fixtureTeams}>
+      {t("fixture.vs", { home: "Amedspor", away: item.opponent })}
+    </Text>
     <Text style={styles.fixtureMeta}>{item.date}</Text>
     <Text style={styles.fixtureVenue}>{item.venue}</Text>
     <Text style={styles.fixtureCompetition}>{item.competition}</Text>
@@ -112,11 +116,11 @@ const LiveEventRow = ({ event }: { event: LiveEvent }) => {
     color = colors.text;
   if (event.type === "goal") {
     tag = styles.goalTag;
-    color = "#0fa958";
+    color = colors.primary;
   }
   if (event.type === "card") {
     tag = styles.cardTag;
-    color = "#d10e0e";
+    color = colors.accent;
   }
   if (event.type === "var") {
     tag = styles.varTag;
@@ -141,7 +145,7 @@ const LiveEventRow = ({ event }: { event: LiveEvent }) => {
   );
 };
 
-const LiveMatchCard = () => (
+const LiveMatchCard = ({ t }: { t: TFunction }) => (
   <LinearGradient colors={["#12381f", "#0d0d0d"]} style={styles.liveCard}>
     <View style={styles.liveHeader}>
       <View style={styles.liveBadge}>
@@ -151,19 +155,19 @@ const LiveMatchCard = () => (
       <Text style={styles.liveMinute}>{liveMatch.minute}'</Text>
     </View>
     <View style={styles.liveScoreRow}>
-      <View style={styles.teamBlock}>
-        <Text style={styles.liveTeam}>Amedspor</Text>
-        <Text style={styles.teamSub}>İç Saha</Text>
-      </View>
-      <View style={styles.scoreCircle}>
-        <Text style={styles.liveScore}>{liveMatch.score}</Text>
-      </View>
-      <View style={styles.teamBlock}>
-        <Text style={[styles.liveTeam, { textAlign: "right" }]}>
+      <Text style={styles.liveScoreLine} numberOfLines={1}>
+        <Text style={[styles.liveTeam, styles.liveTeamLeft]}>Amedspor</Text>
+        <Text style={styles.liveScoreInline}>{`  ${liveMatch.score}  `}</Text>
+        <Text style={[styles.liveTeam, styles.liveTeamRight]}>
           {liveMatch.away}
         </Text>
-        <Text style={[styles.teamSub, { textAlign: "right" }]}>Konuk</Text>
-      </View>
+      </Text>
+    </View>
+    <View style={styles.teamSubRow}>
+      <Text style={styles.teamSub}>{t("fixture.home")}</Text>
+      <Text style={[styles.teamSub, { textAlign: "right" }]}>
+        {t("fixture.guest")}
+      </Text>
     </View>
     <View style={styles.eventList}>
       {liveMatch.events.map((e) => (
@@ -190,21 +194,20 @@ const SectionHeader = ({
   ANA EKRAN
 ────────────────────────────────*/
 const FixtureScreen = () => {
+  const { t } = useTranslation();
   const sortedStandings = [...standings].sort((a, b) => b.pts - a.pts);
 
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.pageTitle}>Maç Merkezi</Text>
-          <Text style={styles.pageSubtitle}>
-            Canlı skor, fikstür ve puan durumu
-          </Text>
+          <Text style={styles.pageTitle}>{t("fixture.title")}</Text>
+          <Text style={styles.pageSubtitle}>{t("fixture.subtitle")}</Text>
 
-          <LiveMatchCard />
+          <LiveMatchCard t={t} />
 
           <SectionHeader
-            title="Puan Durumu"
+            title={t("fixture.tableTitle")}
             icon={<Feather name="bar-chart-2" size={18} color={colors.text} />}
           />
 
@@ -214,7 +217,7 @@ const FixtureScreen = () => {
                 <Text
                   style={[styles.tableTextHeader, styles.tableColTeamHeader]}
                 >
-                  Takım
+                  {t("fixture.tableTeam")}
                 </Text>
                 <View style={styles.numCol}>
                   <Text style={styles.tableTextHeader}>O</Text>
@@ -242,14 +245,14 @@ const FixtureScreen = () => {
           </ScrollView>
 
           <SectionHeader
-            title="Yaklaşan Maçlar"
+            title={t("fixture.upcomingTitle")}
             icon={
               <Ionicons name="calendar-outline" size={18} color={colors.text} />
             }
           />
           <View style={styles.fixtureGrid}>
             {fixtureData.map((x) => (
-              <FixtureCard key={x.id} item={x} />
+              <FixtureCard key={x.id} item={x} t={t} />
             ))}
           </View>
         </ScrollView>
@@ -330,11 +333,27 @@ const styles = StyleSheet.create({
   },
   liveScoreRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
+    gap: spacing.xs,
   },
-  teamBlock: { flex: 1 },
+  teamSubRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: spacing.xs / 2,
+  },
+  liveScoreLine: {
+    flex: 1,
+    textAlign: "center",
+  },
   liveTeam: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+  },
+  liveTeamLeft: { textAlign: "left" },
+  liveTeamRight: { textAlign: "right" },
+  liveScoreInline: {
     color: colors.text,
     fontFamily: typography.bold,
     fontSize: fontSizes.lg,
@@ -343,21 +362,6 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     fontSize: fontSizes.sm,
-  },
-  scoreCircle: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.25)",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  liveScore: {
-    color: colors.text,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.xl,
   },
   eventList: { gap: spacing.sm },
 
@@ -522,3 +526,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
 });
+

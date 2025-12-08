@@ -1,0 +1,94 @@
+{
+  "greeting": "¡Hola! Bienvenido a nuestra aplicación.",
+  "change_language": "Cambiar idioma",
+  "current_language": "Idioma actual:",
+  "nav": {
+    "home": "Inicio",
+    "chat": "Salas de chat",
+    "matches": "Calendario de partidos",
+    "settings": "Configuración"
+  },
+  "feed_latest_news": "Últimas noticias",
+  "settings_title": "Configuración de la aplicación",
+  "settings_select_lang": "Seleccionar idioma",
+  "button_save": "Guardar",
+  "error_unknown": "Ha ocurrido un error inesperado",
+  "tabs": {
+    "home": "Inicio",
+    "fixture": "Centro de partidos",
+    "feed": "Noticias",
+    "chat": "Chat",
+    "mars": "Archivo"
+  },
+  "feed": {
+    "title": "Noticias",
+    "subtitle": "Actualidad de Amedspor con datos simulados",
+    "category_all": "Todos",
+    "mock_reads": "Lectura simulada",
+    "back": "Atrás",
+    "time_ago": "hace {{time}}"
+  },
+  "fixture": {
+    "title": "Centro de partidos",
+    "subtitle": "Marcadores en vivo, calendario y clasificación",
+    "tableTitle": "Tabla de posiciones",
+    "tableTeam": "Equipo",
+    "upcomingTitle": "Próximos partidos",
+    "home": "Local",
+    "away": "Visitante",
+    "guest": "Invitado",
+    "vs": "{{home}} vs {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "Archivo y anuncios",
+    "heroSubtitle": "Historia del club, leyendas, camisetas y lista de eventos, todo en un mismo lugar.",
+    "sectionArchive": "Archivo del club",
+    "sectionLegends": "Jugadores legendarios",
+    "sectionKits": "Camisetas y colección",
+    "sectionMoments": "Momentos en la tribuna",
+    "sectionAnnouncements": "Anuncios de organización",
+    "sectionCreate": "Crear nuevo anuncio",
+    "timeAgo": "hace {{time}}",
+    "contactLabel": "Contacto: {{contact}}",
+    "contactUnknown": "No especificado",
+    "submit": "Agregar anuncio simulado",
+    "formHint": "Este formulario usa datos simulados, no hay conexión con el servidor.",
+    "form": {
+      "title": "Título",
+      "city": "Ciudad",
+      "location": "Lugar / Ubicación",
+      "date": "Fecha y hora",
+      "contact": "Contacto",
+      "note": "Nota"
+    }
+  },
+  "settings": {
+    "title": "Configuración de la aplicación",
+    "select_language": "Seleccionar idioma",
+    "save": "Guardar"
+  },
+  "home": {
+    "momentsTitle": "Momentos en la tribuna del día del partido",
+    "newsTitle": "Flujo de noticias",
+    "newsSubtitle": "Noticias simuladas y actualizaciones de la tribuna",
+    "fixturesTitle": "Próximos partidos",
+    "fixturesSubtitle": "Calendario y horarios",
+    "supportTitle": "Apoya a tu equipo",
+    "supportSubtitle": "Compra camisetas, bufandas y productos oficiales.",
+    "supportPill": "Tienda",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "Anuncio de organización",
+    "announcementSubtitle": "Sigue los puntos de encuentro y vías de contacto",
+    "shareMomentTitle": "Share a Moment",
+    "shareMomentSubtitle": "Add city, quick note and photo",
+    "moreMomentsTitle": "See more"
+  },
+  "chat": {
+    "title": "Amedspor Tribun",
+    "subtitle": "Share the match hype, cheer together, ask quick questions.",
+    "placeholder": "Write a message...",
+    "nicknamePlaceholder": "Nickname",
+    "emptyState": "Be the first to drop a message and warm up the tribune."
+  }
+}

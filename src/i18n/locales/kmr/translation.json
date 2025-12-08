@@ -1,0 +1,94 @@
+{
+  "greeting": "Silav! Bi xêr hatî sepanê me.",
+  "change_language": "Ziman biguherîne",
+  "current_language": "Zimanê niha:",
+  "nav": {
+    "home": "Destpêk",
+    "chat": "Odeyên sohbetê",
+    "matches": "Fîkstriya lîstikê",
+    "settings": "Mîheng"
+  },
+  "feed_latest_news": "Nûçeyên dawî",
+  "settings_title": "Mîhengên sepanê",
+  "settings_select_lang": "Hilbijartina zimên",
+  "button_save": "Tomarke",
+  "error_unknown": "Çewtiyeke nexwesî rû da",
+  "tabs": {
+    "home": "Destpêk",
+    "fixture": "Navenda lîstikan",
+    "feed": "Nûçe",
+    "chat": "Sohbet",
+    "mars": "Arşîv"
+  },
+  "feed": {
+    "title": "Nûçe",
+    "subtitle": "Nûçeyên Amedspor bi daneyên mox",
+    "category_all": "Hemû",
+    "mock_reads": "Xwendina mox",
+    "back": "Vegere",
+    "time_ago": "{{time}} berê"
+  },
+  "fixture": {
+    "title": "Navenda Lîstikan",
+    "subtitle": "Skora zindî, fîkstr û astengên pûanê",
+    "tableTitle": "Pûan",
+    "tableTeam": "Tîm",
+    "upcomingTitle": "Lîstikên têne",
+    "home": "Malê",
+    "away": "Derve",
+    "guest": "Mêvan",
+    "vs": "{{home}} li dijî {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "Arşîv & Ragihandin",
+    "heroSubtitle": "Dîrok, lejen, formayên bîranîn û lîsteya organizasyonan li yek derê.",
+    "sectionArchive": "Arşîva klûbê",
+    "sectionLegends": "Lejendên tîma",
+    "sectionKits": "Forma & Berhevkirin",
+    "sectionMoments": "Demên tribûnê",
+    "sectionAnnouncements": "Ragihandinên organizasyonê",
+    "sectionCreate": "Ragihandina nû çêke",
+    "timeAgo": "{{time}} berê",
+    "contactLabel": "Têkilî: {{contact}}",
+    "contactUnknown": "Nenas",
+    "submit": "Ragihandina mox lê zêde bike",
+    "formHint": "Ev form bi daneyên mox dixebite, girêdanê backend tune.",
+    "form": {
+      "title": "Sernav",
+      "city": "Bajar",
+      "location": "Cîh/Noqte",
+      "date": "Dîrok & Dem",
+      "contact": "Têkilî",
+      "note": "Têbînî"
+    }
+  },
+  "settings": {
+    "title": "Mîhengên sepanê",
+    "select_language": "Ziman hilbijêre",
+    "save": "Tomarke"
+  },
+  "home": {
+    "momentsTitle": "Demên tribûnê roja lîstikê",
+    "newsTitle": "Rêya nûçeyan",
+    "newsSubtitle": "Nûçeyên mox û rojaneya tribûnê",
+    "fixturesTitle": "Lîstikên têne",
+    "fixturesSubtitle": "Fîkstr û dem",
+    "supportTitle": "Piştgirî bide tîma xwe",
+    "supportSubtitle": "Ji bo forma, eşarp û hilberên fermî bitikîne.",
+    "supportPill": "Firoşgeh",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "Ragihandina organizasyonê",
+    "announcementSubtitle": "Noqteyên civînê û rêyên têkilîyê bişopîne",
+    "shareMomentTitle": "Share a Moment",
+    "shareMomentSubtitle": "Add city, quick note and photo",
+    "moreMomentsTitle": "See more"
+  },
+  "chat": {
+    "title": "Amedspor Tribun",
+    "subtitle": "Share the match hype, cheer together, ask quick questions.",
+    "placeholder": "Write a message...",
+    "nicknamePlaceholder": "Nickname",
+    "emptyState": "Be the first to drop a message and warm up the tribune."
+  }
+}

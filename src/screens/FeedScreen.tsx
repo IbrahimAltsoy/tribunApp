@@ -13,22 +13,38 @@ import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { NewsItem, newsData } from "../data/mockData";
 import { BottomTabParamList } from "../navigation/BottomTabs";
 
-const categories = ["Tum", ...Array.from(new Set(newsData.map((n) => n.category)))];
+const ALL_CATEGORY_CODE = "__all__";
 
 const FeedScreen: React.FC = () => {
   const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const route = useRoute<RouteProp<BottomTabParamList, "Feed">>();
-  const [selected, setSelected] = useState<string>("Tum");
+  const { t } = useTranslation();
+
+  const categoryValues = useMemo(
+    () => Array.from(new Set(newsData.map((n) => n.category))),
+    []
+  );
+
+  const categories = useMemo(
+    () => [
+      { code: ALL_CATEGORY_CODE, label: t("feed.category_all") },
+      ...categoryValues.map((cat) => ({ code: cat, label: cat })),
+    ],
+    [t, categoryValues]
+  );
+
+  const [selected, setSelected] = useState<string>(ALL_CATEGORY_CODE);
   const [activeNews, setActiveNews] = useState<NewsItem | null>(null);
 
   const filteredNews = useMemo(() => {
-    if (selected === "Tum") return newsData;
+    if (selected === ALL_CATEGORY_CODE) return newsData;
     return newsData.filter((item) => item.category === selected);
   }, [selected]);
 
@@ -52,8 +68,8 @@ const FeedScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Haberler</Text>
-        <Text style={styles.subtitle}>Mock verilerle guncel Amedspor gundemi</Text>
+        <Text style={styles.title}>{t("feed.title")}</Text>
+        <Text style={styles.subtitle}>{t("feed.subtitle")}</Text>
 
         <ScrollView
           horizontal
@@ -62,71 +78,85 @@ const FeedScreen: React.FC = () => {
         >
           {categories.map((cat) => (
             <Pressable
-              key={cat}
+              key={cat.code}
               style={[
                 styles.chip,
-                selected === cat && styles.chipActive,
-                { borderColor: selected === cat ? colors.primary : colors.border },
+                selected === cat.code && styles.chipActive,
+                { borderColor: selected === cat.code ? colors.primary : colors.border },
               ]}
-              onPress={() => setSelected(cat)}
+              onPress={() => setSelected(cat.code)}
             >
               <Text
                 style={[
                   styles.chipText,
-                  selected === cat && { color: colors.text },
+                  selected === cat.code && { color: colors.text },
                 ]}
               >
-                {cat}
+                {cat.label}
               </Text>
             </Pressable>
           ))}
         </ScrollView>
 
         <View style={styles.list}>
-          {filteredNews.map((news) => (
-            <Pressable
-              key={news.id}
-              onPress={() => setActiveNews(news)}
-              style={styles.card}
-            >
-              {news.image && (
-                <ImageBackground
-                  source={news.image}
-                  style={styles.cardImage}
-                  imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-                >
-                  <LinearGradient
-                    colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                  <View style={styles.cardImageContent}>
+          {filteredNews.length === 0 ? (
+            <Text style={styles.cardMeta}>{t("error_unknown")}</Text>
+          ) : (
+            filteredNews.map((news) => (
+              <Pressable
+                key={news.id}
+                onPress={() => setActiveNews(news)}
+                style={styles.card}
+              >
+                {news.image && (
+                  <ImageBackground
+                    source={news.image}
+                    style={styles.cardImage}
+                    imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                  >
+                    <LinearGradient
+                      colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
+                      style={StyleSheet.absoluteFillObject}
+                    />
+                    <View style={styles.cardImageContent}>
+                      <View style={styles.cardBadge}>
+                        <Text style={styles.cardBadgeText}>{news.category}</Text>
+                      </View>
+                      <Text style={styles.cardTitle}>{news.title}</Text>
+                    </View>
+                  </ImageBackground>
+                )}
+                <View style={styles.cardBody}>
+                  {!news.image && (
                     <View style={styles.cardBadge}>
                       <Text style={styles.cardBadgeText}>{news.category}</Text>
                     </View>
-                    <Text style={styles.cardTitle}>{news.title}</Text>
-                  </View>
-                </ImageBackground>
-              )}
-              <View style={styles.cardBody}>
-                {!news.image && (
-                  <View style={styles.cardBadge}>
-                    <Text style={styles.cardBadgeText}>{news.category}</Text>
-                  </View>
-                )}
-                <Text style={styles.cardSummary}>{news.summary}</Text>
-                <View style={styles.cardFooter}>
-                  <View style={styles.footerMeta}>
-                    <Ionicons name="time-outline" size={16} color={colors.mutedText} />
-                    <Text style={styles.cardMeta}>{news.time} once</Text>
-                  </View>
-                  <View style={styles.footerMeta}>
-                    <Ionicons name="eye-outline" size={16} color={colors.mutedText} />
-                    <Text style={styles.cardMeta}>Mock okuma</Text>
+                  )}
+                  <Text style={styles.cardSummary}>{news.summary}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.footerMeta}>
+                      <Ionicons
+                        name="time-outline"
+                        size={16}
+                        color={colors.mutedText}
+                      />
+                      <Text style={styles.cardMeta}>
+                        {t("feed.time_ago", { time: news.time })}
+                      </Text>
+                    </View>
+                    <View style={styles.footerMeta}>
+                      <Ionicons
+                        name="eye-outline"
+                        size={16}
+                        color={colors.mutedText}
+                      />
+                      <Text style={styles.cardMeta}>{t("feed.mock_reads")}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Pressable>
-          ))}
+              </Pressable>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -145,7 +175,7 @@ const FeedScreen: React.FC = () => {
                 accessibilityRole="button"
               >
                 <Ionicons name="arrow-back" size={22} color={colors.text} />
-                <Text style={styles.closeText}>Geri</Text>
+                <Text style={styles.closeText}>{t("feed.back")}</Text>
               </Pressable>
 
               {activeNews.image && (
@@ -165,7 +195,9 @@ const FeedScreen: React.FC = () => {
                     <Text style={styles.detailTitle}>{activeNews.title}</Text>
                     <View style={styles.detailMetaRow}>
                       <Ionicons name="time-outline" size={16} color={colors.text} />
-                      <Text style={styles.detailMeta}>{activeNews.time} once</Text>
+                      <Text style={styles.detailMeta}>
+                        {t("feed.time_ago", { time: activeNews.time })}
+                      </Text>
                     </View>
                   </View>
                 </ImageBackground>
@@ -179,7 +211,9 @@ const FeedScreen: React.FC = () => {
                   <Text style={styles.detailTitle}>{activeNews.title}</Text>
                   <View style={styles.detailMetaRow}>
                     <Ionicons name="time-outline" size={16} color={colors.mutedText} />
-                    <Text style={styles.detailMeta}>{activeNews.time} once</Text>
+                    <Text style={styles.detailMeta}>
+                      {t("feed.time_ago", { time: activeNews.time })}
+                    </Text>
                   </View>
                 </View>
               )}

@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
 import RootNavigator from "./navigation/RootNavigator";
 import { colors } from "./theme/colors";
+import "./i18n";
 
 const App: React.FC = () => {
   const [fontsLoaded] = useFonts({

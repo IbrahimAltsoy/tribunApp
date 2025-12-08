@@ -1,0 +1,94 @@
+{
+  "greeting": "Merhaba! Uygulamamıza Hoş Geldiniz.",
+  "change_language": "Dili Değiştir",
+  "current_language": "Mevcut Dil:",
+  "nav": {
+    "home": "Ana Sayfa",
+    "chat": "Sohbet Odaları",
+    "matches": "Maç Fikstürü",
+    "settings": "Ayarlar"
+  },
+  "feed_latest_news": "Son Haberler",
+  "settings_title": "Uygulama Ayarları",
+  "settings_select_lang": "Dil Seçimi",
+  "button_save": "Kaydet",
+  "error_unknown": "Beklenmeyen Bir Hata Oluştu",
+  "tabs": {
+    "home": "Ana Sayfa",
+    "fixture": "Maç Merkezi",
+    "feed": "Haberler",
+    "chat": "Sohbet",
+    "mars": "Arşiv"
+  },
+  "feed": {
+    "title": "Haberler",
+    "subtitle": "Mock verilerle güncel Amedspor gündemi",
+    "category_all": "Tüm",
+    "mock_reads": "Mock okuma",
+    "back": "Geri",
+    "time_ago": "{{time}} önce"
+  },
+  "fixture": {
+    "title": "Maç Merkezi",
+    "subtitle": "Canlı skor, fikstür ve puan durumu",
+    "tableTitle": "Puan Durumu",
+    "tableTeam": "Takım",
+    "upcomingTitle": "Yaklaşan Maçlar",
+    "home": "İç Saha",
+    "away": "Deplasman",
+    "guest": "Konuk",
+    "vs": "{{home}} vs {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "Arşiv & Duyurular",
+    "heroSubtitle": "Tarihçe, efsaneler, forma hatıraları ve organizasyon listeleri tek ekranda.",
+    "sectionArchive": "Kulüp Arşivi",
+    "sectionLegends": "Efsane Oyuncular",
+    "sectionKits": "Forma & Koleksiyon",
+    "sectionMoments": "Tribün Seçkisi",
+    "sectionAnnouncements": "Organizasyon Duyuruları",
+    "sectionCreate": "Yeni Duyuru Oluştur",
+    "timeAgo": "{{time}} önce",
+    "contactLabel": "İletişim: {{contact}}",
+    "contactUnknown": "Belirtilmedi",
+    "submit": "Mock Duyuru Ekle",
+    "formHint": "Form mock veri üzerinde çalışır, backend bağlantısı yoktur.",
+    "form": {
+      "title": "Başlık",
+      "city": "Şehir",
+      "location": "Mekan / Nokta",
+      "date": "Tarih & Saat",
+      "contact": "İletişim",
+      "note": "Not"
+    }
+  },
+  "settings": {
+    "title": "Uygulama Ayarları",
+    "select_language": "Dil Seçimi",
+    "save": "Kaydet"
+  },
+  "home": {
+    "momentsTitle": "Maç Günü Tribün Anları",
+    "newsTitle": "Haber Akışı",
+    "newsSubtitle": "Mock haberler ve tribün gelişmeleri",
+    "fixturesTitle": "Yaklaşan Maçlar",
+    "fixturesSubtitle": "Fikstür ve saat bilgisi",
+    "supportTitle": "Takımına Destek Ol",
+    "supportSubtitle": "Formalar, atkılar ve lisanslı ürünler için tıkla.",
+    "supportPill": "Mağaza",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "Organizasyon Duyurusu",
+    "announcementSubtitle": "Toplanma noktalarını ve iletişim kanallarını yakala",
+    "shareMomentTitle": "Anı Paylaş",
+    "shareMomentSubtitle": "Şehir, kısa not ve görsel ekle",
+    "moreMomentsTitle": "Daha fazlası"
+  },
+  "chat": {
+    "title": "Amedspor Tribün",
+    "subtitle": "Tribün sohbeti: Maç heyecanını paylaş, destek ol, sorularını sor.",
+    "placeholder": "Mesajını yaz...",
+    "nicknamePlaceholder": "Takma ad",
+    "emptyState": "İlk mesajı sen at, tribünü ısıt."
+  }
+}

@@ -20,8 +20,10 @@ import {
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+import { useTranslation } from "react-i18next";
 
 const MarsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const [announcementList, setAnnouncementList] = useState(announcementData);
   const [form, setForm] = useState({
     title: "",
@@ -58,13 +60,11 @@ const MarsScreen: React.FC = () => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Text style={styles.heroTitle}>Arşiv & Duyurular</Text>
-          <Text style={styles.heroSubtitle}>
-            Tarihçe, efsaneler, forma hatıraları ve organizasyon listeleri tek ekranda.
-          </Text>
+          <Text style={styles.heroTitle}>{t("archive.heroTitle")}</Text>
+          <Text style={styles.heroSubtitle}>{t("archive.heroSubtitle")}</Text>
         </LinearGradient>
 
-        <SectionHeading title="Kulüp Arşivi" icon="book-outline" />
+        <SectionHeading title={t("archive.sectionArchive")} icon="book-outline" />
         <View style={styles.grid}>
           {archiveHighlights.map((item) => (
             <View key={item.id} style={styles.card}>
@@ -74,7 +74,7 @@ const MarsScreen: React.FC = () => {
           ))}
         </View>
 
-        <SectionHeading title="Efsane Oyuncular" icon="trophy-outline" />
+        <SectionHeading title={t("archive.sectionLegends")} icon="trophy-outline" />
         <View style={styles.legendList}>
           {legends.map((legend) => (
             <View key={legend.id} style={styles.legendCard}>
@@ -88,7 +88,7 @@ const MarsScreen: React.FC = () => {
           ))}
         </View>
 
-        <SectionHeading title="Forma & Koleksiyon" icon="shirt-outline" />
+        <SectionHeading title={t("archive.sectionKits")} icon="shirt-outline" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -108,7 +108,7 @@ const MarsScreen: React.FC = () => {
           ))}
         </ScrollView>
 
-        <SectionHeading title="Tribün Seçkisi" icon="camera-outline" />
+        <SectionHeading title={t("archive.sectionMoments")} icon="camera-outline" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -119,12 +119,14 @@ const MarsScreen: React.FC = () => {
               <Text style={styles.momentUser}>{moment.user}</Text>
               <Text style={styles.momentCaption}>{moment.caption}</Text>
               <Text style={styles.momentMeta}>{moment.location}</Text>
-              <Text style={styles.momentMeta}>{moment.time} önce</Text>
+              <Text style={styles.momentMeta}>
+                {t("archive.timeAgo", { time: moment.time })}
+              </Text>
             </View>
           ))}
         </ScrollView>
 
-        <SectionHeading title="Organizasyon Duyuruları" icon="megaphone-outline" />
+        <SectionHeading title={t("archive.sectionAnnouncements")} icon="megaphone-outline" />
         <View style={styles.announcementList}>
           {announcementList.map((item) => (
             <View key={item.id} style={styles.announcementCard}>
@@ -136,51 +138,53 @@ const MarsScreen: React.FC = () => {
               <Text style={styles.announcementMeta}>{item.location}</Text>
               <Text style={styles.announcementNote}>{item.note}</Text>
               <Text style={styles.announcementContact}>
-                İletişim: {item.contact || "Belirtilmedi"}
+                {t("archive.contactLabel", {
+                  contact: item.contact || t("archive.contactUnknown"),
+                })}
               </Text>
             </View>
           ))}
         </View>
 
-        <SectionHeading title="Yeni Duyuru Oluştur" icon="create-outline" />
+        <SectionHeading title={t("archive.sectionCreate")} icon="create-outline" />
         <View style={styles.form}>
           <FormInput
-            label="Başlık"
+            label={t("archive.form.title")}
             value={form.title}
             onChangeText={(text) => setForm((prev) => ({ ...prev, title: text }))}
           />
           <FormInput
-            label="Şehir"
+            label={t("archive.form.city")}
             value={form.city}
             onChangeText={(text) => setForm((prev) => ({ ...prev, city: text }))}
           />
           <FormInput
-            label="Mekan / Nokta"
+            label={t("archive.form.location")}
             value={form.location}
             onChangeText={(text) => setForm((prev) => ({ ...prev, location: text }))}
           />
           <FormInput
-            label="Tarih & Saat"
+            label={t("archive.form.date")}
             value={form.date}
             onChangeText={(text) => setForm((prev) => ({ ...prev, date: text }))}
           />
           <FormInput
-            label="İletişim"
+            label={t("archive.form.contact")}
             value={form.contact}
             onChangeText={(text) => setForm((prev) => ({ ...prev, contact: text }))}
           />
           <FormInput
-            label="Not"
+            label={t("archive.form.note")}
             value={form.note}
             onChangeText={(text) => setForm((prev) => ({ ...prev, note: text }))}
             multiline
           />
 
           <Pressable style={styles.submitBtn} onPress={handleCreateAnnouncement}>
-            <Text style={styles.submitText}>Mock Duyuru Ekle</Text>
+            <Text style={styles.submitText}>{t("archive.submit")}</Text>
           </Pressable>
           <Text style={styles.formHint}>
-            Form mock veri üzerinde çalışır, backend bağlantısı yoktur.
+            {t("archive.formHint")}
           </Text>
         </View>
       </ScrollView>

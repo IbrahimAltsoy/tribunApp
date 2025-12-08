@@ -4,45 +4,55 @@ import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
 import { fixtureData } from "../../data/mockData";
+import { useTranslation } from "react-i18next";
 
 type Props = {
   fixtures: typeof fixtureData;
 };
 
-const FixtureList: React.FC<Props> = ({ fixtures }) => (
-  <View style={styles.fixtureList}>
-    {fixtures.map((fixture) => (
-      <View key={fixture.id} style={styles.fixtureCard}>
-        <View style={styles.fixtureRow}>
-          <View>
-            <Text style={styles.fixtureOpponent}>Amedspor</Text>
-            <Text style={styles.fixtureVs}>vs {fixture.opponent}</Text>
-            <Text style={styles.fixtureMeta}>
-              {fixture.date} | {fixture.time}
-            </Text>
-            <Text style={styles.fixtureVenue}>{fixture.venue}</Text>
-          </View>
-          <View
-            style={[
-              styles.fixtureTag,
-              fixture.isHome ? styles.homeTag : styles.awayTag,
-            ]}
-          >
-            <Text
+const FixtureList: React.FC<Props> = ({ fixtures }) => {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.fixtureList}>
+      {fixtures.map((fixture) => (
+        <View key={fixture.id} style={styles.fixtureCard}>
+          <View style={styles.fixtureRow}>
+            <View>
+              <Text style={styles.fixtureOpponent}>Amedspor</Text>
+              <Text style={styles.fixtureVs}>
+                {t("fixture.vsDash", {
+                  home: "Amedspor",
+                  away: fixture.opponent,
+                })}{" "}
+              </Text>
+              <Text style={styles.fixtureMeta}>
+                {fixture.date} | {fixture.time}
+              </Text>
+              <Text style={styles.fixtureVenue}>{fixture.venue}</Text>
+            </View>
+            <View
               style={[
-                styles.fixtureTagText,
-                fixture.isHome ? styles.homeTagText : styles.awayTagText,
+                styles.fixtureTag,
+                fixture.isHome ? styles.homeTag : styles.awayTag,
               ]}
             >
-              {fixture.isHome ? "Ic Saha" : "Deplasman"}
-            </Text>
+              <Text
+                style={[
+                  styles.fixtureTagText,
+                  fixture.isHome ? styles.homeTagText : styles.awayTagText,
+                ]}
+              >
+                {fixture.isHome ? t("fixture.home") : t("fixture.away")}
+              </Text>
+            </View>
           </View>
+          <Text style={styles.fixtureCompetition}>{fixture.competition}</Text>
         </View>
-        <Text style={styles.fixtureCompetition}>{fixture.competition}</Text>
-      </View>
-    ))}
-  </View>
-);
+      ))}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   fixtureList: {

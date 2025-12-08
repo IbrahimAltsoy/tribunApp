@@ -1,0 +1,94 @@
+{
+  "greeting": "Hello! Welcome to our app.",
+  "change_language": "Change Language",
+  "current_language": "Current Language:",
+  "nav": {
+    "home": "Home",
+    "chat": "Chat Rooms",
+    "matches": "Match Fixtures",
+    "settings": "Settings"
+  },
+  "feed_latest_news": "Latest News",
+  "settings_title": "App Settings",
+  "settings_select_lang": "Select Language",
+  "button_save": "Save",
+  "error_unknown": "An Unexpected Error Occurred",
+  "tabs": {
+    "home": "Home",
+    "fixture": "Match Center",
+    "feed": "News",
+    "chat": "Chat",
+    "mars": "Archive"
+  },
+  "feed": {
+    "title": "News",
+    "subtitle": "Latest Amedspor buzz with mock data",
+    "category_all": "All",
+    "mock_reads": "Mock reads",
+    "back": "Back",
+    "time_ago": "{{time}} ago"
+  },
+  "fixture": {
+    "title": "Match Center",
+    "subtitle": "Live score, fixtures and standings",
+    "tableTitle": "Standings",
+    "tableTeam": "Team",
+    "upcomingTitle": "Upcoming Matches",
+    "home": "Home",
+    "away": "Away",
+    "guest": "Guest",
+    "vs": "{{home}} vs {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "Archive & Announcements",
+    "heroSubtitle": "History, legends, kit memories and organization lists in one screen.",
+    "sectionArchive": "Club Archive",
+    "sectionLegends": "Legendary Players",
+    "sectionKits": "Kits & Collection",
+    "sectionMoments": "Tribune Picks",
+    "sectionAnnouncements": "Organization Announcements",
+    "sectionCreate": "Create New Announcement",
+    "timeAgo": "{{time}} ago",
+    "contactLabel": "Contact: {{contact}}",
+    "contactUnknown": "Not provided",
+    "submit": "Add Mock Announcement",
+    "formHint": "This form works on mock data only; there is no backend connection.",
+    "form": {
+      "title": "Title",
+      "city": "City",
+      "location": "Venue / Spot",
+      "date": "Date & Time",
+      "contact": "Contact",
+      "note": "Note"
+    }
+  },
+  "settings": {
+    "title": "App Settings",
+    "select_language": "Select Language",
+    "save": "Save"
+  },
+  "home": {
+    "momentsTitle": "Matchday Fan Moments",
+    "newsTitle": "News Feed",
+    "newsSubtitle": "Mock news and tribune updates",
+    "fixturesTitle": "Upcoming Matches",
+    "fixturesSubtitle": "Fixtures and kickoff times",
+    "supportTitle": "Support Your Team",
+    "supportSubtitle": "Click for jerseys, scarves and licensed products.",
+    "supportPill": "Store",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "Organization Announcement",
+    "announcementSubtitle": "Find meeting points and communication channels",
+    "shareMomentTitle": "Share a Moment",
+    "shareMomentSubtitle": "Add city, quick note and photo",
+    "moreMomentsTitle": "See more"
+  },
+  "chat": {
+    "title": "Amedspor Tribun",
+    "subtitle": "Share the match hype, cheer together, ask quick questions.",
+    "placeholder": "Write a message...",
+    "nicknamePlaceholder": "Nickname",
+    "emptyState": "Be the first to drop a message and warm up the tribune."
+  }
+}

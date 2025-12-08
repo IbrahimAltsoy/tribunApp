@@ -74,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>AMED FAN OFFICIAL</Text>
+          <Text style={styles.title}>AMED PULSE</Text>
           <Animated.View
             style={[
               styles.shimmer,
@@ -94,7 +94,10 @@ const Header: React.FC<HeaderProps> = ({
             accessibilityRole="button"
           >
             <Animated.View
-              style={[styles.languageButton, { transform: [{ scale: languageScale }] }]}
+              style={[
+                styles.languageButton,
+                { transform: [{ scale: languageScale }] },
+              ]}
             >
               <Ionicons name="globe-outline" size={20} color={colors.text} />
             </Animated.View>

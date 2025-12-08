@@ -1,0 +1,94 @@
+{
+  "greeting": "Hallo! Willkommen in unserer App.",
+  "change_language": "Sprache ändern",
+  "current_language": "Aktuelle Sprache:",
+  "nav": {
+    "home": "Startseite",
+    "chat": "Chat-Räume",
+    "matches": "Spielplan",
+    "settings": "Einstellungen"
+  },
+  "feed_latest_news": "Neueste Nachrichten",
+  "settings_title": "App-Einstellungen",
+  "settings_select_lang": "Sprachauswahl",
+  "button_save": "Speichern",
+  "error_unknown": "Ein unerwarteter Fehler ist aufgetreten",
+  "tabs": {
+    "home": "Start",
+    "fixture": "Spielzentrum",
+    "feed": "News",
+    "chat": "Chat",
+    "mars": "Archiv"
+  },
+  "feed": {
+    "title": "Nachrichten",
+    "subtitle": "Aktuelle Themen rund um Amedspor (Mock-Daten)",
+    "category_all": "Alle",
+    "mock_reads": "Mock-Lesen",
+    "back": "Zurück",
+    "time_ago": "vor {{time}}"
+  },
+  "fixture": {
+    "title": "Spielzentrum",
+    "subtitle": "Live-Ergebnisse, Spielplan und Tabellenstand",
+    "tableTitle": "Tabellenstand",
+    "tableTeam": "Team",
+    "upcomingTitle": "Kommende Spiele",
+    "home": "Heim",
+    "away": "Auswärts",
+    "guest": "Gast",
+    "vs": "{{home}} vs {{away}}",
+    "vsDash": "{{home}} - {{away}}"
+  },
+  "archive": {
+    "heroTitle": "Archiv & Ankündigungen",
+    "heroSubtitle": "Geschichte, Legenden, Trikot-Erinnerungen & Organisationsliste – alles an einem Ort.",
+    "sectionArchive": "Vereinsarchiv",
+    "sectionLegends": "Legendäre Spieler",
+    "sectionKits": "Trikots & Sammlung",
+    "sectionMoments": "Tribünenmomente",
+    "sectionAnnouncements": "Organisationsankündigungen",
+    "sectionCreate": "Neue Ankündigung erstellen",
+    "timeAgo": "vor {{time}}",
+    "contactLabel": "Kontakt: {{contact}}",
+    "contactUnknown": "Unbekannt",
+    "submit": "Mock-Ankündigung hinzufügen",
+    "formHint": "Dieses Formular arbeitet mit Mock-Daten – keine Backend-Verbindung.",
+    "form": {
+      "title": "Titel",
+      "city": "Stadt",
+      "location": "Ort / Standort",
+      "date": "Datum & Uhrzeit",
+      "contact": "Kontakt",
+      "note": "Notiz"
+    }
+  },
+  "settings": {
+    "title": "App-Einstellungen",
+    "select_language": "Sprache auswählen",
+    "save": "Speichern"
+  },
+  "home": {
+    "momentsTitle": "Tribünenmomente am Spieltag",
+    "newsTitle": "News-Feed",
+    "newsSubtitle": "Mock-News und Tribünen-Updates",
+    "fixturesTitle": "Kommende Spiele",
+    "fixturesSubtitle": "Spielplan und Uhrzeit",
+    "supportTitle": "Unterstütze dein Team",
+    "supportSubtitle": "Trikots, Schals & lizenzierte Artikel – jetzt ansehen.",
+    "supportPill": "Shop",
+    "supportStore": "AmedStore.com",
+    "announcementTitle": "Organisationsankündigung",
+    "announcementSubtitle": "Treffpunkte & Kontaktwege verfolgen",
+    "shareMomentTitle": "Share a Moment",
+    "shareMomentSubtitle": "Add city, quick note and photo",
+    "moreMomentsTitle": "See more"
+  },
+  "chat": {
+    "title": "Amedspor Tribun",
+    "subtitle": "Share the match hype, cheer together, ask quick questions.",
+    "placeholder": "Write a message...",
+    "nicknamePlaceholder": "Nickname",
+    "emptyState": "Be the first to drop a message and warm up the tribune."
+  }
+}
