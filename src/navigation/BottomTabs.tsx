@@ -7,7 +7,7 @@ import HomeScreen from "../screens/HomeScreen";
 import FixtureScreen from "../screens/FixtureScreen";
 import FeedScreen from "../screens/FeedScreen";
 import ChatScreen from "../screens/ChatScreen";
-import MarsScreen from "../screens/MarsScreen";
+import MarsStack from "./MarsStack";
 import { colors } from "../theme/colors";
 import { useTranslation } from "react-i18next";
 
@@ -102,7 +102,7 @@ const BottomTabs: React.FC = () => {
       />
       <Tab.Screen
         name="Mars"
-        component={MarsScreen}
+        component={MarsStack}
         options={{ tabBarLabel: t("tabs.mars") }}
       />
     </Tab.Navigator>

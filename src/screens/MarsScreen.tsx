@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -13,23 +13,24 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import {
   announcements as announcementData,
-  archiveHighlights,
+  fanMoments,
   kits,
   players,
-  fanMoments,
 } from "../data/mockData";
-import { colors } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { MarsStackParamList } from "../navigation/types";
 
 const MarsScreen: React.FC = () => {
   const { t } = useTranslation();
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [playerOpen, setPlayerOpen] = useState(false);
-  const [kitOpen, setKitOpen] = useState(false);
+  const navigation = useNavigation<NavigationProp<MarsStackParamList>>();
   const [momentOpen, setMomentOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [announcementList, setAnnouncementList] = useState(announcementData);
   const [submission, setSubmission] = useState({
     title: "",
@@ -40,31 +41,77 @@ const MarsScreen: React.FC = () => {
     note: "",
   });
 
-  const quickStats = [
+  const momentCardWidth = 240;
+
+  const updateSubmission = (key: keyof typeof submission) => (value: string) => {
+    setFormError(null);
+    setSubmission((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const quickStats: {
+    label: string;
+    value: string | number;
+    meta: string;
+    route?: keyof MarsStackParamList;
+  }[] = [
     {
       label: t("archive.sectionArchive"),
-      value: "1932→",
+      value: "1932'den beri",
       meta: "Kulüp hafızası",
+      route: "Archive",
     },
     {
       label: t("archive.sectionLegends"),
       value: players.length,
       meta: "Kadro",
+      route: "Players",
     },
     {
       label: t("archive.sectionKits"),
       value: kits.length,
       meta: "Forma dönemi",
+      route: "Kits",
     },
     {
       label: t("archive.sectionAnnouncements"),
       value: announcementList.length,
-      meta: "Aktif çağrı",
+      meta: "Aktif çağrılar",
+    },
+  ];
+
+  const featureLinks: {
+    title: string;
+    subtitle: string;
+    route: keyof MarsStackParamList;
+    icon: keyof typeof Ionicons.glyphMap;
+  }[] = [
+    {
+      title: t("archive.sectionArchive"),
+      subtitle: t("archive.sectionArchiveSubtitle"),
+      route: "Archive",
+      icon: "book-outline",
+    },
+    {
+      title: t("archive.sectionLegends"),
+      subtitle: t("archive.sectionLegendsSubtitle"),
+      route: "Players",
+      icon: "trophy-outline",
+    },
+    {
+      title: t("archive.sectionKits"),
+      subtitle: t("archive.sectionKitsSubtitle"),
+      route: "Kits",
+      icon: "shirt-outline",
     },
   ];
 
   const handleSubmitAnnouncement = () => {
-    if (!submission.title || !submission.city || !submission.date) return;
+    setFormSuccess(null);
+    if (!submission.title || !submission.city || !submission.date) {
+      setFormError(t("archive.formErrorRequired"));
+      return;
+    }
+    setFormError(null);
     setAnnouncementList((prev) => [
       {
         id: `local-${Date.now()}`,
@@ -82,6 +129,7 @@ const MarsScreen: React.FC = () => {
       contact: "",
       note: "",
     });
+    setFormSuccess(t("archive.formSuccess"));
     setSubmitOpen(false);
   };
 
@@ -89,7 +137,7 @@ const MarsScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <LinearGradient
-          colors={["#0FA958", "#0B111C"]}
+          colors={[colors.primary, "#0B111C", colors.background]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
@@ -105,134 +153,44 @@ const MarsScreen: React.FC = () => {
             <Chip icon="map" label="Şehir buluşmaları" />
             <Chip icon="time" label="Amed hatları" />
           </View> */}
-          <View style={styles.statRow}>
-            {quickStats.map((item) => (
-              <View key={item.label} style={styles.statCard}>
-                <Text style={styles.statValue}>{item.value}</Text>
-                <Text style={styles.statLabel}>{item.label}</Text>
-                <Text style={styles.statMeta}>{item.meta}</Text>
-              </View>
-            ))}
-          </View>
-        </LinearGradient>
-
-        <SectionHeading
-          title={t("archive.sectionArchive")}
-          subtitle="Büyük hikayeyi üç satırda yakala"
-          icon="book-outline"
-          onPress={() => setArchiveOpen(true)}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.timelineRow}
-        >
-          {archiveHighlights.map((item, index) => (
-            <LinearGradient
-              key={item.id}
-              colors={["rgba(15,169,88,0.18)", "rgba(13,13,13,0.9)"]}
-              style={[
-                styles.timelineCard,
-                index === 0 && styles.timelineCardFirst,
-              ]}
+        <View style={styles.statRow}>
+          {quickStats.map((item) => (
+            <Pressable
+              key={item.label}
+              style={styles.statCard}
+              disabled={!item.route}
+              onPress={() => item.route && navigation.navigate(item.route)}
             >
-              <View style={styles.timelineDot} />
-              <Text style={styles.timelineTitle}>{item.title}</Text>
-              <Text style={styles.timelineBody}>{item.detail}</Text>
-            </LinearGradient>
-          ))}
-        </ScrollView>
-
-        <SectionHeading
-          title={t("archive.sectionLegends")}
-          subtitle="Kadro, roller ve güncel form grafikleri"
-          icon="trophy-outline"
-          onPress={() => setPlayerOpen(true)}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.legendRail}
-        >
-          {players.map((player) => (
-            <View key={player.id} style={styles.legendCard}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <View style={styles.numberBadge}>
-                  <Text style={styles.numberBadgeText}>{player.number}</Text>
+              <Text style={styles.statValue}>{item.value}</Text>
+              <Text style={styles.statLabel}>{item.label}</Text>
+              <Text style={styles.statMeta}>{item.meta}</Text>
+              {item.route ? (
+                <View style={styles.statAction}>
+                  <Text style={styles.statActionText}>{t("archive.viewPage")}</Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={14}
+                    color={colors.mutedText}
+                  />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.legendName}>{player.name}</Text>
-                  <Text style={styles.legendRole}>{player.position}</Text>
-                </View>
-                <Chip icon="pin" label={player.hometown || "Kadro"} compact />
-              </View>
-              <View style={styles.playerMetaRow}>
-                <Chip icon="body" label={`${player.height} m`} compact />
-                <Chip icon="flash" label={`${player.age} yaş`} compact />
-                <Chip
-                  icon="walk-outline"
-                  label={
-                    player.foot === "Both"
-                      ? "Çift ayak"
-                      : player.foot === "Left"
-                        ? "Sol ayak"
-                        : "Sağ ayak"
-                  }
-                  compact
-                />
-              </View>
-              <Text style={styles.legendHighlight}>{player.bio}</Text>
-              <View style={styles.strengthRow}>
-                {player.strengths.map((tag) => (
-                  <Chip key={tag} icon="checkmark-circle" label={tag} compact />
-                ))}
-              </View>
-            </View>
+              ) : null}
+            </Pressable>
           ))}
-        </ScrollView>
-
-        <SectionHeading
-          title={t("archive.sectionKits")}
-          subtitle="Formalarla yolculuk: renk, kumaş, hafıza"
-          icon="shirt-outline"
-          onPress={() => setKitOpen(true)}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.kitRow}
-        >
-          {kits.map((kit) => (
-            <LinearGradient
-              key={kit.id}
-              colors={["rgba(15,169,88,0.25)", "rgba(209,14,14,0.12)"]}
-              style={styles.kitCard}
-            >
-              <View style={styles.kitHeader}>
-                <Text style={styles.kitSeason}>{kit.season}</Text>
-                <Chip icon="color-palette-outline" label={kit.title} compact />
-              </View>
-              <Text style={styles.kitTitle}>{kit.palette}</Text>
-              <Text style={styles.kitNote}>{kit.note}</Text>
-            </LinearGradient>
-          ))}
-        </ScrollView>
+        </View>
+      </LinearGradient>
 
         <SectionHeading
           title={t("archive.sectionMoments")}
-          subtitle="Canlı anlar, şehirden stada"
+          subtitle={t("archive.sectionMomentsSubtitle")}
           icon="camera-outline"
           onPress={() => setMomentOpen(true)}
         />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          decelerationRate="fast"
+          snapToInterval={momentCardWidth + spacing.sm}
+          snapToAlignment="start"
           contentContainerStyle={styles.momentRow}
         >
           {fanMoments.slice(0, 6).map((moment) => (
@@ -252,7 +210,7 @@ const MarsScreen: React.FC = () => {
 
         <SectionHeading
           title={t("archive.sectionAnnouncements")}
-          subtitle="Organizasyon, deplasman, koreografi planı"
+          subtitle={t("archive.sectionAnnouncementsSubtitle")}
           icon="megaphone-outline"
         />
         <View style={styles.announcementList}>
@@ -268,7 +226,11 @@ const MarsScreen: React.FC = () => {
                 <Chip icon="location" label={item.city} compact />
               </View>
               {(item as any).status === "pending" ? (
-                <Chip icon="time-outline" label="Onay bekliyor" compact />
+                <Chip
+                  icon="time-outline"
+                  label={t("archive.pendingApproval")}
+                  compact
+                />
               ) : null}
               <View style={styles.announcementMetaRow}>
                 <Meta icon="time-outline" text={item.date} />
@@ -286,9 +248,15 @@ const MarsScreen: React.FC = () => {
 
         <SectionHeading
           title={t("archive.sectionCreate")}
-          subtitle="Duyurunu bize ilet, moderasyon sonrası ekleyelim"
+          subtitle={t("archive.sectionCreateSubtitle")}
           icon="create-outline"
         />
+        {formSuccess ? (
+          <View style={styles.successBanner}>
+            <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+            <Text style={styles.successText}>{formSuccess}</Text>
+          </View>
+        ) : null}
         <View style={styles.handoffCard}>
           <View style={styles.handoffHeader}>
             <Ionicons name="shield-checkmark" size={18} color={colors.text} />
@@ -301,7 +269,10 @@ const MarsScreen: React.FC = () => {
           <View style={styles.handoffActions}>
             <Pressable
               style={styles.secondaryBtn}
-              onPress={() => setSubmitOpen(true)}
+              onPress={() => {
+                setFormError(null);
+                setSubmitOpen(true);
+              }}
             >
               <Text style={styles.secondaryText}>Duyuru formu</Text>
               <Ionicons name="create-outline" size={14} color={colors.text} />
@@ -311,168 +282,15 @@ const MarsScreen: React.FC = () => {
       </ScrollView>
 
       <Modal
-        visible={archiveOpen}
-        animationType="slide"
-        onRequestClose={() => setArchiveOpen(false)}
-      >
-        <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => setArchiveOpen(false)}
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Arşiv Detayları</Text>
-          </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <LinearGradient
-              colors={["rgba(15,169,88,0.35)", "rgba(0,0,0,0.6)"]}
-              style={styles.modalHero}
-            >
-              <Text style={styles.modalHeroTitle}>
-                Takım tarihi, kupalar, maç hikayeleri
-              </Text>
-              <Text style={styles.modalHeroBody}>
-                İlk kuruluştan bugünlere önemli sezonlar, dönüm maçları ve
-                tribün koreografileri.
-              </Text>
-            </LinearGradient>
-
-            <View style={styles.modalSection}>
-              <Text style={styles.modalSectionTitle}>Dönüm Noktaları</Text>
-              {archiveHighlights.map((item) => (
-                <View key={item.id} style={styles.modalCard}>
-                  <Text style={styles.modalCardTitle}>{item.title}</Text>
-                  <Text style={styles.modalCardBody}>{item.detail}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.modalSection}>
-              <Text style={styles.modalSectionTitle}>Kupa & Unvanlar</Text>
-              <Text style={styles.modalCardBody}>
-                (Placeholder) Kulübün lig yükselişleri, bölgesel kupalar, tarihi
-                derbi galibiyetleri ve taraftar ödülleri burada listelenecek.
-              </Text>
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      <Modal
-        visible={playerOpen}
-        animationType="slide"
-        onRequestClose={() => setPlayerOpen(false)}
-      >
-        <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => setPlayerOpen(false)}
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Oyuncu Profilleri</Text>
-          </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            {players.map((player) => (
-              <View key={player.id} style={styles.modalCard}>
-                <View style={styles.legendHeader}>
-                  <View style={styles.numberBadge}>
-                    <Text style={styles.numberBadgeText}>{player.number}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.legendName}>{player.name}</Text>
-                    <Text style={styles.legendRole}>{player.position}</Text>
-                  </View>
-                  <Chip icon="map" label={player.hometown || "Kadro"} compact />
-                </View>
-                <View style={styles.playerMetaRow}>
-                  <Chip icon="body" label={`${player.height} m`} compact />
-                  <Chip icon="flash" label={`${player.age} yaş`} compact />
-                  <Chip
-                    icon="walk-outline"
-                    label={
-                      player.foot === "Both"
-                        ? "Çift ayak"
-                        : player.foot === "Left"
-                          ? "Sol ayak"
-                          : "Sağ ayak"
-                    }
-                    compact
-                  />
-                </View>
-                <Text style={styles.legendHighlight}>{player.bio}</Text>
-                <View style={styles.strengthRow}>
-                  {player.strengths.map((tag) => (
-                    <Chip
-                      key={tag}
-                      icon="checkmark-circle"
-                      label={tag}
-                      compact
-                    />
-                  ))}
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      <Modal
-        visible={kitOpen}
-        animationType="slide"
-        onRequestClose={() => setKitOpen(false)}
-      >
-        <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => setKitOpen(false)}
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Forma & Koleksiyon</Text>
-          </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            {kits.map((kit) => (
-              <LinearGradient
-                key={kit.id}
-                colors={["rgba(15,169,88,0.18)", "rgba(0,0,0,0.6)"]}
-                style={styles.modalCard}
-              >
-                <View style={styles.kitHeader}>
-                  <Text style={styles.kitSeason}>{kit.season}</Text>
-                  <Chip
-                    icon="color-palette-outline"
-                    label={kit.title}
-                    compact
-                  />
-                </View>
-                <Text style={styles.kitTitle}>{kit.palette}</Text>
-                <Text style={styles.kitNote}>{kit.note}</Text>
-              </LinearGradient>
-            ))}
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-
-      <Modal
         visible={momentOpen}
         animationType="slide"
         onRequestClose={() => setMomentOpen(false)}
       >
         <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => setMomentOpen(false)}
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Tribün Seçkisi</Text>
-          </View>
+          <ModalHeader
+            title={t("archive.modalMomentsTitle")}
+            onClose={() => setMomentOpen(false)}
+          />
           <ScrollView contentContainerStyle={styles.modalContent}>
             {fanMoments.map((moment) => (
               <View key={moment.id} style={styles.modalCard}>
@@ -497,89 +315,79 @@ const MarsScreen: React.FC = () => {
         onRequestClose={() => setSubmitOpen(false)}
       >
         <SafeAreaView style={styles.modalSafe}>
-          <View style={styles.modalHeader}>
-            <Pressable
-              style={styles.modalClose}
-              onPress={() => setSubmitOpen(false)}
-            >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
-            </Pressable>
-            <Text style={styles.modalTitle}>Duyuru Gönder</Text>
-          </View>
+          <ModalHeader
+            title={t("archive.modalSubmitTitle")}
+            onClose={() => {
+              setFormError(null);
+              setSubmitOpen(false);
+            }}
+          />
           <ScrollView contentContainerStyle={styles.modalContent}>
-            <Text style={styles.formHint}>
-              Gönderilen duyurular admin onayından sonra yayınlanır.
-            </Text>
+            <Text style={styles.formHint}>{t("archive.formHint")}</Text>
+            {formError ? (
+              <View style={styles.formAlert}>
+                <Ionicons name="alert-circle" size={16} color={colors.accent} />
+                <Text style={styles.formAlertText}>{formError}</Text>
+              </View>
+            ) : null}
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Başlık</Text>
+              <Text style={styles.formLabel}>{t("archive.form.title")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Örn: Deplasman otobüsü"
+                placeholder={t("archive.form.placeholderTitle")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.title}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, title: text }))
-                }
+                onChangeText={updateSubmission("title")}
               />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Şehir</Text>
+              <Text style={styles.formLabel}>{t("archive.form.city")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Örn: Diyarbakır"
+                placeholder={t("archive.form.placeholderCity")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.city}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, city: text }))
-                }
+                onChangeText={updateSubmission("city")}
               />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Lokasyon</Text>
+              <Text style={styles.formLabel}>{t("archive.form.location")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Buluşma noktası"
+                placeholder={t("archive.form.placeholderLocation")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.location}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, location: text }))
-                }
+                onChangeText={updateSubmission("location")}
               />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Tarih & Saat</Text>
+              <Text style={styles.formLabel}>{t("archive.form.date")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Örn: 12 Aralık, 10:00"
+                placeholder={t("archive.form.placeholderDate")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.date}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, date: text }))
-                }
+                onChangeText={updateSubmission("date")}
               />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>İletişim</Text>
+              <Text style={styles.formLabel}>{t("archive.form.contact")}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="@kullanici veya telefon"
+                placeholder={t("archive.form.placeholderContact")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.contact}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, contact: text }))
-                }
+                onChangeText={updateSubmission("contact")}
               />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Not</Text>
+              <Text style={styles.formLabel}>{t("archive.form.note")}</Text>
               <TextInput
                 style={[styles.formInput, { height: 90 }]}
-                placeholder="Kısa açıklama"
+                placeholder={t("archive.form.placeholderNote")}
                 placeholderTextColor={colors.mutedText}
                 value={submission.note}
-                onChangeText={(text) =>
-                  setSubmission((p) => ({ ...p, note: text }))
-                }
+                onChangeText={updateSubmission("note")}
                 multiline
               />
             </View>
@@ -587,7 +395,7 @@ const MarsScreen: React.FC = () => {
               style={styles.submitBtn}
               onPress={handleSubmitAnnouncement}
             >
-              <Text style={styles.submitText}>Gönder ve onaya ilet</Text>
+              <Text style={styles.submitText}>{t("archive.submit")}</Text>
               <Ionicons name="shield-checkmark" size={16} color={colors.text} />
             </Pressable>
           </ScrollView>
@@ -596,6 +404,21 @@ const MarsScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+const ModalHeader = ({
+  title,
+  onClose,
+}: {
+  title: string;
+  onClose: () => void;
+}) => (
+  <View style={styles.modalHeader}>
+    <Pressable style={styles.modalClose} onPress={onClose}>
+      <Ionicons name="chevron-back" size={20} color={colors.text} />
+    </Pressable>
+    <Text style={styles.modalTitle}>{title}</Text>
+  </View>
+);
 
 const SectionHeading = ({
   title,
@@ -706,7 +529,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: colors.borderLight,
+    ...shadows.lg,
   },
   heroTitle: {
     color: colors.text,
@@ -743,10 +567,22 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 140,
     padding: spacing.md,
-    backgroundColor: colors.card,
+    backgroundColor: colors.glassStrong,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderLight,
+    ...shadows.sm,
+  },
+  statAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    marginTop: spacing.xs,
+  },
+  statActionText: {
+    color: colors.dimmedText,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
   },
   statValue: {
     color: colors.text,
@@ -789,142 +625,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     marginTop: 2,
   },
-  timelineRow: {
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.xl,
-  },
-  timelineCard: {
-    width: 260,
-    padding: spacing.md,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    position: "relative",
-  },
-  timelineCardFirst: {
-    shadowColor: colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-  },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.primary,
-    position: "absolute",
-    top: spacing.md,
-    left: spacing.md,
-  },
-  timelineTitle: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
-    paddingLeft: spacing.md + 6,
-    marginBottom: spacing.xs,
-  },
-  timelineBody: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    lineHeight: 20,
-    paddingLeft: spacing.md + 6,
-  },
-  legendRail: {
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.xl,
-  },
-  legendCard: {
-    padding: spacing.md,
-    borderRadius: 18,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    width: 260,
-    marginRight: spacing.sm,
-  },
-  legendHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xs,
-  },
-  legendName: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
-  },
-  legendRole: {
-    color: colors.primary,
-    fontFamily: typography.semiBold,
-    marginTop: 2,
-  },
-  numberBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: "rgba(15,169,88,0.15)",
-    borderWidth: 1,
-    borderColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.sm,
-  },
-  numberBadgeText: {
-    color: colors.text,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.md,
-  },
-  playerMetaRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  legendHighlight: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    lineHeight: 20,
-    marginTop: spacing.sm,
-  },
-  strengthRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs / 2,
-    marginTop: spacing.xs,
-  },
-  kitRow: {
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-  },
-  kitCard: {
-    width: 240,
-    padding: spacing.md,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  kitHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xs,
-  },
-  kitSeason: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-  },
-  kitTitle: {
-    color: colors.text,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.md,
-    marginBottom: spacing.xs,
-  },
-  kitNote: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    marginTop: spacing.xs,
-  },
   momentRow: {
     gap: spacing.sm,
     marginBottom: spacing.xl,
@@ -935,8 +635,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderLight,
     gap: spacing.xs / 2,
+    ...shadows.sm,
   },
   momentHeader: {
     flexDirection: "row",
@@ -966,10 +667,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    borderColor: colors.borderLight,
     gap: spacing.xs / 2,
     overflow: "hidden",
     position: "relative",
+    ...shadows.sm,
   },
   announcementAccent: {
     position: "absolute",
@@ -1010,9 +712,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderLight,
     marginBottom: spacing.xl,
     gap: spacing.sm,
+    ...shadows.sm,
   },
   handoffHeader: {
     flexDirection: "row",
@@ -1032,6 +735,22 @@ const styles = StyleSheet.create({
   handoffActions: {
     flexDirection: "row",
     gap: spacing.sm,
+  },
+  successBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: 12,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    marginBottom: spacing.sm,
+  },
+  successText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    flex: 1,
   },
   formGroup: {
     marginBottom: spacing.sm,
@@ -1070,6 +789,21 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     marginBottom: spacing.sm,
+  },
+  formAlert: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    padding: spacing.sm,
+    borderRadius: 12,
+    backgroundColor: "rgba(209,14,14,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(209,14,14,0.3)",
+  },
+  formAlertText: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    flex: 1,
   },
   secondaryBtn: {
     flexDirection: "row",
