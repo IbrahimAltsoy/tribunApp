@@ -18,7 +18,7 @@
     "fixture": "مركز المباريات",
     "feed": "الأخبار",
     "chat": "الدردشة",
-    "mars": "الأرشيف"
+    "mars": "Amed"
   },
   "feed": {
     "title": "الأخبار",
@@ -44,7 +44,7 @@
     "heroTitle": "الأرشيف والإعلانات",
     "heroSubtitle": "تاريخ النادي، الأساطير، قمصان التذكارية وقائمة التنظيمات في مكان واحد.",
     "sectionArchive": "أرشيف النادي",
-    "sectionLegends": "اللاعبون الأساطير",
+    "sectionLegends": "اللاعبون",
     "sectionKits": "القمصان والمجموعات",
     "sectionMoments": "لحظات المدرج",
     "sectionAnnouncements": "إعلانات التنظيم",

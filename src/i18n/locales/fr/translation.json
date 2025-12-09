@@ -18,7 +18,7 @@
     "fixture": "Centre des matchs",
     "feed": "Actualités",
     "chat": "Discussion",
-    "mars": "Archive"
+    "mars": "Amed"
   },
   "feed": {
     "title": "Actualités",
@@ -44,7 +44,7 @@
     "heroTitle": "Archive & Annonces",
     "heroSubtitle": "Histoire, légendes, maillots mémorables et liste d’organisations en un seul écran.",
     "sectionArchive": "Archive du club",
-    "sectionLegends": "Joueurs légendaires",
+    "sectionLegends": "Joueurs",
     "sectionKits": "Maillots & Collection",
     "sectionMoments": "Moments de tribune",
     "sectionAnnouncements": "Annonces d’organisation",

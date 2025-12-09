@@ -18,7 +18,7 @@
     "fixture": "Maç Merkezi",
     "feed": "Haberler",
     "chat": "Sohbet",
-    "mars": "Arşiv"
+    "mars": "Amed"
   },
   "feed": {
     "title": "Haberler",
@@ -44,7 +44,7 @@
     "heroTitle": "Arşiv & Duyurular",
     "heroSubtitle": "Tarihçe, efsaneler, forma hatıraları ve organizasyon listeleri tek ekranda.",
     "sectionArchive": "Kulüp Arşivi",
-    "sectionLegends": "Efsane Oyuncular",
+    "sectionLegends": "Oyuncular",
     "sectionKits": "Forma & Koleksiyon",
     "sectionMoments": "Tribün Seçkisi",
     "sectionAnnouncements": "Organizasyon Duyuruları",

@@ -18,7 +18,7 @@
     "fixture": "Spielzentrum",
     "feed": "News",
     "chat": "Chat",
-    "mars": "Archiv"
+    "mars": "Amed"
   },
   "feed": {
     "title": "Nachrichten",
@@ -44,7 +44,7 @@
     "heroTitle": "Archiv & Ankündigungen",
     "heroSubtitle": "Geschichte, Legenden, Trikot-Erinnerungen & Organisationsliste – alles an einem Ort.",
     "sectionArchive": "Vereinsarchiv",
-    "sectionLegends": "Legendäre Spieler",
+    "sectionLegends": "Spieler",
     "sectionKits": "Trikots & Sammlung",
     "sectionMoments": "Tribünenmomente",
     "sectionAnnouncements": "Organisationsankündigungen",

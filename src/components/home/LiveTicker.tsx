@@ -5,8 +5,9 @@ import {
   Text,
   View,
   ImageBackground,
+  Pressable,
+  Linking,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
@@ -30,10 +31,45 @@ const LiveTicker: React.FC = () => {
 };
 
 const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
-  const thumb = event.thumb || require("../../assets/footboll/1.jpg");
-  const videoUrl =
-    event.videoUrl ||
-    "https://www.youtube.com/watch?v=0UIB9Y4OFPs&list=RDvx2u5uUu3DE&index=27";
+  const thumb =
+    event.thumb ||
+    (event.thumbUrl ? { uri: event.thumbUrl } : require("../../assets/footboll/1.jpg"));
+  const clipUrl =
+    event.clip?.embedUrl ||
+    event.clip?.url ||
+    event.videoUrl;
+
+  const platformIcon = (() => {
+    switch (event.clip?.platform) {
+      case "youtube":
+      case "bein":
+      case "trt":
+        return "logo-youtube";
+      case "x":
+        return "logo-twitter";
+      case "instagram":
+        return "logo-instagram";
+      default:
+        return "play-outline";
+    }
+  })();
+
+  const platformLabel = (() => {
+    switch (event.clip?.platform) {
+      case "bein":
+        return "beIN SPORTS embed";
+      case "trt":
+        return "TRT Spor embed";
+      case "youtube":
+        return "YouTube embed";
+      case "x":
+        return "X (Twitter) embed";
+      case "instagram":
+        return "Instagram embed";
+      default:
+        return "Harici kaynak";
+    }
+  })();
 
   return (
     <View style={styles.card}>
@@ -65,24 +101,44 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
         {event.player}: {event.detail}
       </Text>
 
-      <ImageBackground
-        source={thumb}
-        style={styles.videoBox}
-        imageStyle={styles.videoImage}
-      >
-        <View style={styles.playCircle}>
-          <Ionicons name="play" size={16} color={colors.text} />
-        </View>
-        <View style={styles.videoMetaRow}>
-          <Text style={styles.videoMeta}>Amedspor vs {liveMatch.away}</Text>
-          <Text style={styles.videoMeta}>Dakika {event.minute}</Text>
-        </View>
-        <Text style={styles.videoLink} numberOfLines={1}>
-          {
-            "https://www.youtube.com/watch?v=0UIB9Y4OFPs&list=RDvx2u5uUu3DE&index=27"
+      <Pressable
+        onPress={() => {
+          if (clipUrl) {
+            Linking.openURL(clipUrl);
           }
-        </Text>
-      </ImageBackground>
+        }}
+        disabled={!clipUrl}
+        style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+      >
+        <ImageBackground
+          source={thumb}
+          style={styles.videoBox}
+          imageStyle={styles.videoImage}
+        >
+          <View style={styles.sourceRow}>
+            <View style={styles.sourcePill}>
+              <Ionicons name={platformIcon} size={14} color={colors.text} />
+              <Text style={styles.sourceText}>
+                {event.clip?.provider || "Harici video"}
+              </Text>
+            </View>
+            <Text style={styles.platformLabel}>{platformLabel}</Text>
+          </View>
+
+          <View style={{ gap: spacing.xs }}>
+            <Text style={styles.clipTitle}>
+              Amedspor vs {liveMatch.away} • {event.minute}'
+            </Text>
+            <Text style={styles.clipNote} numberOfLines={2}>
+              {event.clip?.note || "Video ilgili kaynaktan embed acilacak."}
+            </Text>
+          </View>
+
+          <Text style={styles.videoLink} numberOfLines={1}>
+            {clipUrl || "Video baglantisi eklenmedi"}
+          </Text>
+        </ImageBackground>
+      </Pressable>
     </View>
   );
 };
@@ -150,23 +206,43 @@ const styles = StyleSheet.create({
   videoImage: {
     borderRadius: 14,
   },
-  playCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
-  },
-  videoMetaRow: {
+  sourceRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    gap: spacing.sm,
   },
-  videoMeta: {
+  sourcePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sourceText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.xs,
+  },
+  platformLabel: {
     color: colors.mutedText,
     fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+  },
+  clipTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
+  },
+  clipNote: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+    lineHeight: 16,
   },
   videoLink: {
     color: colors.text,

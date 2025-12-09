@@ -15,7 +15,7 @@ import {
   announcements as announcementData,
   archiveHighlights,
   kits,
-  legends,
+  players,
   fanMoments,
 } from "../data/mockData";
 import { colors } from "../theme/colors";
@@ -26,7 +26,7 @@ import { useTranslation } from "react-i18next";
 const MarsScreen: React.FC = () => {
   const { t } = useTranslation();
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
+  const [playerOpen, setPlayerOpen] = useState(false);
   const [kitOpen, setKitOpen] = useState(false);
   const [momentOpen, setMomentOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -41,10 +41,26 @@ const MarsScreen: React.FC = () => {
   });
 
   const quickStats = [
-    { label: t("archive.sectionArchive"), value: "1932→", meta: "Kulüp hafızası" },
-    { label: t("archive.sectionLegends"), value: legends.length, meta: "İkon" },
-    { label: t("archive.sectionKits"), value: kits.length, meta: "Forma dönemi" },
-    { label: t("archive.sectionAnnouncements"), value: announcementList.length, meta: "Aktif çağrı" },
+    {
+      label: t("archive.sectionArchive"),
+      value: "1932→",
+      meta: "Kulüp hafızası",
+    },
+    {
+      label: t("archive.sectionLegends"),
+      value: players.length,
+      meta: "Kadro",
+    },
+    {
+      label: t("archive.sectionKits"),
+      value: kits.length,
+      meta: "Forma dönemi",
+    },
+    {
+      label: t("archive.sectionAnnouncements"),
+      value: announcementList.length,
+      meta: "Aktif çağrı",
+    },
   ];
 
   const handleSubmitAnnouncement = () => {
@@ -79,16 +95,16 @@ const MarsScreen: React.FC = () => {
           style={styles.hero}
         >
           <View style={styles.heroBadgeRow}>
-            <Badge icon="planet" text="Mars Station" />
+            <Badge icon="planet" text="Amed Alanı" />
             <Badge icon="pulse" text="Tribün Hafızası" tone="accent" />
           </View>
           <Text style={styles.heroTitle}>{t("archive.heroTitle")}</Text>
           <Text style={styles.heroSubtitle}>{t("archive.heroSubtitle")}</Text>
-          <View style={styles.heroPills}>
+          {/* <View style={styles.heroPills}>
             <Chip icon="flame" label="Tribün ruhu" />
             <Chip icon="map" label="Şehir buluşmaları" />
-            <Chip icon="time" label="Arşiv hatları" />
-          </View>
+            <Chip icon="time" label="Amed hatları" />
+          </View> */}
           <View style={styles.statRow}>
             {quickStats.map((item) => (
               <View key={item.label} style={styles.statCard}>
@@ -115,7 +131,10 @@ const MarsScreen: React.FC = () => {
             <LinearGradient
               key={item.id}
               colors={["rgba(15,169,88,0.18)", "rgba(13,13,13,0.9)"]}
-              style={[styles.timelineCard, index === 0 && styles.timelineCardFirst]}
+              style={[
+                styles.timelineCard,
+                index === 0 && styles.timelineCardFirst,
+              ]}
             >
               <View style={styles.timelineDot} />
               <Text style={styles.timelineTitle}>{item.title}</Text>
@@ -126,25 +145,54 @@ const MarsScreen: React.FC = () => {
 
         <SectionHeading
           title={t("archive.sectionLegends")}
-          subtitle="İkonlar, roller, altın anlar"
+          subtitle="Kadro, roller ve güncel form grafikleri"
           icon="trophy-outline"
-          onPress={() => setLegendOpen(true)}
+          onPress={() => setPlayerOpen(true)}
         />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.legendRail}
         >
-          {legends.map((legend) => (
-            <View key={legend.id} style={styles.legendCard}>
-              <View style={styles.legendHeader}>
-                <View>
-                  <Text style={styles.legendName}>{legend.name}</Text>
-                  <Text style={styles.legendRole}>{legend.role}</Text>
+          {players.map((player) => (
+            <View key={player.id} style={styles.legendCard}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View style={styles.numberBadge}>
+                  <Text style={styles.numberBadgeText}>{player.number}</Text>
                 </View>
-                <Chip icon="calendar" label={legend.years} compact />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.legendName}>{player.name}</Text>
+                  <Text style={styles.legendRole}>{player.position}</Text>
+                </View>
+                <Chip icon="pin" label={player.hometown || "Kadro"} compact />
               </View>
-              <Text style={styles.legendHighlight}>{legend.highlight}</Text>
+              <View style={styles.playerMetaRow}>
+                <Chip icon="body" label={`${player.height} m`} compact />
+                <Chip icon="flash" label={`${player.age} yaş`} compact />
+                <Chip
+                  icon="walk-outline"
+                  label={
+                    player.foot === "Both"
+                      ? "Çift ayak"
+                      : player.foot === "Left"
+                        ? "Sol ayak"
+                        : "Sağ ayak"
+                  }
+                  compact
+                />
+              </View>
+              <Text style={styles.legendHighlight}>{player.bio}</Text>
+              <View style={styles.strengthRow}>
+                {player.strengths.map((tag) => (
+                  <Chip key={tag} icon="checkmark-circle" label={tag} compact />
+                ))}
+              </View>
             </View>
           ))}
         </ScrollView>
@@ -247,7 +295,8 @@ const MarsScreen: React.FC = () => {
             <Text style={styles.handoffTitle}>Duyurular moderasyonlu</Text>
           </View>
           <Text style={styles.handoffBody}>
-            Taraftar güvenliği için duyuruları biz yayınlıyoruz. Detayları paylaş, kontrol edip ekleyelim.
+            Taraftar güvenliği için duyuruları biz yayınlıyoruz. Detayları
+            paylaş, kontrol edip ekleyelim.
           </Text>
           <View style={styles.handoffActions}>
             <Pressable
@@ -268,7 +317,10 @@ const MarsScreen: React.FC = () => {
       >
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Pressable style={styles.modalClose} onPress={() => setArchiveOpen(false)}>
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setArchiveOpen(false)}
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
             <Text style={styles.modalTitle}>Arşiv Detayları</Text>
@@ -278,9 +330,12 @@ const MarsScreen: React.FC = () => {
               colors={["rgba(15,169,88,0.35)", "rgba(0,0,0,0.6)"]}
               style={styles.modalHero}
             >
-              <Text style={styles.modalHeroTitle}>Takım tarihi, kupalar, maç hikayeleri</Text>
+              <Text style={styles.modalHeroTitle}>
+                Takım tarihi, kupalar, maç hikayeleri
+              </Text>
               <Text style={styles.modalHeroBody}>
-                İlk kuruluştan bugünlere önemli sezonlar, dönüm maçları ve tribün koreografileri.
+                İlk kuruluştan bugünlere önemli sezonlar, dönüm maçları ve
+                tribün koreografileri.
               </Text>
             </LinearGradient>
 
@@ -297,7 +352,8 @@ const MarsScreen: React.FC = () => {
             <View style={styles.modalSection}>
               <Text style={styles.modalSectionTitle}>Kupa & Unvanlar</Text>
               <Text style={styles.modalCardBody}>
-                (Placeholder) Kulübün lig yükselişleri, bölgesel kupalar, tarihi derbi galibiyetleri ve taraftar ödülleri burada listelenecek.
+                (Placeholder) Kulübün lig yükselişleri, bölgesel kupalar, tarihi
+                derbi galibiyetleri ve taraftar ödülleri burada listelenecek.
               </Text>
             </View>
           </ScrollView>
@@ -305,28 +361,59 @@ const MarsScreen: React.FC = () => {
       </Modal>
 
       <Modal
-        visible={legendOpen}
+        visible={playerOpen}
         animationType="slide"
-        onRequestClose={() => setLegendOpen(false)}
+        onRequestClose={() => setPlayerOpen(false)}
       >
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Pressable style={styles.modalClose} onPress={() => setLegendOpen(false)}>
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setPlayerOpen(false)}
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
-            <Text style={styles.modalTitle}>Efsaneler & Oyuncular</Text>
+            <Text style={styles.modalTitle}>Oyuncu Profilleri</Text>
           </View>
           <ScrollView contentContainerStyle={styles.modalContent}>
-            {legends.map((legend) => (
-              <View key={legend.id} style={styles.modalCard}>
+            {players.map((player) => (
+              <View key={player.id} style={styles.modalCard}>
                 <View style={styles.legendHeader}>
-                  <View>
-                    <Text style={styles.legendName}>{legend.name}</Text>
-                    <Text style={styles.legendRole}>{legend.role}</Text>
+                  <View style={styles.numberBadge}>
+                    <Text style={styles.numberBadgeText}>{player.number}</Text>
                   </View>
-                  <Chip icon="calendar" label={legend.years} compact />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.legendName}>{player.name}</Text>
+                    <Text style={styles.legendRole}>{player.position}</Text>
+                  </View>
+                  <Chip icon="map" label={player.hometown || "Kadro"} compact />
                 </View>
-                <Text style={styles.legendHighlight}>{legend.highlight}</Text>
+                <View style={styles.playerMetaRow}>
+                  <Chip icon="body" label={`${player.height} m`} compact />
+                  <Chip icon="flash" label={`${player.age} yaş`} compact />
+                  <Chip
+                    icon="walk-outline"
+                    label={
+                      player.foot === "Both"
+                        ? "Çift ayak"
+                        : player.foot === "Left"
+                          ? "Sol ayak"
+                          : "Sağ ayak"
+                    }
+                    compact
+                  />
+                </View>
+                <Text style={styles.legendHighlight}>{player.bio}</Text>
+                <View style={styles.strengthRow}>
+                  {player.strengths.map((tag) => (
+                    <Chip
+                      key={tag}
+                      icon="checkmark-circle"
+                      label={tag}
+                      compact
+                    />
+                  ))}
+                </View>
               </View>
             ))}
           </ScrollView>
@@ -340,7 +427,10 @@ const MarsScreen: React.FC = () => {
       >
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Pressable style={styles.modalClose} onPress={() => setKitOpen(false)}>
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setKitOpen(false)}
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
             <Text style={styles.modalTitle}>Forma & Koleksiyon</Text>
@@ -354,7 +444,11 @@ const MarsScreen: React.FC = () => {
               >
                 <View style={styles.kitHeader}>
                   <Text style={styles.kitSeason}>{kit.season}</Text>
-                  <Chip icon="color-palette-outline" label={kit.title} compact />
+                  <Chip
+                    icon="color-palette-outline"
+                    label={kit.title}
+                    compact
+                  />
                 </View>
                 <Text style={styles.kitTitle}>{kit.palette}</Text>
                 <Text style={styles.kitNote}>{kit.note}</Text>
@@ -371,7 +465,10 @@ const MarsScreen: React.FC = () => {
       >
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Pressable style={styles.modalClose} onPress={() => setMomentOpen(false)}>
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setMomentOpen(false)}
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
             <Text style={styles.modalTitle}>Tribün Seçkisi</Text>
@@ -401,7 +498,10 @@ const MarsScreen: React.FC = () => {
       >
         <SafeAreaView style={styles.modalSafe}>
           <View style={styles.modalHeader}>
-            <Pressable style={styles.modalClose} onPress={() => setSubmitOpen(false)}>
+            <Pressable
+              style={styles.modalClose}
+              onPress={() => setSubmitOpen(false)}
+            >
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
             <Text style={styles.modalTitle}>Duyuru Gönder</Text>
@@ -417,7 +517,9 @@ const MarsScreen: React.FC = () => {
                 placeholder="Örn: Deplasman otobüsü"
                 placeholderTextColor={colors.mutedText}
                 value={submission.title}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, title: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, title: text }))
+                }
               />
             </View>
             <View style={styles.formGroup}>
@@ -427,7 +529,9 @@ const MarsScreen: React.FC = () => {
                 placeholder="Örn: Diyarbakır"
                 placeholderTextColor={colors.mutedText}
                 value={submission.city}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, city: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, city: text }))
+                }
               />
             </View>
             <View style={styles.formGroup}>
@@ -437,7 +541,9 @@ const MarsScreen: React.FC = () => {
                 placeholder="Buluşma noktası"
                 placeholderTextColor={colors.mutedText}
                 value={submission.location}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, location: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, location: text }))
+                }
               />
             </View>
             <View style={styles.formGroup}>
@@ -447,7 +553,9 @@ const MarsScreen: React.FC = () => {
                 placeholder="Örn: 12 Aralık, 10:00"
                 placeholderTextColor={colors.mutedText}
                 value={submission.date}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, date: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, date: text }))
+                }
               />
             </View>
             <View style={styles.formGroup}>
@@ -457,7 +565,9 @@ const MarsScreen: React.FC = () => {
                 placeholder="@kullanici veya telefon"
                 placeholderTextColor={colors.mutedText}
                 value={submission.contact}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, contact: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, contact: text }))
+                }
               />
             </View>
             <View style={styles.formGroup}>
@@ -467,11 +577,16 @@ const MarsScreen: React.FC = () => {
                 placeholder="Kısa açıklama"
                 placeholderTextColor={colors.mutedText}
                 value={submission.note}
-                onChangeText={(text) => setSubmission((p) => ({ ...p, note: text }))}
+                onChangeText={(text) =>
+                  setSubmission((p) => ({ ...p, note: text }))
+                }
                 multiline
               />
             </View>
-            <Pressable style={styles.submitBtn} onPress={handleSubmitAnnouncement}>
+            <Pressable
+              style={styles.submitBtn}
+              onPress={handleSubmitAnnouncement}
+            >
               <Text style={styles.submitText}>Gönder ve onaya ilet</Text>
               <Ionicons name="shield-checkmark" size={16} color={colors.text} />
             </Pressable>
@@ -501,7 +616,9 @@ const SectionHeading = ({
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+        {subtitle ? (
+          <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+        ) : null}
       </View>
       {onPress ? (
         <Ionicons name="chevron-forward" size={16} color={colors.mutedText} />
@@ -531,10 +648,7 @@ const Badge = ({
       color={tone === "accent" ? colors.accent : colors.text}
     />
     <Text
-      style={[
-        styles.badgeText,
-        tone === "accent" && { color: colors.accent },
-      ]}
+      style={[styles.badgeText, tone === "accent" && { color: colors.accent }]}
     >
       {text}
     </Text>
@@ -553,7 +667,10 @@ const Chip = ({
   <View
     style={[
       styles.chip,
-      compact && { paddingVertical: spacing.xs / 2, paddingHorizontal: spacing.sm },
+      compact && {
+        paddingVertical: spacing.xs / 2,
+        paddingHorizontal: spacing.sm,
+      },
     ]}
   >
     <Ionicons name={icon} size={14} color={colors.text} />
@@ -561,7 +678,13 @@ const Chip = ({
   </View>
 );
 
-const Meta = ({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) => (
+const Meta = ({
+  icon,
+  text,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+}) => (
   <View style={styles.metaRow}>
     <Ionicons name={icon} size={14} color={colors.mutedText} />
     <Text style={styles.metaText}>{text}</Text>
@@ -735,11 +858,39 @@ const styles = StyleSheet.create({
     fontFamily: typography.semiBold,
     marginTop: 2,
   },
+  numberBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(15,169,88,0.15)",
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.sm,
+  },
+  numberBadgeText: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+  },
+  playerMetaRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
   legendHighlight: {
     color: colors.mutedText,
     fontFamily: typography.medium,
     lineHeight: 20,
     marginTop: spacing.sm,
+  },
+  strengthRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs / 2,
+    marginTop: spacing.xs,
   },
   kitRow: {
     gap: spacing.sm,

@@ -18,6 +18,7 @@ import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
 import FixtureList from "../components/home/FixtureList";
 import LiveTicker from "../components/home/LiveTicker";
+import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
@@ -26,6 +27,7 @@ import {
   fanMoments,
   fixtureData,
   newsData,
+  polls,
 } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -122,10 +124,15 @@ const HomeScreen: React.FC = () => {
         </ScrollView>
 
         <SectionHeader
-          title="Anlık Gol / Pozisyon"
-          subtitle="Canlı maçlardan gol, kart ve pozisyon akışı"
+          title="Anlik Gol / Pozisyon"
+          subtitle="Canli maclardan gol, kart ve pozisyon akisi (harici embed)"
         />
         <LiveTicker />
+        <SectionHeader
+          title="Anket"
+          subtitle="Haftanin maci: kim kazanir?"
+        />
+        <PollCard poll={polls[0]} />
 
         <SectionHeader
           title={t("home.supportTitle")}

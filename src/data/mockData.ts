@@ -22,6 +22,14 @@ export type FixtureItem = {
   score?: string;
 };
 
+export type ExternalClip = {
+  platform: "youtube" | "bein" | "trt" | "x" | "instagram";
+  provider: string;
+  url: string;
+  embedUrl?: string;
+  note?: string;
+};
+
 export type LiveEvent = {
   id: string;
   minute: number;
@@ -29,8 +37,10 @@ export type LiveEvent = {
   type: "goal" | "card" | "var" | "sub";
   player: string;
   detail: string;
+  clip?: ExternalClip;
   videoUrl?: string;
   thumb?: ImageSourcePropType;
+  thumbUrl?: string;
 };
 
 export type StandingRow = {
@@ -51,6 +61,19 @@ export type Legend = {
   role: string;
   years: string;
   highlight: string;
+};
+
+export type Player = {
+  id: string;
+  name: string;
+  position: string;
+  number: number;
+  age: number;
+  height: string;
+  foot: "Right" | "Left" | "Both";
+  bio: string;
+  strengths: string[];
+  hometown?: string;
 };
 
 export type KitItem = {
@@ -226,8 +249,16 @@ export const liveMatch = {
       type: "goal",
       player: "Ahmet Derin",
       detail: "Sol caprazdan plase, ust kose.",
-      videoUrl: "https://fakevideo.link/amedspor-gol1.mp4",
+      clip: {
+        platform: "bein",
+        provider: "beIN SPORTS TR (YouTube)",
+        url: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+        embedUrl: "https://www.youtube.com/embed/aqz-KE-bpKQ?autoplay=1&mute=1",
+        note: "beIN Sports kanalindan gol tekrari.",
+      },
       thumb: require("../assets/footboll/1.jpg"),
+      thumbUrl:
+        "https://img.youtube.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
     },
     {
       id: "e2",
@@ -236,8 +267,15 @@ export const liveMatch = {
       type: "goal",
       player: "Mehmet Kaya",
       detail: "Kafa vurus, skor 1-1.",
-      videoUrl: "https://fakevideo.link/rakip-gol.mp4",
+      clip: {
+        platform: "trt",
+        provider: "TRT Spor YouTube",
+        url: "https://www.youtube.com/watch?v=7QUtEmBT_-w",
+        embedUrl: "https://www.youtube.com/embed/7QUtEmBT_-w?autoplay=1&mute=1",
+        note: "TRT Spor'un yayina aldigi pozisyon tekrari.",
+      },
       thumb: require("../assets/footboll/2.jpg"),
+      thumbUrl: "https://img.youtube.com/vi/7QUtEmBT_-w/hqdefault.jpg",
     },
     {
       id: "e3",
@@ -246,7 +284,12 @@ export const liveMatch = {
       type: "goal",
       player: "Jiyan Karadayi",
       detail: "Ceza sahasi karambolu sonrasi tamamlandi.",
-      videoUrl: "https://fakevideo.link/amedspor-gol2.mp4",
+      clip: {
+        platform: "x",
+        provider: "X / Twitter",
+        url: "https://x.com/Football__Tweet/status/1700152540103938129",
+        note: "X uzerinde paylasilan taraftar videosu.",
+      },
       thumb: require("../assets/footboll/3.jpg"),
     },
     {
@@ -256,7 +299,13 @@ export const liveMatch = {
       type: "card",
       player: "Musa Bulut",
       detail: "Sert mudahale, sari kart.",
-      videoUrl: "https://fakevideo.link/sari-kart.mp4",
+      clip: {
+        platform: "instagram",
+        provider: "Instagram Reels",
+        url: "https://www.instagram.com/reel/CuPj7yLMJhQ/",
+        embedUrl: "https://www.instagram.com/reel/CuPj7yLMJhQ/embed",
+        note: "Instagram'da paylasilan pozisyon.",
+      },
       thumb: require("../assets/footboll/4.jpg"),
     },
   ] as LiveEvent[],
@@ -533,15 +582,90 @@ export const kits: KitItem[] = [
   },
 ];
 
+export const players: Player[] = [
+  {
+    id: "pl1",
+    name: "M. Ali Güneş",
+    position: "Kaleci",
+    number: 1,
+    age: 29,
+    height: "1.88",
+    foot: "Right",
+    bio: "Refleksleri güçlü, çizgi hakimiyeti yüksek. Yan toplarda güven veriyor.",
+    strengths: ["Refleks", "Hava topları", "1v1"],
+    hometown: "Diyarbakır",
+  },
+  {
+    id: "pl2",
+    name: "Baran Karadoğan",
+    position: "Stoper",
+    number: 4,
+    age: 27,
+    height: "1.85",
+    foot: "Left",
+    bio: "Pas kanalı açan sol stoper. İkili mücadelede sert, oyun kurulumunda sakin.",
+    strengths: ["Pas açıları", "Önsezi", "Fizik"],
+    hometown: "Mardin",
+  },
+  {
+    id: "pl3",
+    name: "Rojhat Demir",
+    position: "Ön Libero",
+    number: 6,
+    age: 25,
+    height: "1.80",
+    foot: "Right",
+    bio: "Pres tetikleyicisi. Geçişlerde top kapıp dikine oynuyor.",
+    strengths: ["Pres", "Top kapma", "Dikine pas"],
+    hometown: "Batman",
+  },
+  {
+    id: "pl4",
+    name: "Deniz Yalçın",
+    position: "On Numara",
+    number: 10,
+    age: 24,
+    height: "1.78",
+    foot: "Left",
+    bio: "Dar alanda çözüm üreten kreatif oyun kurucu. Duran toplarda etkili.",
+    strengths: ["Anahtar pas", "Duran top", "Şut"],
+    hometown: "İzmir",
+  },
+  {
+    id: "pl5",
+    name: "Jiyan Karadağ",
+    position: "Kanat Forvet",
+    number: 17,
+    age: 23,
+    height: "1.76",
+    foot: "Both",
+    bio: "Çabuk yön değiştiriyor, içe katla şut tehdidi. Çizgide de asist arıyor.",
+    strengths: ["Çeviklik", "Şut", "İkili oyun"],
+    hometown: "Diyarbakır",
+  },
+  {
+    id: "pl6",
+    name: "Ahmet Derin",
+    position: "Santrafor",
+    number: 9,
+    age: 28,
+    height: "1.83",
+    foot: "Right",
+    bio: "Ceza sahası avcısı. Sırtı dönük duvar olup takımı ileri taşıyor.",
+    strengths: ["Bitiricilik", "Sırtı dönük oyun", "Zamanlama"],
+    hometown: "Kocaeli",
+  },
+];
+
 export const polls: Poll[] = [
   {
     id: "p1",
-    question: "Derbide ilk golü kim atar?",
-    closesIn: "3 saat",
+    question: "Haftanin macini kim kazanir?",
+    closesIn: "12 saat",
     options: [
-      { id: "o1", text: "Amedspor", votes: 245 },
-      { id: "o2", text: "Rakip", votes: 62 },
-      { id: "o3", text: "İlk yarı golsüz", votes: 31 },
+      { id: "o1", text: "Amedspor", votes: 312 },
+      { id: "o2", text: "Kocaelispor", votes: 118 },
+      { id: "o3", text: "Beraberlik", votes: 74 },
     ],
   },
   {

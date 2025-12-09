@@ -18,7 +18,7 @@
     "fixture": "Match Center",
     "feed": "News",
     "chat": "Chat",
-    "mars": "Archive"
+    "mars": "Amed"
   },
   "feed": {
     "title": "News",
@@ -44,7 +44,7 @@
     "heroTitle": "Archive & Announcements",
     "heroSubtitle": "History, legends, kit memories and organization lists in one screen.",
     "sectionArchive": "Club Archive",
-    "sectionLegends": "Legendary Players",
+    "sectionLegends": "Players",
     "sectionKits": "Kits & Collection",
     "sectionMoments": "Tribune Picks",
     "sectionAnnouncements": "Organization Announcements",

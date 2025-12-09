@@ -18,7 +18,7 @@
     "fixture": "Centro de partidos",
     "feed": "Noticias",
     "chat": "Chat",
-    "mars": "Archivo"
+    "mars": "Amed"
   },
   "feed": {
     "title": "Noticias",
@@ -44,7 +44,7 @@
     "heroTitle": "Archivo y anuncios",
     "heroSubtitle": "Historia del club, leyendas, camisetas y lista de eventos, todo en un mismo lugar.",
     "sectionArchive": "Archivo del club",
-    "sectionLegends": "Jugadores legendarios",
+    "sectionLegends": "Jugadores",
     "sectionKits": "Camisetas y colección",
     "sectionMoments": "Momentos en la tribuna",
     "sectionAnnouncements": "Anuncios de organización",
