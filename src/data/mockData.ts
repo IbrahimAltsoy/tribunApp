@@ -74,6 +74,12 @@ export type Player = {
   bio: string;
   strengths: string[];
   hometown?: string;
+  matches?: number;
+  goals?: number;
+  assists?: number;
+  rating?: number;
+  career?: string[];
+  image?: ImageSourcePropType;
 };
 
 export type KitItem = {
@@ -82,6 +88,8 @@ export type KitItem = {
   title: string;
   palette: string;
   note: string;
+  colors?: string[];
+  image?: ImageSourcePropType;
 };
 
 export type PollOption = { id: string; text: string; votes: number };
@@ -142,7 +150,7 @@ export const newsData: NewsItem[] = [
       "Takim son idmaninda tempolu pres ve gecis oyunu uzerine calisti. Tribun provasi yapildi, 11 netlesti.",
     time: "2s",
     category: "Kulup",
-    image: require("../assets/footboll/1.jpg"),
+    image: require("../assets/footboll/2.jpg"),
     body: [
       "Stoper hattinda rotasyon denense de teknik ekip savunma uyumundan memnun. Kanatlarda hizli cikislar icin set calismasi tamamlandi.",
       "Taraftar gruplari mac oncesi koreografi ve tezahurat provasi icin stadyumda bulustu.",
@@ -562,23 +570,29 @@ export const kits: KitItem[] = [
   {
     id: "k1",
     season: "2024/25",
-    title: "İç Saha",
-    palette: "Yeşil - Kırmızı blok, ince beyaz detay",
-    note: "Diyarbakır sur motifleri göğüs çizgisinde işleme.",
+    title: "?? Saha",
+    palette: "Ye?il - K?rm?z? blok, ince beyaz detay",
+    note: "Diyarbak?r sur motifleri g???s ?izgisinde i?leme.",
+    image: require("../assets/footboll/1.jpg"),
+    colors: ["#0FA958", "#D10E0E", "#FFFFFF"],
   },
   {
     id: "k2",
     season: "2023/24",
     title: "Deplasman",
-    palette: "Beyaz zemin, yeşil-kırmızı omuz şeritleri",
-    note: "Minimalist duruş, hafif kumaş.",
+    palette: "Beyaz zemin, ye?il-k?rm?z? omuz ?eritleri",
+    note: "Minimalist duru?, hafif kuma?.",
+    image: require("../assets/footboll/2.jpg"),
+    colors: ["#FFFFFF", "#0FA958", "#D10E0E"],
   },
   {
     id: "k3",
     season: "2022/23",
     title: "Alternatif",
-    palette: "Gece siyahı, neon yeşil vurgu",
-    note: "Gece maçları için tasarlanan özel seri.",
+    palette: "Gece siyah?, neon ye?il vurgu",
+    note: "Gece ma?lar? i?in tasarlanan ?zel seri.",
+    image: require("../assets/footboll/4.jpg"),
+    colors: ["#0D0D0D", "#0FA958", "#12C26A"],
   },
 ];
 
@@ -594,6 +608,12 @@ export const players: Player[] = [
     bio: "Refleksleri güçlü, çizgi hakimiyeti yüksek. Yan toplarda güven veriyor.",
     strengths: ["Refleks", "Hava topları", "1v1"],
     hometown: "Diyarbakır",
+    matches: 26,
+    goals: 0,
+    assists: 0,
+    rating: 7.4,
+    career: ["2023-24: 30 maç, 14 CS", "2024-25: 26 maç, 12 CS"],
+    image: require("../assets/footboll/2.jpg"),
   },
   {
     id: "pl2",
@@ -606,6 +626,12 @@ export const players: Player[] = [
     bio: "Pas kanalı açan sol stoper. İkili mücadelede sert, oyun kurulumunda sakin.",
     strengths: ["Pas açıları", "Önsezi", "Fizik"],
     hometown: "Mardin",
+    matches: 24,
+    goals: 2,
+    assists: 1,
+    rating: 7.1,
+    career: ["2023-24: 28 maç, 2 gol", "2024-25: 24 maç, 3 blok ort."],
+    image: require("../assets/footboll/2.jpg"),
   },
   {
     id: "pl3",
@@ -618,6 +644,12 @@ export const players: Player[] = [
     bio: "Pres tetikleyicisi. Geçişlerde top kapıp dikine oynuyor.",
     strengths: ["Pres", "Top kapma", "Dikine pas"],
     hometown: "Batman",
+    matches: 25,
+    goals: 1,
+    assists: 3,
+    rating: 7.3,
+    career: ["2023-24: 27 maç, 2 asist", "2024-25: 25 maç, 3 asist"],
+    image: require("../assets/footboll/3.jpg"),
   },
   {
     id: "pl4",
@@ -630,6 +662,12 @@ export const players: Player[] = [
     bio: "Dar alanda çözüm üreten kreatif oyun kurucu. Duran toplarda etkili.",
     strengths: ["Anahtar pas", "Duran top", "Şut"],
     hometown: "İzmir",
+    matches: 23,
+    goals: 7,
+    assists: 9,
+    rating: 7.8,
+    career: ["2023-24: 29 maç, 6G 8A", "2024-25: 23 maç, 7G 9A"],
+    image: require("../assets/footboll/4.jpg"),
   },
   {
     id: "pl5",
@@ -642,6 +680,12 @@ export const players: Player[] = [
     bio: "Çabuk yön değiştiriyor, içe katla şut tehdidi. Çizgide de asist arıyor.",
     strengths: ["Çeviklik", "Şut", "İkili oyun"],
     hometown: "Diyarbakır",
+    matches: 25,
+    goals: 9,
+    assists: 6,
+    rating: 7.6,
+    career: ["2023-24: 31 maç, 9G 7A", "2024-25: 25 maç, 9G 6A"],
+    image: require("../assets/footboll/2.jpg"),
   },
   {
     id: "pl6",
@@ -654,6 +698,12 @@ export const players: Player[] = [
     bio: "Ceza sahası avcısı. Sırtı dönük duvar olup takımı ileri taşıyor.",
     strengths: ["Bitiricilik", "Sırtı dönük oyun", "Zamanlama"],
     hometown: "Kocaeli",
+    matches: 24,
+    goals: 14,
+    assists: 4,
+    rating: 7.9,
+    career: ["2023-24: 30 maç, 15 gol", "2024-25: 24 maç, 14 gol"],
+    image: require("../assets/footboll/2.jpg"),
   },
 ];
 
@@ -802,7 +852,7 @@ export const fanMoments: FanMoment[] = [
     caption: "Projeksiyon yansitildi, 40 kisiyiz. Sesimizi duyuyor musunuz?",
     time: "35dk",
     source: "Ev/Izleme",
-    image: require("../assets/footboll/1.jpg"),
+    image: require("../assets/footboll/2.jpg"),
   },
   {
     id: "fm4",
@@ -841,6 +891,7 @@ export const fanMoments: FanMoment[] = [
     image: "../assets/footboll/1.jpg",
   },
 ];
+
 
 
 
