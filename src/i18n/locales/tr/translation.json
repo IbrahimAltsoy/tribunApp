@@ -257,5 +257,46 @@
     "back": "Geri",
     "time_ago": "{{time}} önce",
     "newsNotFound": "Haber bulunamadı"
+  },
+  "team": {
+    "title": "Takım",
+    "subtitle": "Yönetim, teknik kadro ve oyuncular",
+    "genderSelector": {
+      "mens": "Erkek Takımı",
+      "womens": "Kadın Takımı"
+    },
+    "tabs": {
+      "management": "Yönetim Kadrosu",
+      "coaching": "Teknik Kadro",
+      "squad": "Oyuncular"
+    },
+    "player": {
+      "jerseyNumber": "Forma No",
+      "position": "Pozisyon",
+      "detailedPosition": "Detaylı Pozisyon",
+      "age": "Yaş",
+      "birthDate": "Doğum Tarihi",
+      "birthPlace": "Doğum Yeri",
+      "nationality": "Uyruk",
+      "height": "Boy",
+      "weight": "Kilo",
+      "preferredFoot": "Tercih Ettiği Ayak",
+      "marketValue": "Piyasa Değeri",
+      "currentClub": "Mevcut Kulüp",
+      "previousClubs": "Eski Kulüpler",
+      "socialMedia": "Sosyal Medya",
+      "foot": {
+        "left": "Sol",
+        "right": "Sağ",
+        "both": "Çift Ayak"
+      }
+    },
+    "positions": {
+      "goalkeeper": "Kaleciler",
+      "defender": "Defans",
+      "midfielder": "Orta Saha",
+      "forward": "Forvet"
+    },
+    "emptyState": "Bu kategoride henüz kişi bulunmuyor"
   }
 }

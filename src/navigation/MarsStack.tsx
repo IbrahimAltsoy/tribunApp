@@ -4,6 +4,7 @@ import MarsScreen from "../screens/MarsScreen";
 import ArchiveScreen from "../screens/ArchiveScreen";
 import PlayersScreen from "../screens/PlayersScreen";
 import KitsScreen from "../screens/KitsScreen";
+import TeamScreen from "../screens/TeamScreen";
 import { MarsStackParamList } from "./types";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
@@ -45,6 +46,11 @@ const MarsStack: React.FC = () => {
       <Stack.Screen
         name="Kits"
         component={KitsScreen}
+        options={{ title: "" }}
+      />
+      <Stack.Screen
+        name="Team"
+        component={TeamScreen}
         options={{ title: "" }}
       />
     </Stack.Navigator>

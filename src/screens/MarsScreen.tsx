@@ -62,10 +62,10 @@ const MarsScreen: React.FC = () => {
       route: "Archive",
     },
     {
-      label: t("archive.sectionLegends"),
+      label: t("team.title"),
       value: players.length,
-      meta: t("archive.sectionLegendsSubtitle"),
-      route: "Players",
+      meta: t("team.subtitle"),
+      route: "Team",
     },
     {
       label: t("archive.sectionKits"),

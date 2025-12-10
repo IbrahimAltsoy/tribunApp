@@ -230,5 +230,46 @@
     "back": "Back",
     "time_ago": "{{time}} ago",
     "newsNotFound": "News not found"
+  },
+  "team": {
+    "title": "Team",
+    "subtitle": "Management, coaching staff and players",
+    "genderSelector": {
+      "mens": "Men's Team",
+      "womens": "Women's Team"
+    },
+    "tabs": {
+      "management": "Management",
+      "coaching": "Coaching Staff",
+      "squad": "Players"
+    },
+    "player": {
+      "jerseyNumber": "Jersey No",
+      "position": "Position",
+      "detailedPosition": "Detailed Position",
+      "age": "Age",
+      "birthDate": "Birth Date",
+      "birthPlace": "Birth Place",
+      "nationality": "Nationality",
+      "height": "Height",
+      "weight": "Weight",
+      "preferredFoot": "Preferred Foot",
+      "marketValue": "Market Value",
+      "currentClub": "Current Club",
+      "previousClubs": "Previous Clubs",
+      "socialMedia": "Social Media",
+      "foot": {
+        "left": "Left",
+        "right": "Right",
+        "both": "Both Feet"
+      }
+    },
+    "positions": {
+      "goalkeeper": "Goalkeepers",
+      "defender": "Defenders",
+      "midfielder": "Midfielders",
+      "forward": "Forwards"
+    },
+    "emptyState": "No people in this category yet"
   }
 }
