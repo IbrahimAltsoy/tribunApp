@@ -2,6 +2,9 @@
   "greeting": "Bonjour ! Bienvenue dans notre application.",
   "change_language": "Changer la langue",
   "current_language": "Langue actuelle :",
+  "actions": {
+    "close": "Fermer"
+  },
   "nav": {
     "home": "Accueil",
     "chat": "Salles de discussion",
@@ -82,7 +85,13 @@
     "announcementSubtitle": "Suis les points de rassemblement et les contacts",
     "shareMomentTitle": "Share a Moment",
     "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more"
+    "moreMomentsTitle": "See more",
+    "momentDefaults": {
+      "user": "Toi",
+      "city": "Ville non prÃ©cisÃ©e",
+      "caption": "Nouveau moment",
+      "time": "Maintenant"
+    }
   },
   "chat": {
     "title": "Amedspor Tribun",

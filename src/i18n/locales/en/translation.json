@@ -2,6 +2,9 @@
   "greeting": "Hello! Welcome to our app.",
   "change_language": "Change Language",
   "current_language": "Current Language:",
+  "actions": {
+    "close": "Close"
+  },
   "nav": {
     "home": "Home",
     "chat": "Chat Rooms",
@@ -82,7 +85,13 @@
     "announcementSubtitle": "Find meeting points and communication channels",
     "shareMomentTitle": "Share a Moment",
     "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more"
+    "moreMomentsTitle": "See more",
+    "momentDefaults": {
+      "user": "You",
+      "city": "City not provided",
+      "caption": "New moment",
+      "time": "Now"
+    }
   },
   "chat": {
     "title": "Amedspor Tribun",

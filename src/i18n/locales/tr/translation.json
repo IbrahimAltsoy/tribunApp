@@ -2,6 +2,9 @@
   "greeting": "Merhaba! Uygulamam?za Ho? Geldiniz.",
   "change_language": "Dili De?i?tir",
   "current_language": "Mevcut Dil:",
+  "actions": {
+    "close": "Kapat"
+  },
   "nav": {
     "home": "Ana Sayfa",
     "chat": "Sohbet Odalar?",
@@ -119,7 +122,13 @@
     "announcementSubtitle": "Toplanma noktalar?n? ve ileti?im kanallar?n? yakala",
     "shareMomentTitle": "An? Payla?",
     "shareMomentSubtitle": "?ehir, k?sa not ve g?rsel ekle",
-    "moreMomentsTitle": "Daha fazlas?"
+    "moreMomentsTitle": "Daha fazlas?",
+    "momentDefaults": {
+      "user": "Sen",
+      "city": "Sehir belirtilmedi",
+      "caption": "Yeni paylasim",
+      "time": "Simdi"
+    }
   },
   "chat": {
     "title": "Amedspor Trib?n",

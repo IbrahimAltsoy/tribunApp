@@ -2,6 +2,9 @@
   "greeting": "Silav! Bi xêr hatî sepanê me.",
   "change_language": "Ziman biguherîne",
   "current_language": "Zimanê niha:",
+  "actions": {
+    "close": "Close"
+  },
   "nav": {
     "home": "Destpêk",
     "chat": "Odeyên sohbetê",
@@ -82,7 +85,13 @@
     "announcementSubtitle": "Noqteyên civînê û rêyên têkilîyê bişopîne",
     "shareMomentTitle": "Share a Moment",
     "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more"
+    "moreMomentsTitle": "See more",
+    "momentDefaults": {
+      "user": "You",
+      "city": "City not provided",
+      "caption": "New moment",
+      "time": "Now"
+    }
   },
   "chat": {
     "title": "Amedspor Tribun",

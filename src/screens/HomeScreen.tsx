@@ -36,6 +36,7 @@ import { BottomTabParamList } from "../navigation/BottomTabs";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useShareMomentForm } from "../hooks/useShareMomentForm";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
@@ -47,7 +48,6 @@ const HomeScreen: React.FC = () => {
   const featuredNews = newsData.slice(0, 5);
 
   const [moments, setMoments] = useState(fanMoments);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
@@ -55,10 +55,18 @@ const HomeScreen: React.FC = () => {
     (typeof fanMoments)[0] | undefined
   >(undefined);
 
-  const [newCity, setNewCity] = useState("");
-  const [newCaption, setNewCaption] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-
+  const {
+    visible: shareModalVisible,
+    open: openShareModal,
+    close: closeShareModal,
+    city: newCity,
+    caption: newCaption,
+    imageUrl,
+    setCity: setNewCity,
+    setCaption: setNewCaption,
+    setImageUrl,
+    submit,
+  } = useShareMomentForm();
 
   const momentList = useMemo(() => moments, [moments]);
 
@@ -68,26 +76,9 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleAddMoment = () => {
-    const trimmedCity = newCity.trim();
-    const trimmedCaption = newCaption.trim();
-
-    if (!trimmedCity && !trimmedCaption && !imageUrl) return;
-
-    const newMoment = {
-      id: `local-${Date.now()}`,
-      user: "Sen",
-      location: trimmedCity || "Sehir belirtilmedi",
-      caption: trimmedCaption || "Yeni paylasim",
-      time: "Simdi",
-      source: "Tribun" as const,
-      image: imageUrl ? { uri: imageUrl } : undefined,
-    } satisfies (typeof fanMoments)[0];
-
+    const newMoment = submit();
+    if (!newMoment) return;
     setMoments((prev) => [newMoment, ...prev]);
-    setNewCity("");
-    setNewCaption("");
-    setImageUrl("");
-    setShareModalVisible(false);
   };
 
   return (
@@ -98,7 +89,7 @@ const HomeScreen: React.FC = () => {
         <SectionHeader title={t("home.momentsTitle")} />
         <FanMomentsSection
           moments={momentList}
-          onPressAdd={() => setShareModalVisible(true)}
+          onPressAdd={openShareModal}
           onPressMore={() => setAllMomentsVisible(true)}
           onSelectMoment={handleOpenDetail}
         />
@@ -171,7 +162,7 @@ const HomeScreen: React.FC = () => {
         onChangeCaption={setNewCaption}
         onChangeImageUrl={setImageUrl}
         onSubmit={handleAddMoment}
-        onClose={() => setShareModalVisible(false)}
+        onClose={closeShareModal}
       />
 
       <MomentDetailModal
@@ -204,8 +195,8 @@ const HomeScreen: React.FC = () => {
                 <Ionicons name="globe-outline" size={20} color={colors.text} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.languageTitle}>{t('change_language')}</Text>
-                <Text style={styles.languageSubtitle}>{t('greeting')}</Text>
+                <Text style={styles.languageTitle}>{t("change_language")}</Text>
+                <Text style={styles.languageSubtitle}>{t("greeting")}</Text>
               </View>
             </View>
 

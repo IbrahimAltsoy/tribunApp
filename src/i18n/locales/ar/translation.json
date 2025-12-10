@@ -2,6 +2,9 @@
   "greeting": "مرحبًا! أهلاً بك في تطبيقنا.",
   "change_language": "تغيير اللغة",
   "current_language": "اللغة الحالية:",
+  "actions": {
+    "close": "Close"
+  },
   "nav": {
     "home": "الصفحة الرئيسية",
     "chat": "غرف الدردشة",
@@ -82,7 +85,13 @@
     "announcementSubtitle": "تابع نقاط التجمع وقنوات التواصل",
     "shareMomentTitle": "Share a Moment",
     "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more"
+    "moreMomentsTitle": "See more",
+    "momentDefaults": {
+      "user": "You",
+      "city": "City not provided",
+      "caption": "New moment",
+      "time": "Now"
+    }
   },
   "chat": {
     "title": "Amedspor Tribun",

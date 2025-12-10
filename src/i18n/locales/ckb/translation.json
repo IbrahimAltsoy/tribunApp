@@ -2,6 +2,9 @@
   "greeting": "سڵاو! بەخێربێیت بۆ ئەپڵیکەیشنەکەمان.",
   "change_language": "گۆڕینی زمان",
   "current_language": "زمانی ئێستا:",
+  "actions": {
+    "close": "Close"
+  },
   "nav": {
     "home": "سەرەتا",
     "chat": "ژوورەکانی گفتوگۆ",
@@ -82,7 +85,13 @@
     "announcementSubtitle": "شوێنە جێگیرەکان و ڕێگای پەیوەندی بدۆزەرەوە",
     "shareMomentTitle": "Share a Moment",
     "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more"
+    "moreMomentsTitle": "See more",
+    "momentDefaults": {
+      "user": "You",
+      "city": "City not provided",
+      "caption": "New moment",
+      "time": "Now"
+    }
   },
   "chat": {
     "title": "Amedspor Tribun",

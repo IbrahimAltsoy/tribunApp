@@ -8,20 +8,25 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import i18n, { availableLanguages } from "../i18n";
+import type { LanguageCode } from "../i18n";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 
-const LanguageSwitcher = ({ onClose }) => {
+type LanguageSwitcherProps = {
+  onClose?: () => void;
+};
+
+const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ onClose }) => {
   const { t } = useTranslation();
-  const current = i18n.language;
+  const current =
+    (availableLanguages.find((lng) => lng.code === i18n.language)?.code as
+      LanguageCode | undefined) || availableLanguages[0].code;
   const isRTL = I18nManager.isRTL;
 
-  const handleChange = (code) => {
+  const handleChange = (code: LanguageCode) => {
     i18n.changeLanguage(code);
-    if (onClose) {
-      onClose();
-    }
+    onClose?.();
   };
 
   return (
@@ -31,7 +36,8 @@ const LanguageSwitcher = ({ onClose }) => {
           {t("change_language")}
         </Text>
         <Text style={[styles.subtitle, isRTL && styles.rtlText]}>
-          {t("current_language")} <Text style={styles.code}>{current}</Text>
+          {t("current_language")}{" "}
+          <Text style={styles.code}>{current}</Text>
         </Text>
       </View>
 
@@ -85,7 +91,7 @@ const LanguageSwitcher = ({ onClose }) => {
           style={styles.closeButton}
           accessibilityRole="button"
         >
-          <Text style={styles.closeText}>Kapat</Text>
+          <Text style={styles.closeText}>{t("actions.close")}</Text>
         </Pressable>
       ) : null}
     </View>
