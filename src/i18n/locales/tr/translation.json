@@ -204,7 +204,50 @@
   },
   "fixture": {
     "liveTickerTitle": "Anlık Gol / Pozisyon",
-    "liveTickerSubtitle": "Canlı maçlardan gol, kart ve pozisyon akışı"
+    "liveTickerSubtitle": "Canlı maçlardan gol, kart ve pozisyon akışı",
+    "genderSelector": {
+      "mens": "Erkek Takımı",
+      "womens": "Kadın Takımı"
+    },
+    "legend": {
+      "title": "Açıklamalar",
+      "promotion": "Yükselme",
+      "playoffFinalist": "Play-off Finalist",
+      "playoff": "Play-off",
+      "relegation": "Düşme",
+      "pointsDeduction": "Puan Cezası"
+    },
+    "lastWeeks": {
+      "title": "Son 5 Hafta",
+      "week": "{{week}}. Hafta",
+      "noMatches": "Bu haftaya ait maç bulunamadı"
+    },
+    "upcomingFixtures": {
+      "title": "Önümüzdeki Maçlar",
+      "week": "{{week}}. Hafta",
+      "noMatches": "Bu haftaya ait maç bulunamadı"
+    },
+    "standings": {
+      "title": "Puan Durumu",
+      "mensTeam": "Erkek Takımı",
+      "womensTeam": "Kadın Takımı",
+      "leagueMens": "TFF 1. Lig 2024-25",
+      "leagueWomens": "Kadınlar 1. Ligi 2024-25",
+      "week": "{{week}}. Hafta",
+      "tabGeneral": "Genel",
+      "tabHome": "İç Saha",
+      "tabAway": "Deplasman",
+      "rank": "Sıra",
+      "team": "Takım",
+      "played": "O",
+      "won": "G",
+      "drawn": "B",
+      "lost": "M",
+      "goalsFor": "A",
+      "goalsAgainst": "Y",
+      "goalDifference": "Av",
+      "points": "P"
+    }
   },
   "feed": {
     "title": "Haberler",

@@ -177,7 +177,50 @@
     "vs": "{{home}} vs {{away}}",
     "vsDash": "{{home}} - {{away}}",
     "liveTickerTitle": "Live Goals / Positions",
-    "liveTickerSubtitle": "Goal, card and position stream from live matches"
+    "liveTickerSubtitle": "Goal, card and position stream from live matches",
+    "genderSelector": {
+      "mens": "Men's Team",
+      "womens": "Women's Team"
+    },
+    "legend": {
+      "title": "Legend",
+      "promotion": "Promotion",
+      "playoffFinalist": "Play-off Finalist",
+      "playoff": "Play-off",
+      "relegation": "Relegation",
+      "pointsDeduction": "Points Deduction"
+    },
+    "lastWeeks": {
+      "title": "Last 5 Weeks",
+      "week": "Week {{week}}",
+      "noMatches": "No matches found for this week"
+    },
+    "upcomingFixtures": {
+      "title": "Upcoming Matches",
+      "week": "Week {{week}}",
+      "noMatches": "No matches found for this week"
+    },
+    "standings": {
+      "title": "Standings",
+      "mensTeam": "Men's Team",
+      "womensTeam": "Women's Team",
+      "leagueMens": "TFF 1st League 2024-25",
+      "leagueWomens": "Women's 1st League 2024-25",
+      "week": "Week {{week}}",
+      "tabGeneral": "Overall",
+      "tabHome": "Home",
+      "tabAway": "Away",
+      "rank": "Rank",
+      "team": "Team",
+      "played": "P",
+      "won": "W",
+      "drawn": "D",
+      "lost": "L",
+      "goalsFor": "GF",
+      "goalsAgainst": "GA",
+      "goalDifference": "GD",
+      "points": "Pts"
+    }
   },
   "feed": {
     "title": "News",
