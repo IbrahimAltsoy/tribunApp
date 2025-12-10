@@ -46,6 +46,12 @@
   "archive": {
     "heroTitle": "Ar?iv & Duyurular",
     "heroSubtitle": "Tarih?e, efsaneler, forma hat?ralar? ve organizasyon listeleri tek ekranda.",
+    "heroBadgeAmedArea": "Amed Alanı",
+    "heroBadgeTribune": "Tribün Hafızası",
+    "since1932": "1932'den beri",
+    "clubMemory": "Kulüp hafızası",
+    "formaPeriod": "Forma dönemi",
+    "activeCalls": "Aktif çağrılar",
     "sectionArchive": "Kul?p Ar?ivi",
     "sectionArchiveSubtitle": "B?y?k hikayeyi ?? sat?rda yakala",
     "sectionLegends": "Oyuncular",
@@ -59,6 +65,9 @@
     "sectionCreate": "Yeni Duyuru Olu?tur",
     "sectionCreateSubtitle": "Duyurunu bize ilet, moderasyon sonras? ekleyelim",
     "pendingApproval": "Onay bekliyor",
+    "moderatedAnnouncements": "Duyurular moderasyonlu",
+    "moderationDescription": "Taraftar güvenliği için duyuruları biz yayınlıyoruz. Detayları paylaş, kontrol edip ekleyelim.",
+    "announcementForm": "Duyuru formu",
     "modalArchiveTitle": "Ar?iv Detaylar?",
     "modalPlayersTitle": "Oyuncu Profilleri",
     "modalKitsTitle": "Forma & Koleksiyon",
@@ -123,6 +132,8 @@
     "shareMomentTitle": "An? Payla?",
     "shareMomentSubtitle": "?ehir, k?sa not ve g?rsel ekle",
     "moreMomentsTitle": "Daha fazlas?",
+    "allTribuneMoments": "Tüm Tribün Anları",
+    "timeAgo": "{{time}} önce",
     "momentDefaults": {
       "user": "Sen",
       "city": "Sehir belirtilmedi",
@@ -139,5 +150,69 @@
   },
   "like": "Beğen",
   "share": "Paylaş",
-  "details": "Detaylar"
+  "details": "Detaylar",
+  "detailsView": "Detayları Gör",
+  "error": "Hata",
+  "ok": "Tamam",
+  "cancel": "İptal",
+  "appSlogan": "Bihevra Amed",
+  "errorBoundary": {
+    "title": "Bir Şeyler Yanlış Gitti",
+    "message": "Üzgünüz, beklenmeyen bir hata oluştu.\nLütfen uygulamayı yeniden başlatmayı deneyin.",
+    "errorDetailsTitle": "Hata Detayları:",
+    "retry": "Tekrar Dene"
+  },
+  "validation": {
+    "required": "Bu alan zorunludur",
+    "tooShort": "Çok kısa (en az {{min}} karakter)",
+    "tooLong": "Çok uzun (en fazla {{max}} karakter)",
+    "invalidFormat": "Geçersiz format",
+    "invalidUrl": "Geçersiz URL",
+    "invalidImageUrl": "Geçersiz görsel URL'si (jpg, png, gif, webp)",
+    "invalidDate": "Geçersiz tarih formatı",
+    "urlBlocked": "Bu bağlantı güvenlik nedeniyle açılamıyor",
+    "urlCannotOpen": "Bu bağlantı cihazınızda açılamıyor",
+    "noUrlProvided": "URL belirtilmedi"
+  },
+  "shareMoment": {
+    "title": "Anı Paylaş",
+    "cityPlaceholder": "Şehir / Lokasyon",
+    "captionPlaceholder": "Kısa açıklama",
+    "imageUrlPlaceholder": "Görsel URL (opsiyonel)",
+    "submit": "Paylaş",
+    "cancel": "İptal",
+    "cityRequired": "Şehir belirtilmelidir",
+    "cityTooShort": "Şehir en az 2 karakter olmalıdır",
+    "cityTooLong": "Şehir en fazla 100 karakter olabilir",
+    "captionRequired": "Açıklama zorunludur",
+    "captionTooShort": "Açıklama en az 3 karakter olmalıdır",
+    "captionTooLong": "Açıklama en fazla 500 karakter olabilir",
+    "invalidImageUrl": "Geçersiz görsel URL'si",
+    "success": "Anınız başarıyla paylaşıldı"
+  },
+  "announcement": {
+    "titleRequired": "Başlık zorunludur",
+    "titleTooShort": "Başlık en az 5 karakter olmalıdır",
+    "titleTooLong": "Başlık en fazla 200 karakter olabilir",
+    "cityRequired": "Şehir zorunludur",
+    "cityTooLong": "Şehir en fazla 100 karakter olabilir",
+    "dateRequired": "Tarih zorunludur",
+    "invalidDateFormat": "Geçersiz tarih formatı (örn: 15 Aralık, 19:00)",
+    "locationTooLong": "Mekan en fazla 200 karakter olabilir",
+    "contactTooLong": "İletişim en fazla 100 karakter olabilir",
+    "noteTooLong": "Not en fazla 1000 karakter olabilir"
+  },
+  "fixture": {
+    "liveTickerTitle": "Anlık Gol / Pozisyon",
+    "liveTickerSubtitle": "Canlı maçlardan gol, kart ve pozisyon akışı"
+  },
+  "feed": {
+    "title": "Haberler",
+    "subtitle": "Mock verilerle güncel Amedspor gündemi",
+    "category_all": "Tüm",
+    "mock_reads": "Mock okuma",
+    "back": "Geri",
+    "time_ago": "{{time}} önce",
+    "newsNotFound": "Haber bulunamadı"
+  }
 }

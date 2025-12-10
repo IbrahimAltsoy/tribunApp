@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   ImageBackground,
   Modal,
   Pressable,
@@ -50,11 +51,27 @@ const FeedScreen: React.FC = () => {
 
   useEffect(() => {
     const newsId = route.params?.newsId;
-    if (newsId) {
-      const target = newsData.find((n) => n.id === newsId);
-      if (target) setActiveNews(target);
+    if (!newsId) return;
+
+    const target = newsData.find((n) => n.id === newsId);
+    if (target) {
+      setActiveNews(target);
+    } else {
+      // Handle missing news item
+      Alert.alert(
+        t("error"),
+        t("feed.newsNotFound"),
+        [
+          {
+            text: t("ok"),
+            onPress: () => {
+              navigation.setParams({ newsId: undefined });
+            },
+          },
+        ]
+      );
     }
-  }, [route.params?.newsId]);
+  }, [route.params?.newsId, navigation, t]);
 
   const handleCloseDetail = () => {
     const origin = route.params?.origin;

@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import {
   ImageBackground,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,7 +11,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur"; // 🔥 yeni
+import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
@@ -23,6 +24,7 @@ import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import {
   fanMoments,
   fixtureData,
@@ -33,10 +35,9 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { BottomTabParamList } from "../navigation/BottomTabs";
-import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
-import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useShareMomentForm } from "../hooks/useShareMomentForm";
+import { openURLSafely } from "../utils/urlValidator";
+import { EXTERNAL_LINKS } from "../constants/app";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
@@ -45,7 +46,9 @@ const HomeScreen: React.FC = () => {
   const navigation =
     useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const { t } = useTranslation();
-  const featuredNews = newsData.slice(0, 5);
+
+  // Memoize featured news slice
+  const featuredNews = useMemo(() => newsData.slice(0, 5), []);
 
   const [moments, setMoments] = useState(fanMoments);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -70,21 +73,35 @@ const HomeScreen: React.FC = () => {
 
   const momentList = useMemo(() => moments, [moments]);
 
-  const handleOpenDetail = (moment: (typeof fanMoments)[0]) => {
+  const handleOpenDetail = useCallback((moment: (typeof fanMoments)[0]) => {
     setSelectedMoment(moment);
     setDetailModalVisible(true);
-  };
+  }, []);
 
-  const handleAddMoment = () => {
+  const handleAddMoment = useCallback(() => {
     const newMoment = submit();
     if (!newMoment) return;
     setMoments((prev) => [newMoment, ...prev]);
-  };
+  }, [submit]);
+
+  const handleNewsPress = useCallback((id: string) => {
+    navigation.navigate("Feed", { newsId: id, origin: "Home" });
+  }, [navigation]);
+
+  const handleLanguagePress = useCallback(() => {
+    setLanguageModalVisible(true);
+  }, []);
+
+  const handleStorePress = useCallback(() => {
+    openURLSafely(EXTERNAL_LINKS.STORE, {
+      errorTitle: t("error"),
+    });
+  }, [t]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Header onPressLanguage={() => setLanguageModalVisible(true)} />
+        <Header onPressLanguage={handleLanguagePress} />
 
         <SectionHeader title={t("home.momentsTitle")} />
         <FanMomentsSection
@@ -107,16 +124,14 @@ const HomeScreen: React.FC = () => {
             <NewsCard
               key={news.id}
               item={news}
-              onPress={(id) =>
-                navigation.navigate("Feed", { newsId: id, origin: "Home" })
-              }
+              onPress={handleNewsPress}
             />
           ))}
         </ScrollView>
 
         <SectionHeader
-          title="Anlik Gol / Pozisyon"
-          subtitle="Canli maclardan gol, kart ve pozisyon akisi (harici embed)"
+          title={t("fixture.liveTickerTitle")}
+          subtitle={t("fixture.liveTickerSubtitle")}
         />
         <LiveTicker />
         <SectionHeader
@@ -130,7 +145,7 @@ const HomeScreen: React.FC = () => {
           subtitle={t("home.supportSubtitle")}
         />
         <Pressable
-          onPress={() => Linking.openURL("https://amedstore.com")}
+          onPress={handleStorePress}
           style={styles.supportCard}
           accessibilityRole="button"
         >

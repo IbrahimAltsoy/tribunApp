@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
@@ -29,7 +30,10 @@ const AllMomentsModal: React.FC<Props> = ({
   moments,
   onClose,
   onSelect,
-}) => (
+}) => {
+  const { t } = useTranslation();
+
+  return (
   <Modal
     visible={visible}
     transparent
@@ -39,7 +43,7 @@ const AllMomentsModal: React.FC<Props> = ({
     <View style={styles.allOverlay}>
       <View style={styles.allCard}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Tüm Tribün Anları</Text>
+          <Text style={styles.modalTitle}>{t("home.allTribuneMoments")}</Text>
           <Pressable onPress={onClose}>
             <Ionicons name="close" size={22} color={colors.text} />
           </Pressable>
@@ -81,7 +85,7 @@ const AllMomentsModal: React.FC<Props> = ({
                 </View>
                 <Text style={styles.allCaption}>{moment.caption}</Text>
                 <Text style={styles.allMeta}>
-                  {moment.location} • {moment.time} önce
+                  {moment.location} • {t("home.timeAgo", { time: moment.time })}
                 </Text>
               </View>
             </Pressable>
@@ -90,7 +94,8 @@ const AllMomentsModal: React.FC<Props> = ({
       </View>
     </View>
   </Modal>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   allOverlay: {

@@ -1,6 +1,8 @@
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
@@ -10,47 +12,61 @@ type Props = {
   announcement: (typeof announcements)[0];
 };
 
-const AnnouncementCard: React.FC<Props> = ({ announcement }) => (
-  <View style={styles.card}>
-    <View style={styles.headerRow}>
-      <View style={styles.titleBlock}>
-        <Text style={styles.title}>{announcement.title} </Text>
-        <View style={styles.pill}>
-          <Ionicons name="location-outline" size={14} color={colors.text} />
-          <Text style={styles.pillText}>{announcement.city}</Text>
+const AnnouncementCard: React.FC<Props> = ({ announcement }) => {
+  const { t } = useTranslation();
+
+  const handleLinkPress = () => {
+    openURLSafely(announcement.link, {
+      errorTitle: t("error"),
+      invalidUrlMessage: t("validation.urlBlocked"),
+    });
+  };
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.headerRow}>
+        <View style={styles.titleBlock}>
+          <Text style={styles.title}>{announcement.title} </Text>
+          <View style={styles.pill}>
+            <Ionicons name="location-outline" size={14} color={colors.text} />
+            <Text style={styles.pillText}>{announcement.city}</Text>
+          </View>
+        </View>
+        <View style={styles.datePill}>
+          <Ionicons name="calendar-outline" size={14} color={colors.text} />
+          <Text style={styles.pillText}>{announcement.date}</Text>
         </View>
       </View>
-      <View style={styles.datePill}>
-        <Ionicons name="calendar-outline" size={14} color={colors.text} />
-        <Text style={styles.pillText}>{announcement.date}</Text>
+
+      <View style={styles.metaRow}>
+        <Ionicons name="navigate-outline" size={16} color={colors.mutedText} />
+        <Text style={styles.metaText}>{announcement.location}</Text>
+      </View>
+
+      <Text style={styles.note}>{announcement.note}</Text>
+
+      <View style={styles.footerRow}>
+        <View style={styles.contactRow}>
+          <Ionicons name="chatbubbles-outline" size={16} color={colors.text} />
+          <Text style={styles.contactText}>{announcement.contact}</Text>
+        </View>
+        {announcement.link && (
+          <Pressable
+            style={styles.cta}
+            onPress={handleLinkPress}
+            accessibilityRole="button"
+          >
+            <Text style={styles.ctaText}>{t("details")}</Text>
+            <Ionicons name="arrow-forward" size={14} color={colors.text} />
+          </Pressable>
+        )}
       </View>
     </View>
+  );
+};
 
-    <View style={styles.metaRow}>
-      <Ionicons name="navigate-outline" size={16} color={colors.mutedText} />
-      <Text style={styles.metaText}>{announcement.location}</Text>
-    </View>
-
-    <Text style={styles.note}>{announcement.note}</Text>
-
-    <View style={styles.footerRow}>
-      <View style={styles.contactRow}>
-        <Ionicons name="chatbubbles-outline" size={16} color={colors.text} />
-        <Text style={styles.contactText}>{announcement.contact}</Text>
-      </View>
-      {announcement.link && (
-        <Pressable
-          style={styles.cta}
-          onPress={() => Linking.openURL(announcement.link!)}
-          accessibilityRole="button"
-        >
-          <Text style={styles.ctaText}>Detay</Text>
-          <Ionicons name="arrow-forward" size={14} color={colors.text} />
-        </Pressable>
-      )}
-    </View>
-  </View>
-);
+// Wrap with React.memo for performance
+export default React.memo(AnnouncementCard);
 
 const styles = StyleSheet.create({
   card: {
@@ -149,5 +165,3 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
   },
 });
-
-export default AnnouncementCard;

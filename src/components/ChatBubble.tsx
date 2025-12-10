@@ -28,7 +28,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onLongPress }) => {
   const scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.parallel([
+    const animation = Animated.parallel([
       Animated.spring(slideAnim, {
         toValue: 0,
         tension: 100,
@@ -40,8 +40,15 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onLongPress }) => {
         duration: 300,
         useNativeDriver: true,
       }),
-    ]).start();
-  }, []);
+    ]);
+
+    animation.start();
+
+    // Cleanup: stop animation when component unmounts
+    return () => {
+      animation.stop();
+    };
+  }, [slideAnim, fadeAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scale, {

@@ -9,7 +9,7 @@ type Props = {
   poll: (typeof polls)[0];
 };
 
-const PollCard: React.FC<Props> = ({ poll }) => {
+const PollCard: React.FC<Props> = React.memo(({ poll }) => {
   const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes, 0);
 
   return (
@@ -35,7 +35,7 @@ const PollCard: React.FC<Props> = ({ poll }) => {
       <Text style={styles.pollFooter}>{totalVotes} oy</Text>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   pollCard: {

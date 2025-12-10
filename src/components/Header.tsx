@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -24,12 +25,13 @@ const Header: React.FC<HeaderProps> = ({
   onPressNotifications,
   onPressLanguage,
 }) => {
+  const { t } = useTranslation();
   const notificationScale = useRef(new Animated.Value(1)).current;
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const languageScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const animation = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
           toValue: 1,
@@ -42,8 +44,15 @@ const Header: React.FC<HeaderProps> = ({
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, []);
+    );
+
+    animation.start();
+
+    // Cleanup: stop animation when component unmounts
+    return () => {
+      animation.stop();
+    };
+  }, [shimmerAnim]);
 
   const handlePressIn = () => {
     Animated.spring(notificationScale, {
@@ -88,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({
         <View style={styles.titleContainer}>
           <View style={styles.brandRow}>
             <Image source={logo} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.title}>Bihevra Amed</Text>
+            <Text style={styles.title}>{t("appSlogan")}</Text>
           </View>
           <Animated.View
             style={[

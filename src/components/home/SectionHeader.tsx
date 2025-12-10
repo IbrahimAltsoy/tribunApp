@@ -9,7 +9,7 @@ type Props = {
   subtitle?: string;
 };
 
-const SectionHeader: React.FC<Props> = ({ title, subtitle }) => (
+const SectionHeader: React.FC<Props> = React.memo(({ title, subtitle }) => (
   <View style={styles.sectionHeader}>
     <View>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -17,7 +17,7 @@ const SectionHeader: React.FC<Props> = ({ title, subtitle }) => (
     </View>
     <View style={styles.sectionAccent} />
   </View>
-);
+));
 
 const styles = StyleSheet.create({
   sectionHeader: {

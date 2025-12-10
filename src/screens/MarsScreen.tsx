@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -56,26 +57,26 @@ const MarsScreen: React.FC = () => {
   }[] = [
     {
       label: t("archive.sectionArchive"),
-      value: "1932'den beri",
-      meta: "Kulüp hafızası",
+      value: t("archive.since1932"),
+      meta: t("archive.clubMemory"),
       route: "Archive",
     },
     {
       label: t("archive.sectionLegends"),
       value: players.length,
-      meta: "Kadro",
+      meta: t("archive.sectionLegendsSubtitle"),
       route: "Players",
     },
     {
       label: t("archive.sectionKits"),
       value: kits.length,
-      meta: "Forma dönemi",
+      meta: t("archive.formaPeriod"),
       route: "Kits",
     },
     {
       label: t("archive.sectionAnnouncements"),
       value: announcementList.length,
-      meta: "Aktif çağrılar",
+      meta: t("archive.activeCalls"),
     },
   ];
 
@@ -107,18 +108,65 @@ const MarsScreen: React.FC = () => {
 
   const handleSubmitAnnouncement = () => {
     setFormSuccess(null);
-    if (!submission.title || !submission.city || !submission.date) {
-      setFormError(t("archive.formErrorRequired"));
+
+    // Comprehensive validation
+    const errors: string[] = [];
+
+    // Title validation
+    if (!submission.title?.trim()) {
+      errors.push(t("announcement.titleRequired"));
+    } else if (submission.title.trim().length < 5) {
+      errors.push(t("announcement.titleTooShort"));
+    } else if (submission.title.length > 200) {
+      errors.push(t("announcement.titleTooLong"));
+    }
+
+    // City validation
+    if (!submission.city?.trim()) {
+      errors.push(t("announcement.cityRequired"));
+    } else if (submission.city.length > 100) {
+      errors.push(t("announcement.cityTooLong"));
+    }
+
+    // Date validation
+    if (!submission.date?.trim()) {
+      errors.push(t("announcement.dateRequired"));
+    } else {
+      const datePattern = /^\d{1,2}\s\w+,?\s\d{2}:\d{2}$/;
+      if (!datePattern.test(submission.date)) {
+        errors.push(t("announcement.invalidDateFormat"));
+      }
+    }
+
+    // Optional field length validation
+    if (submission.location && submission.location.length > 200) {
+      errors.push(t("announcement.locationTooLong"));
+    }
+    if (submission.contact && submission.contact.length > 100) {
+      errors.push(t("announcement.contactTooLong"));
+    }
+    if (submission.note && submission.note.length > 1000) {
+      errors.push(t("announcement.noteTooLong"));
+    }
+
+    if (errors.length > 0) {
+      setFormError(errors.join("\n"));
+      Alert.alert(t("error"), errors.join("\n"), [{ text: t("ok") }]);
       return;
     }
+
     setFormError(null);
     setAnnouncementList((prev) => [
       {
         id: `local-${Date.now()}`,
-        ...submission,
-        contact: submission.contact || t("archive.contactUnknown"),
-        status: "pending",
-      } as any,
+        title: submission.title.trim(),
+        city: submission.city.trim(),
+        location: submission.location.trim(),
+        date: submission.date.trim(),
+        contact: submission.contact?.trim() || t("archive.contactUnknown"),
+        note: submission.note.trim(),
+        status: "pending" as const,
+      },
       ...prev,
     ]);
     setSubmission({
@@ -143,16 +191,11 @@ const MarsScreen: React.FC = () => {
           style={styles.hero}
         >
           <View style={styles.heroBadgeRow}>
-            <Badge icon="planet" text="Amed Alanı" />
-            <Badge icon="pulse" text="Tribün Hafızası" tone="accent" />
+            <Badge icon="planet" text={t("archive.heroBadgeAmedArea")} />
+            <Badge icon="pulse" text={t("archive.heroBadgeTribune")} tone="accent" />
           </View>
           <Text style={styles.heroTitle}>{t("archive.heroTitle")}</Text>
           <Text style={styles.heroSubtitle}>{t("archive.heroSubtitle")}</Text>
-          {/* <View style={styles.heroPills}>
-            <Chip icon="flame" label="Tribün ruhu" />
-            <Chip icon="map" label="Şehir buluşmaları" />
-            <Chip icon="time" label="Amed hatları" />
-          </View> */}
         <View style={styles.statRow}>
           {quickStats.map((item) => (
             <Pressable
@@ -225,7 +268,7 @@ const MarsScreen: React.FC = () => {
                 <Text style={styles.announcementTitle}>{item.title}</Text>
                 <Chip icon="location" label={item.city} compact />
               </View>
-              {(item as any).status === "pending" ? (
+              {item.status === "pending" ? (
                 <Chip
                   icon="time-outline"
                   label={t("archive.pendingApproval")}
@@ -260,11 +303,10 @@ const MarsScreen: React.FC = () => {
         <View style={styles.handoffCard}>
           <View style={styles.handoffHeader}>
             <Ionicons name="shield-checkmark" size={18} color={colors.text} />
-            <Text style={styles.handoffTitle}>Duyurular moderasyonlu</Text>
+            <Text style={styles.handoffTitle}>{t("archive.moderatedAnnouncements")}</Text>
           </View>
           <Text style={styles.handoffBody}>
-            Taraftar güvenliği için duyuruları biz yayınlıyoruz. Detayları
-            paylaş, kontrol edip ekleyelim.
+            {t("archive.moderationDescription")}
           </Text>
           <View style={styles.handoffActions}>
             <Pressable
@@ -274,7 +316,7 @@ const MarsScreen: React.FC = () => {
                 setSubmitOpen(true);
               }}
             >
-              <Text style={styles.secondaryText}>Duyuru formu</Text>
+              <Text style={styles.secondaryText}>{t("archive.announcementForm")}</Text>
               <Ionicons name="create-outline" size={14} color={colors.text} />
             </Pressable>
           </View>
@@ -548,13 +590,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.sm,
-  },
-  heroPills: {
-    flexDirection: "row",
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
-    flexWrap: "wrap",
   },
   statRow: {
     flexDirection: "row",

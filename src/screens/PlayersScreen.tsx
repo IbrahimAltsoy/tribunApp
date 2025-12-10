@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
+  FlatList,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
+  ListRenderItem,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,101 +19,115 @@ import { fontSizes, typography } from "../theme/typography";
 const PlayersScreen: React.FC = () => {
   const { t } = useTranslation();
 
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.container}
-      >
-        <Text style={styles.screenTitle}>{t("archive.sectionLegends")}</Text>
-        <Text style={styles.screenSubtitle}>
-          {t("archive.sectionLegendsSubtitle")}
-        </Text>
+  const renderPlayerCard: ListRenderItem<typeof players[0]> = useCallback(({ item: p }) => (
+    <View style={styles.card}>
+      <View style={styles.headerRow}>
+        <Text style={styles.playerNumber}>#{p.number}</Text>
+        <Pressable>
+          <Ionicons name="star-outline" size={22} color={colors.primary} />
+        </Pressable>
+      </View>
 
-        {players.map((p) => (
-          <View key={p.id} style={styles.card}>
-            <View style={styles.headerRow}>
-              <Text style={styles.playerNumber}>#{p.number}</Text>
-              <Pressable>
-                <Ionicons name="star-outline" size={22} color={colors.primary} />
-              </Pressable>
-            </View>
+      <Image
+        source={p.image || require("../assets/footboll/1.jpg")}
+        style={styles.playerImage}
+      />
 
-            <Image
-              source={p.image || require("../assets/footboll/1.jpg")}
-              style={styles.playerImage}
-            />
+      <Text style={styles.playerName}>{p.name}</Text>
+      <View style={styles.positionBadge}>
+        <Text style={styles.positionText}>{p.position}</Text>
+      </View>
 
-            <Text style={styles.playerName}>{p.name}</Text>
-            <View style={styles.positionBadge}>
-              <Text style={styles.positionText}>{p.position}</Text>
-            </View>
+      <View style={styles.statsRow}>
+        <Stat label={t("stats.matches")} value={p.matches ?? "-"} />
+        <Stat label={t("stats.goals")} value={p.goals ?? "-"} />
+        <Stat label={t("stats.assists")} value={p.assists ?? "-"} />
+        <Stat
+          label={t("stats.rating")}
+          value={p.rating ? `${p.rating}/10` : "-"}
+        />
+      </View>
 
-            <View style={styles.statsRow}>
-              <Stat label={t("stats.matches")} value={p.matches ?? "-"} />
-              <Stat label={t("stats.goals")} value={p.goals ?? "-"} />
-              <Stat label={t("stats.assists")} value={p.assists ?? "-"} />
-              <Stat
-                label={t("stats.rating")}
-                value={p.rating ? `${p.rating}/10` : "-"}
-              />
-            </View>
+      <View style={styles.metaGrid}>
+        <Meta
+          icon="walk"
+          text={
+            p.foot === "Both"
+              ? t("archive.footBoth")
+              : p.foot === "Left"
+                ? t("archive.footLeft")
+                : t("archive.footRight")
+          }
+        />
+        <Meta icon="male" text={`${p.height} m`} />
+        <Meta icon="flash" text={`${p.age} ${t("years")}`} />
+        <Meta icon="map" text={p.hometown || t("archive.contactUnknown")} />
+      </View>
 
-            <View style={styles.metaGrid}>
-              <Meta
-                icon="walk"
-                text={
-                  p.foot === "Both"
-                    ? t("archive.footBoth")
-                    : p.foot === "Left"
-                      ? t("archive.footLeft")
-                      : t("archive.footRight")
-                }
-              />
-              <Meta icon="male" text={`${p.height} m`} />
-              <Meta icon="flash" text={`${p.age} ${t("years")}`} />
-              <Meta icon="map" text={p.hometown || t("archive.contactUnknown")} />
-            </View>
+      <Text style={styles.bio}>{p.bio}</Text>
 
-            <Text style={styles.bio}>{p.bio}</Text>
-
-            <Text style={styles.label}>{t("strengths")}</Text>
-            <View style={styles.tagRow}>
-              {p.strengths.map((s) => (
-                <View style={styles.tag} key={s}>
-                  <Ionicons name="checkmark" size={14} color={colors.text} />
-                  <Text style={styles.tagText}>{s}</Text>
-                </View>
-              ))}
-            </View>
-
-            {p.career?.length ? (
-              <>
-                <Text style={styles.label}>{t("career")}</Text>
-                <View style={styles.careerBox}>
-                  {p.career.map((c, i) => (
-                    <Text key={`${p.id}-car-${i}`} style={styles.careerText}>
-                      • {c}
-                    </Text>
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            <View style={styles.actionRow}>
-              <Pressable style={styles.actionBtn}>
-                <Ionicons name="heart" size={18} color={colors.text} />
-              </Pressable>
-              <Pressable style={styles.actionBtn}>
-                <Ionicons name="share-social" size={18} color={colors.text} />
-              </Pressable>
-              <Pressable style={styles.actionBtn}>
-                <Ionicons name="chatbubble-ellipses" size={18} color={colors.text} />
-              </Pressable>
-            </View>
+      <Text style={styles.label}>{t("strengths")}</Text>
+      <View style={styles.tagRow}>
+        {p.strengths.map((s) => (
+          <View style={styles.tag} key={s}>
+            <Ionicons name="checkmark" size={14} color={colors.text} />
+            <Text style={styles.tagText}>{s}</Text>
           </View>
         ))}
-      </ScrollView>
+      </View>
+
+      {p.career?.length ? (
+        <>
+          <Text style={styles.label}>{t("career")}</Text>
+          <View style={styles.careerBox}>
+            {p.career.map((c, i) => (
+              <Text key={`${p.id}-car-${i}`} style={styles.careerText}>
+                • {c}
+              </Text>
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      <View style={styles.actionRow}>
+        <Pressable style={styles.actionBtn}>
+          <Ionicons name="heart" size={18} color={colors.text} />
+        </Pressable>
+        <Pressable style={styles.actionBtn}>
+          <Ionicons name="share-social" size={18} color={colors.text} />
+        </Pressable>
+        <Pressable style={styles.actionBtn}>
+          <Ionicons name="chatbubble-ellipses" size={18} color={colors.text} />
+        </Pressable>
+      </View>
+    </View>
+  ), [t]);
+
+  const keyExtractor = useCallback((item: typeof players[0]) => item.id, []);
+
+  const ListHeaderComponent = useCallback(() => (
+    <>
+      <Text style={styles.screenTitle}>{t("archive.sectionLegends")}</Text>
+      <Text style={styles.screenSubtitle}>
+        {t("archive.sectionLegendsSubtitle")}
+      </Text>
+    </>
+  ), [t]);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <FlatList
+        data={players}
+        renderItem={renderPlayerCard}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeaderComponent}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
+        initialNumToRender={5}
+      />
     </SafeAreaView>
   );
 };

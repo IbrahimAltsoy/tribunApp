@@ -9,8 +9,13 @@ import {
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
 import RootNavigator from "./navigation/RootNavigator";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { colors } from "./theme/colors";
+import { initSentry } from "./utils/sentry";
 import "./i18n";
+
+// Initialize error tracking
+initSentry();
 
 const App: React.FC = () => {
   const [fontsLoaded] = useFonts({
@@ -26,10 +31,12 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor={colors.background} />
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <RootNavigator />
-      </View>
+      <ErrorBoundary>
+        <StatusBar style="light" backgroundColor={colors.background} />
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <RootNavigator />
+        </View>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 };

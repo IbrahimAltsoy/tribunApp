@@ -66,7 +66,6 @@ const FanMomentsSection: React.FC<Props> = ({
                 style={StyleSheet.absoluteFillObject}
               />
               <View style={styles.momentContent}>
-                {/* <View style={styles.momentSourcePill}> */}
                 <View
                   style={[
                     styles.momentSourcePill,
@@ -79,14 +78,14 @@ const FanMomentsSection: React.FC<Props> = ({
                 </View>
                 <Text style={styles.momentCaption}>{moment.caption}</Text>
                 <Text style={styles.momentLocation}>{moment.location}</Text>
-                <Text style={styles.momentTime}>{moment.time} önce</Text>
+                <Text style={styles.momentTime}>{t("home.timeAgo", { time: moment.time })}</Text>
               </View>
             </ImageBackground>
           ) : (
             <View style={[styles.momentImage, styles.momentFallback]}>
               <Text style={styles.momentCaption}>{moment.caption}</Text>
               <Text style={styles.momentLocation}>{moment.location}</Text>
-              <Text style={styles.momentTime}>{moment.time} önce</Text>
+              <Text style={styles.momentTime}>{t("home.timeAgo", { time: moment.time })}</Text>
             </View>
           )}
         </Pressable>
@@ -98,7 +97,6 @@ const FanMomentsSection: React.FC<Props> = ({
           <Text style={styles.momentMoreTitle}>
             {t("home.moreMomentsTitle")}
           </Text>
-          {/* <Text style={styles.momentMoreSub}>Tüm tribün anlarını gör</Text> */}
         </Pressable>
       )}
     </ScrollView>

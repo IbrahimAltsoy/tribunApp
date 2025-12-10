@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { View, Text, StyleSheet, Pressable, Animated } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -27,12 +28,15 @@ const MatchCard: React.FC<MatchCardProps> = ({
   isLive = false,
   onPress,
 }) => {
+  const { t } = useTranslation();
   const scale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
+    let animation: Animated.CompositeAnimation | null = null;
+
     if (isLive) {
-      Animated.loop(
+      animation = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.2,
@@ -45,9 +49,18 @@ const MatchCard: React.FC<MatchCardProps> = ({
             useNativeDriver: true,
           }),
         ])
-      ).start();
+      );
+
+      animation.start();
     }
-  }, [isLive]);
+
+    // Cleanup: stop animation when component unmounts or isLive changes
+    return () => {
+      if (animation) {
+        animation.stop();
+      }
+    };
+  }, [isLive, pulseAnim]);
 
   const handlePressIn = () => {
     Animated.spring(scale, {
@@ -139,7 +152,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
 
           {/* Footer with details button */}
           <View style={styles.footer}>
-            <Text style={styles.detailsText}>Detayları Gör</Text>
+            <Text style={styles.detailsText}>{t("detailsView")}</Text>
             <Ionicons name="chevron-forward" size={16} color={colors.primary} />
           </View>
         </LinearGradient>

@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { logger } from "../utils/logger";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -67,7 +68,7 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
-      console.log("Haptics not available");
+      logger.warn("Haptics not available", error);
     }
 
     Animated.sequence([
@@ -98,7 +99,7 @@ const PostCard: React.FC<PostCardProps> = ({
       });
       onShare?.(post.id);
     } catch (error) {
-      console.log("Share error:", error);
+      logger.error("Share error:", error);
     }
   };
 
@@ -106,7 +107,7 @@ const PostCard: React.FC<PostCardProps> = ({
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.log("Haptics not available");
+      logger.warn("Haptics not available", error);
     }
     onComment?.(post.id);
   };

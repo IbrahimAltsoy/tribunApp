@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useCallback } from "react";
 import {
+  FlatList,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
+  ListRenderItem,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -20,56 +21,69 @@ import { fontSizes, typography } from "../theme/typography";
 const KitsScreen: React.FC = () => {
   const { t } = useTranslation();
 
+  const renderKitCard: ListRenderItem<typeof kits[0]> = useCallback(({ item: kit }) => (
+    <LinearGradient
+      colors={["rgba(15,169,88,0.20)", "rgba(0,0,0,0.30)", "rgba(209,14,14,0.15)"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.card}
+    >
+      <View style={styles.headerRow}>
+        <View style={styles.seasonBadge}>
+          <Ionicons name="shirt" size={16} color={colors.text} />
+          <Text style={styles.seasonText}>{kit.season}</Text>
+        </View>
+
+        <Pressable style={styles.iconButton}>
+          <Ionicons name="star-outline" size={18} color={colors.text} />
+        </Pressable>
+      </View>
+
+      <KitArt image={kit.image} colors={kit.colors} />
+
+      <Text style={styles.kitTitle}>{kit.title}</Text>
+
+      {kit.colors?.length ? (
+        <View style={styles.colorDots}>
+          {kit.colors.map((clr: string) => (
+            <View key={clr} style={[styles.colorDot, { backgroundColor: clr }]} />
+          ))}
+        </View>
+      ) : null}
+
+      <Text style={styles.note}>{kit.note}</Text>
+
+      <View style={styles.actionRow}>
+        <Action icon="heart-outline" label={t("like")} />
+        <Action icon="share-social-outline" label={t("share")} />
+        <Action icon="ellipsis-horizontal" label={t("details")} />
+      </View>
+    </LinearGradient>
+  ), [t]);
+
+  const keyExtractor = useCallback((item: typeof kits[0]) => item.id, []);
+
+  const ListHeaderComponent = useCallback(() => (
+    <>
+      <Text style={styles.title}>{t("archive.sectionKits")}</Text>
+      <Text style={styles.subtitle}>{t("archive.sectionKitsSubtitle")}</Text>
+    </>
+  ), [t]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
+      <FlatList
+        data={kits}
+        renderItem={renderKitCard}
+        keyExtractor={keyExtractor}
+        ListHeaderComponent={ListHeaderComponent}
         contentContainerStyle={styles.container}
-      >
-        <Text style={styles.title}>{t("archive.sectionKits")}</Text>
-        <Text style={styles.subtitle}>{t("archive.sectionKitsSubtitle")}</Text>
-
-        {kits.map((kit) => (
-          <LinearGradient
-            key={kit.id}
-            colors={["rgba(15,169,88,0.20)", "rgba(0,0,0,0.30)", "rgba(209,14,14,0.15)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.card}
-          >
-            <View style={styles.headerRow}>
-              <View style={styles.seasonBadge}>
-                <Ionicons name="shirt" size={16} color={colors.text} />
-                <Text style={styles.seasonText}>{kit.season}</Text>
-              </View>
-
-              <Pressable style={styles.iconButton}>
-                <Ionicons name="star-outline" size={18} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <KitArt image={kit.image} colors={(kit as any).colors} />
-
-            <Text style={styles.kitTitle}>{kit.title}</Text>
-
-            {(kit as any).colors?.length ? (
-              <View style={styles.colorDots}>
-                {(kit as any).colors.map((clr: string) => (
-                  <View key={clr} style={[styles.colorDot, { backgroundColor: clr }]} />
-                ))}
-              </View>
-            ) : null}
-
-            <Text style={styles.note}>{kit.note}</Text>
-
-            <View style={styles.actionRow}>
-              <Action icon="heart-outline" label={t("like")} />
-              <Action icon="share-social-outline" label={t("share")} />
-              <Action icon="ellipsis-horizontal" label={t("details")} />
-            </View>
-          </LinearGradient>
-        ))}
-      </ScrollView>
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        initialNumToRender={4}
+      />
     </SafeAreaView>
   );
 };

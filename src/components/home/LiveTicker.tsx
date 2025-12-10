@@ -6,9 +6,10 @@ import {
   View,
   ImageBackground,
   Pressable,
-  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
@@ -31,6 +32,8 @@ const LiveTicker: React.FC = () => {
 };
 
 const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
+  const { t } = useTranslation();
+
   const thumb =
     event.thumb ||
     (event.thumbUrl ? { uri: event.thumbUrl } : require("../../assets/footboll/1.jpg"));
@@ -38,6 +41,15 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
     event.clip?.embedUrl ||
     event.clip?.url ||
     event.videoUrl;
+
+  const handleVideoPress = () => {
+    if (clipUrl) {
+      openURLSafely(clipUrl, {
+        errorTitle: t("error"),
+        invalidUrlMessage: t("validation.urlBlocked"),
+      });
+    }
+  };
 
   const platformIcon = (() => {
     switch (event.clip?.platform) {
@@ -102,11 +114,7 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
       </Text>
 
       <Pressable
-        onPress={() => {
-          if (clipUrl) {
-            Linking.openURL(clipUrl);
-          }
-        }}
+        onPress={handleVideoPress}
         disabled={!clipUrl}
         style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
       >

@@ -110,6 +110,7 @@ export type Announcement = {
   link?: string;
   contact: string;
   note: string;
+  status?: "pending" | "approved" | "rejected";
 };
 
 export type FanMoment = {
@@ -118,6 +119,7 @@ export type FanMoment = {
   location: string;
   caption: string;
   time: string;
+  timestamp?: string;
   source: "Tribun" | "Sehir Meydani" | "Ev/Izleme";
   image?: ImageSourcePropType;
 };

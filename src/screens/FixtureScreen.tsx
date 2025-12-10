@@ -1,5 +1,5 @@
 // --- KODUN TAMAMI (kopyala & yapıştır) ---
-import React from "react";
+import React, { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, View, TextStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -195,7 +195,12 @@ const SectionHeader = ({
 ────────────────────────────────*/
 const FixtureScreen = () => {
   const { t } = useTranslation();
-  const sortedStandings = [...standings].sort((a, b) => b.pts - a.pts);
+
+  // Memoize expensive sorting operation
+  const sortedStandings = useMemo(
+    () => [...standings].sort((a, b) => b.pts - a.pts),
+    [standings]
+  );
 
   return (
     <View style={styles.container}>

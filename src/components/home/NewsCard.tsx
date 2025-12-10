@@ -11,7 +11,7 @@ type Props = {
   onPress?: (id: string) => void;
 };
 
-const NewsCard: React.FC<Props> = ({ item, onPress }) => {
+const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
   const summary =
     item.summary.length > 50
       ? `${item.summary.slice(0, 50).trimEnd()}...`
@@ -64,7 +64,7 @@ const NewsCard: React.FC<Props> = ({ item, onPress }) => {
       </LinearGradient>
     </Pressable>
   );
-};
+});
 
 const styles = StyleSheet.create({
   newsRow: {
