@@ -91,6 +91,18 @@
       "city": "City not provided",
       "caption": "New moment",
       "time": "Now"
+    },
+    "liveTicker": {
+      "moreVideos": "ویدیوهای بیشتر",
+      "video": "ویدیو",
+      "videoCount": "+{{count}} ویدیو",
+      "allVideosTitle": "همه ویدیوها",
+      "videoCountTitle": "{{count}} ویدیو",
+      "playButton": "پخش"
+    },
+    "poll": {
+      "title": "نظرسنجی",
+      "weekMatch": "بازی هفته: چه کسی برنده می‌شود؟"
     }
   },
   "chat": {

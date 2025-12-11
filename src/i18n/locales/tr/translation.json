@@ -139,6 +139,18 @@
       "city": "Sehir belirtilmedi",
       "caption": "Yeni paylasim",
       "time": "Simdi"
+    },
+    "liveTicker": {
+      "moreVideos": "Daha Fazla",
+      "video": "Video",
+      "videoCount": "+{{count}} video",
+      "allVideosTitle": "Tüm Videolar",
+      "videoCountTitle": "{{count}} video",
+      "playButton": "Oynat"
+    },
+    "poll": {
+      "title": "Anket",
+      "weekMatch": "Haftanin maci: kim kazanir?"
     }
   },
   "chat": {

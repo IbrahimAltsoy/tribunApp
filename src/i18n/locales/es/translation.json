@@ -91,6 +91,18 @@
       "city": "Ciudad no especificada",
       "caption": "Nuevo momento",
       "time": "Ahora"
+    },
+    "liveTicker": {
+      "moreVideos": "Más videos",
+      "video": "Video",
+      "videoCount": "+{{count}} videos",
+      "allVideosTitle": "Todos los videos",
+      "videoCountTitle": "{{count}} videos",
+      "playButton": "Reproducir"
+    },
+    "poll": {
+      "title": "Encuesta",
+      "weekMatch": "Partido de la semana: ¿quién gana?"
     }
   },
   "chat": {

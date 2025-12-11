@@ -91,6 +91,18 @@
       "city": "City not provided",
       "caption": "New moment",
       "time": "Now"
+    },
+    "liveTicker": {
+      "moreVideos": "Vîdyoyên Bêtir",
+      "video": "Vîdyo",
+      "videoCount": "+{{count}} vîdyo",
+      "allVideosTitle": "Hemû Vîdyo",
+      "videoCountTitle": "{{count}} vîdyo",
+      "playButton": "Lîstin"
+    },
+    "poll": {
+      "title": "Rapirsî",
+      "weekMatch": "Lîstika hefteyê: kî dê bibê?"
     }
   },
   "chat": {

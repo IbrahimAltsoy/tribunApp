@@ -7,7 +7,9 @@ import {
   Text,
   View,
   Modal,
+  Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,6 +26,7 @@ import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
+import AllVideosModal from "../components/home/AllVideosModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { fanMoments, fixtureData, newsData, polls } from "../data/mockData";
 import { colors } from "../theme/colors";
@@ -47,6 +50,7 @@ const HomeScreen: React.FC = () => {
   const [moments, setMoments] = useState(fanMoments);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
+  const [allVideosVisible, setAllVideosVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<
     (typeof fanMoments)[0] | undefined
@@ -126,8 +130,11 @@ const HomeScreen: React.FC = () => {
           title={t("fixture.liveTickerTitle")}
           subtitle={t("fixture.liveTickerSubtitle")}
         />
-        <LiveTicker />
-        <SectionHeader title="Anket" subtitle="Haftanin maci: kim kazanir?" />
+        <LiveTicker onPressMore={() => setAllVideosVisible(true)} />
+        <SectionHeader
+          title={t("home.poll.title")}
+          subtitle={t("home.poll.weekMatch")}
+        />
         <PollCard poll={polls[0]} />
 
         <SectionHeader
@@ -136,22 +143,38 @@ const HomeScreen: React.FC = () => {
         />
         <Pressable
           onPress={handleStorePress}
-          style={styles.supportCard}
+          style={({ pressed }) => [
+            styles.supportCard,
+            pressed && styles.supportCardPressed,
+          ]}
           accessibilityRole="button"
         >
           <ImageBackground
             source={storeImage}
             style={styles.supportImage}
-            imageStyle={{ borderRadius: 18 }}
+            imageStyle={styles.supportImageStyle}
           >
-            <View style={styles.supportOverlay} />
-            <View style={styles.supportContent}>
-              <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+            <LinearGradient
+              colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
+              style={StyleSheet.absoluteFill}
+            />
+            <BlurView
+              intensity={Platform.OS === "ios" ? 30 : 22}
+              tint="dark"
+              style={styles.supportContent}
+            >
+              <View style={styles.supportPillWrapper}>
+                <Ionicons name="storefront" size={14} color={colors.primary} />
+                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+              </View>
               <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
               <Text style={styles.supportSubtitle}>
                 {t("home.supportSubtitle")}
               </Text>
-            </View>
+              <View style={styles.supportArrowCircle}>
+                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              </View>
+            </BlurView>
           </ImageBackground>
         </Pressable>
       </ScrollView>
@@ -186,6 +209,11 @@ const HomeScreen: React.FC = () => {
         }}
       />
 
+      <AllVideosModal
+        visible={allVideosVisible}
+        onClose={() => setAllVideosVisible(false)}
+      />
+
       <Modal
         visible={languageModalVisible}
         transparent
@@ -210,7 +238,7 @@ const HomeScreen: React.FC = () => {
       </Modal>
     </SafeAreaView>
   );
-};;
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -227,41 +255,94 @@ const styles = StyleSheet.create({
   supportCard: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassStroke,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadowSoft,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  supportCardPressed: {
+    opacity: 0.95,
+    transform: [{ scale: 0.98 }],
   },
   supportImage: {
-    height: 160,
+    height: 180,
     justifyContent: "flex-end",
   },
-  supportOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.35)",
+  supportImageStyle: {
+    borderRadius: 20,
   },
   supportContent: {
     padding: spacing.lg,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    backgroundColor: "rgba(19, 30, 19, 0.5)",
+    overflow: "hidden",
+  },
+  supportPillWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
+    alignSelf: "flex-start",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 191, 71, 0.2)",
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   supportPill: {
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(15,169,88,0.9)",
-    color: colors.text,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs / 2,
-    borderRadius: 12,
-    fontFamily: typography.semiBold,
+    color: colors.primary,
+    fontFamily: typography.bold,
     fontSize: fontSizes.xs,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   supportTitle: {
-    color: colors.text,
+    color: colors.white,
     fontFamily: typography.bold,
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.xl,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   supportSubtitle: {
-    color: colors.text,
+    color: colors.textSecondary,
     fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    lineHeight: 20,
+  },
+  supportArrowCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    marginTop: spacing.xs,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
 
   // -------- Dil Modalı (yeni tasarım) --------

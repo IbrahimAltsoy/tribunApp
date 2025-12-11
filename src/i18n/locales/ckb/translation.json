@@ -91,6 +91,18 @@
       "city": "City not provided",
       "caption": "New moment",
       "time": "Now"
+    },
+    "liveTicker": {
+      "moreVideos": "ڤیدیۆی زیاتر",
+      "video": "ڤیدیۆ",
+      "videoCount": "+{{count}} ڤیدیۆ",
+      "allVideosTitle": "هەموو ڤیدیۆکان",
+      "videoCountTitle": "{{count}} ڤیدیۆ",
+      "playButton": "لێدان"
+    },
+    "poll": {
+      "title": "ڕاپرسی",
+      "weekMatch": "یارییەکی هەفتە: کێ دەبێتەوە؟"
     }
   },
   "chat": {

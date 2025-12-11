@@ -102,6 +102,18 @@
       "city": "City not provided",
       "caption": "New moment",
       "time": "Now"
+    },
+    "liveTicker": {
+      "moreVideos": "More Videos",
+      "video": "Video",
+      "videoCount": "+{{count}} videos",
+      "allVideosTitle": "All Videos",
+      "videoCountTitle": "{{count}} videos",
+      "playButton": "Play"
+    },
+    "poll": {
+      "title": "Poll",
+      "weekMatch": "Match of the week: who wins?"
     }
   },
   "chat": {

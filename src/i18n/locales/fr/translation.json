@@ -91,6 +91,18 @@
       "city": "Ville non prÃ©cisÃ©e",
       "caption": "Nouveau moment",
       "time": "Maintenant"
+    },
+    "liveTicker": {
+      "moreVideos": "Plus de vidéos",
+      "video": "Vidéo",
+      "videoCount": "+{{count}} vidéos",
+      "allVideosTitle": "Toutes les vidéos",
+      "videoCountTitle": "{{count}} vidéos",
+      "playButton": "Lire"
+    },
+    "poll": {
+      "title": "Sondage",
+      "weekMatch": "Match de la semaine: qui gagne?"
     }
   },
   "chat": {
