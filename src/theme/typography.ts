@@ -3,15 +3,19 @@ export const typography = {
   medium: 'Montserrat_500Medium',
   semiBold: 'Montserrat_600SemiBold',
   bold: 'Montserrat_700Bold',
+  extraBold: 'Montserrat_800ExtraBold',
 };
 
 export const fontSizes = {
-  xs: 12,
-  sm: 14,
-  md: 16,
+  xs: 11,
+  sm: 13,
+  md: 15,
+  base: 17,
   lg: 20,
-  xl: 24,
-  xxl: 32,
+  xl: 28,
+  xxl: 40,
+  xxxl: 56,
+  display: 72,
 };
 
 export const lineHeights = {
@@ -19,4 +23,5 @@ export const lineHeights = {
   normal: 22,
   relaxed: 26,
   loose: 30,
+  xl: 60,
 };

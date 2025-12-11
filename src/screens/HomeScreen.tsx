@@ -25,12 +25,7 @@ import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
-import {
-  fanMoments,
-  fixtureData,
-  newsData,
-  polls,
-} from "../data/mockData";
+import { fanMoments, fixtureData, newsData, polls } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -40,7 +35,6 @@ import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
 
 const storeImage = require("../assets/footboll/1.jpg");
-
 
 const HomeScreen: React.FC = () => {
   const navigation =
@@ -84,9 +78,12 @@ const HomeScreen: React.FC = () => {
     setMoments((prev) => [newMoment, ...prev]);
   }, [submit]);
 
-  const handleNewsPress = useCallback((id: string) => {
-    navigation.navigate("Feed", { newsId: id, origin: "Home" });
-  }, [navigation]);
+  const handleNewsPress = useCallback(
+    (id: string) => {
+      navigation.navigate("Feed", { newsId: id, origin: "Home" });
+    },
+    [navigation]
+  );
 
   const handleLanguagePress = useCallback(() => {
     setLanguageModalVisible(true);
@@ -121,11 +118,7 @@ const HomeScreen: React.FC = () => {
           contentContainerStyle={styles.newsRow}
         >
           {featuredNews.map((news) => (
-            <NewsCard
-              key={news.id}
-              item={news}
-              onPress={handleNewsPress}
-            />
+            <NewsCard key={news.id} item={news} onPress={handleNewsPress} />
           ))}
         </ScrollView>
 
@@ -134,10 +127,7 @@ const HomeScreen: React.FC = () => {
           subtitle={t("fixture.liveTickerSubtitle")}
         />
         <LiveTicker />
-        <SectionHeader
-          title="Anket"
-          subtitle="Haftanin maci: kim kazanir?"
-        />
+        <SectionHeader title="Anket" subtitle="Haftanin maci: kim kazanir?" />
         <PollCard poll={polls[0]} />
 
         <SectionHeader
@@ -164,7 +154,6 @@ const HomeScreen: React.FC = () => {
             </View>
           </ImageBackground>
         </Pressable>
-
       </ScrollView>
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
@@ -215,15 +204,13 @@ const HomeScreen: React.FC = () => {
               </View>
             </View>
 
-            <LanguageSwitcher
-              onClose={() => setLanguageModalVisible(false)}
-            />
+            <LanguageSwitcher onClose={() => setLanguageModalVisible(false)} />
           </View>
         </BlurView>
       </Modal>
     </SafeAreaView>
   );
-};
+};;
 
 const styles = StyleSheet.create({
   safeArea: {

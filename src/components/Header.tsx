@@ -5,16 +5,17 @@ import {
   View,
   Animated,
   Pressable,
-  Image,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
-import { spacing } from "../theme/spacing";
-import { fontSizes, typography } from "../theme/typography";
+import { spacing, radii } from "../theme/spacing";
+import { fontSizes } from "../theme/typography";
 
-const logo = require("../assets/logos/logo.png");
+const IS_IOS = Platform.OS === "ios";
 
 type HeaderProps = {
   onPressNotifications?: () => void;
@@ -25,138 +26,175 @@ const Header: React.FC<HeaderProps> = ({
   onPressNotifications,
   onPressLanguage,
 }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const notificationScale = useRef(new Animated.Value(1)).current;
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
   const languageScale = useRef(new Animated.Value(1)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const brandOpacity = useRef(new Animated.Value(0)).current;
+  const brandTranslateY = useRef(new Animated.Value(-10)).current;
 
+  // Brand entrance animation
   useEffect(() => {
-    const animation = Animated.loop(
+    Animated.parallel([
+      Animated.timing(brandOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(brandTranslateY, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // Badge pulse animation
+  useEffect(() => {
+    const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 2000,
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 1000,
           useNativeDriver: true,
         }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0,
-          duration: 2000,
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ])
     );
+    pulse.start();
+    return () => pulse.stop();
+  }, []);
 
-    animation.start();
-
-    // Cleanup: stop animation when component unmounts
-    return () => {
-      animation.stop();
-    };
-  }, [shimmerAnim]);
-
-  const handlePressIn = () => {
-    Animated.spring(notificationScale, {
+  const handlePressIn = (scaleValue: Animated.Value) => {
+    Animated.spring(scaleValue, {
       toValue: 0.85,
       useNativeDriver: true,
+      tension: 300,
+      friction: 10,
     }).start();
   };
 
-  const handlePressOut = () => {
-    Animated.spring(notificationScale, {
+  const handlePressOut = (scaleValue: Animated.Value) => {
+    Animated.spring(scaleValue, {
       toValue: 1,
-      friction: 3,
-      tension: 40,
       useNativeDriver: true,
+      tension: 300,
+      friction: 10,
     }).start();
   };
 
-  const shimmerTranslate = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-100, 100],
-  });
-
-  const handleLangPressIn = () => {
-    Animated.spring(languageScale, {
-      toValue: 0.9,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handleLangPressOut = () => {
-    Animated.spring(languageScale, {
-      toValue: 1,
-      friction: 4,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
+  const currentLanguage = i18n.language.toUpperCase();
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <View style={styles.titleContainer}>
-          <View style={styles.brandRow}>
-            <Image source={logo} style={styles.logo} resizeMode="contain" />
-            <Text style={styles.title}>{t("appSlogan")}</Text>
-          </View>
+      {/* Gradient Background */}
+      <LinearGradient
+        colors={[colors.background, "rgba(19, 30, 19, 0.95)", colors.background]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View style={styles.content}>
+        {/* Left Action: Language Button */}
+        <Pressable
+          onPress={onPressLanguage}
+          onPressIn={() => handlePressIn(languageScale)}
+          onPressOut={() => handlePressOut(languageScale)}
+          style={styles.actionButton}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
           <Animated.View
             style={[
-              styles.shimmer,
-              {
-                transform: [{ translateX: shimmerTranslate }],
-              },
+              styles.actionButtonInner,
+              { transform: [{ scale: languageScale }] },
             ]}
-          />
-        </View>
-
-        <View style={styles.actionsRow}>
-          <Pressable
-            onPress={onPressLanguage}
-            onPressIn={handleLangPressIn}
-            onPressOut={handleLangPressOut}
-            style={styles.iconPressable}
-            accessibilityRole="button"
           >
-            <Animated.View
-              style={[
-                styles.languageButton,
-                { transform: [{ scale: languageScale }] },
-              ]}
+            <BlurView
+              intensity={IS_IOS ? 25 : 20}
+              tint="dark"
+              style={styles.actionBlur}
             >
-              <Ionicons name="globe-outline" size={20} color={colors.text} />
-            </Animated.View>
-          </Pressable>
+              <Text style={styles.languageText}>{currentLanguage}</Text>
+            </BlurView>
+          </Animated.View>
+        </Pressable>
 
-          <Pressable
-            onPress={onPressNotifications}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            style={styles.iconPressable}
-            accessibilityRole="button"
+        {/* Center: Brand Name */}
+        <Animated.View
+          style={[
+            styles.brandContainer,
+            {
+              opacity: brandOpacity,
+              transform: [{ translateY: brandTranslateY }],
+            },
+          ]}
+        >
+          <Text style={styles.brandText}>
+            <Text style={styles.brandTextBi}>Bi</Text>
+            <Text style={styles.brandTextHevra}>hevra</Text>
+          </Text>
+          <View style={styles.brandUnderline} />
+          <Text style={styles.liveTag}>
+            <View style={styles.liveDot} />
+            {" "}CANLI TAKİP
+          </Text>
+        </Animated.View>
+
+        {/* Right Action: Notification Button */}
+        <Pressable
+          onPress={onPressNotifications}
+          onPressIn={() => handlePressIn(notificationScale)}
+          onPressOut={() => handlePressOut(notificationScale)}
+          style={styles.actionButton}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Animated.View
+            style={[
+              styles.actionButtonInner,
+              { transform: [{ scale: notificationScale }] },
+            ]}
           >
-            <Animated.View
-              style={[
-                styles.notificationButton,
-                { transform: [{ scale: notificationScale }] },
-              ]}
+            <BlurView
+              intensity={IS_IOS ? 25 : 20}
+              tint="dark"
+              style={styles.actionBlur}
             >
               <Ionicons
-                name="notifications-outline"
-                size={24}
-                color={colors.text}
+                name="notifications"
+                size={22}
+                color={colors.white}
               />
-              <View style={styles.notificationBadge} />
-            </Animated.View>
-          </Pressable>
-        </View>
+              {/* Animated Badge */}
+              <Animated.View
+                style={[
+                  styles.notificationBadge,
+                  { transform: [{ scale: pulseAnim }] },
+                ]}
+              />
+            </BlurView>
+          </Animated.View>
+        </Pressable>
       </View>
 
-      <View style={styles.underlineContainer}>
+      {/* Premium Gradient Divider */}
+      <View style={styles.dividerContainer}>
         <LinearGradient
-          colors={[colors.accent, colors.primary]}
+          colors={[
+            "rgba(0, 191, 71, 0)",
+            "rgba(0, 191, 71, 0.3)",
+            colors.primary,
+            "rgba(209, 14, 14, 0.6)",
+            "rgba(209, 14, 14, 0)",
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={styles.underline}
+          style={styles.divider}
         />
       </View>
     </View>
@@ -165,98 +203,138 @@ const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+    position: "relative",
   },
-  row: {
+  content: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  titleContainer: {
+    paddingHorizontal: spacing.lg,
     position: "relative",
+    zIndex: 10,
+  },
+
+  // Brand Section (Center)
+  brandContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
+  brandText: {
+    fontSize: 32,
+    letterSpacing: 1.5,
+    textAlign: "center",
+  },
+  brandTextBi: {
+    fontFamily: Platform.select({
+      ios: "System",
+      android: "sans-serif-medium",
+      default: "System",
+    }),
+    fontWeight: "700",
+    color: colors.primary,
+    textShadowColor: colors.primaryGlow,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 12,
+  },
+  brandTextHevra: {
+    fontFamily: Platform.select({
+      ios: "System",
+      android: "sans-serif-light",
+      default: "System",
+    }),
+    fontWeight: "300",
+    color: colors.white,
+    textShadowColor: "rgba(255, 255, 255, 0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  brandUnderline: {
+    width: 100,
+    height: 2,
+    backgroundColor: colors.primary,
+    marginTop: spacing.xxs,
+    marginBottom: spacing.xxs,
+    borderRadius: 1,
+    opacity: 0.8,
+  },
+  liveTag: {
+    fontSize: fontSizes.xs,
+    color: colors.textTertiary,
+    letterSpacing: 1.8,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.accent,
+    marginRight: 4,
+  },
+
+  // Action Buttons (Left & Right)
+  actionButton: {
+    borderRadius: radii.xl,
+  },
+  actionButtonInner: {
+    borderRadius: radii.xl,
     overflow: "hidden",
   },
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  logo: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSizes.xl,
-    fontFamily: typography.bold,
-    letterSpacing: 1.2,
-    textShadowColor: "rgba(15, 169, 88, 0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  shimmer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  actionBlur: {
     width: 50,
-  },
-  actionsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  iconPressable: {
-    borderRadius: 22,
-  },
-  languageButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderWidth: 1,
-    borderColor: colors.border,
+    height: 50,
+    borderRadius: radii.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: colors.glassStroke,
+    backgroundColor: "rgba(19, 30, 19, 0.4)",
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadowSoft,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
   },
-  notificationButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+  languageText: {
+    fontSize: fontSizes.sm,
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
+
+  // Notification Badge
   notificationBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    width: 10,
-    height: 10,
+    top: 10,
+    right: 10,
+    width: 9,
+    height: 9,
     borderRadius: 5,
     backgroundColor: colors.accent,
     borderWidth: 2,
     borderColor: colors.background,
   },
-  underlineContainer: {
+
+  // Divider
+  dividerContainer: {
     marginTop: spacing.md,
-    position: "relative",
+    paddingHorizontal: spacing.lg,
   },
-  underline: {
-    height: 4,
-    width: "100%",
-    borderRadius: 3,
+  divider: {
+    height: 2.5,
+    borderRadius: 2,
+    opacity: 0.9,
   },
 });
 
