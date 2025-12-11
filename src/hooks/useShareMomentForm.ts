@@ -5,13 +5,11 @@ import type { FanMoment } from "../data/mockData";
 type ShareMomentFormState = {
   city: string;
   caption: string;
-  imageUrl: string;
 };
 
 const initialState: ShareMomentFormState = {
   city: "",
   caption: "",
-  imageUrl: "",
 };
 
 export const useShareMomentForm = () => {
@@ -29,11 +27,6 @@ export const useShareMomentForm = () => {
     []
   );
 
-  const setImageUrl = useCallback(
-    (imageUrl: string) => setForm((prev) => ({ ...prev, imageUrl })),
-    []
-  );
-
   const reset = useCallback(() => setForm(initialState), []);
 
   const close = useCallback(() => {
@@ -43,12 +36,11 @@ export const useShareMomentForm = () => {
 
   const open = useCallback(() => setVisible(true), []);
 
-  const buildMoment = useCallback((): FanMoment | null => {
+  const buildMoment = useCallback((imageUri?: string): FanMoment | null => {
     const trimmedCity = form.city.trim();
     const trimmedCaption = form.caption.trim();
-    const trimmedImage = form.imageUrl.trim();
 
-    if (!trimmedCity && !trimmedCaption && !trimmedImage) {
+    if (!trimmedCity && !trimmedCaption && !imageUri) {
       return null;
     }
 
@@ -59,12 +51,12 @@ export const useShareMomentForm = () => {
       caption: trimmedCaption || t("home.momentDefaults.caption"),
       time: t("home.momentDefaults.time"),
       source: "Tribun",
-      image: trimmedImage ? { uri: trimmedImage } : undefined,
+      image: imageUri ? { uri: imageUri } : undefined,
     };
   }, [form, t]);
 
-  const submit = useCallback(() => {
-    const moment = buildMoment();
+  const submit = useCallback((imageUri?: string) => {
+    const moment = buildMoment(imageUri);
     if (!moment) return null;
     reset();
     setVisible(false);
@@ -74,9 +66,9 @@ export const useShareMomentForm = () => {
   const canSubmit = useMemo(
     () =>
       Boolean(
-        form.city.trim() || form.caption.trim() || form.imageUrl.trim()
+        form.city.trim() || form.caption.trim()
       ),
-    [form.caption, form.city, form.imageUrl]
+    [form.caption, form.city]
   );
 
   return {
@@ -85,10 +77,8 @@ export const useShareMomentForm = () => {
     close,
     city: form.city,
     caption: form.caption,
-    imageUrl: form.imageUrl,
     setCity,
     setCaption,
-    setImageUrl,
     canSubmit,
     submit,
     reset,

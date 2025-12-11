@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Alert,
+  Animated,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import {
   announcements as announcementData,
@@ -24,6 +27,9 @@ import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { MarsStackParamList } from "../navigation/types";
+import { radii } from "../theme/spacing";
+
+const IS_IOS = Platform.OS === "ios";
 
 const MarsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -42,7 +48,50 @@ const MarsScreen: React.FC = () => {
     note: "",
   });
 
+  // Animations
+  const badgeAnim = useRef(new Animated.Value(0)).current;
+  const heroTitleAnim = useRef(new Animated.Value(0)).current;
+  const [statCardsAnim] = useState(() => [
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]);
+
   const momentCardWidth = 240;
+
+  // Animate hero and stats on mount
+  useEffect(() => {
+    Animated.sequence([
+      // Animate hero first
+      Animated.stagger(150, [
+        Animated.spring(badgeAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.spring(heroTitleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Then animate stat cards with stagger
+      Animated.stagger(
+        80,
+        statCardsAnim.map((anim) =>
+          Animated.spring(anim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          })
+        )
+      ),
+    ]).start();
+  }, [badgeAnim, heroTitleAnim, statCardsAnim]);
 
   const updateSubmission = (key: keyof typeof submission) => (value: string) => {
     setFormError(null);
@@ -185,42 +234,146 @@ const MarsScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <LinearGradient
-          colors={[colors.primary, "#0B111C", colors.background]}
+          colors={[
+            colors.primary,
+            "rgba(0, 191, 71, 0.8)",
+            "rgba(11, 17, 28, 0.9)",
+            colors.background,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <View style={styles.heroBadgeRow}>
-            <Badge icon="planet" text={t("archive.heroBadgeAmedArea")} />
-            <Badge icon="pulse" text={t("archive.heroBadgeTribune")} tone="accent" />
-          </View>
-          <Text style={styles.heroTitle}>{t("archive.heroTitle")}</Text>
-          <Text style={styles.heroSubtitle}>{t("archive.heroSubtitle")}</Text>
-        <View style={styles.statRow}>
-          {quickStats.map((item) => (
-            <Pressable
-              key={item.label}
-              style={styles.statCard}
-              disabled={!item.route}
-              onPress={() => item.route && navigation.navigate(item.route)}
+          <BlurView
+            intensity={IS_IOS ? 20 : 15}
+            tint="dark"
+            style={styles.heroBlur}
+          >
+            <Animated.View
+              style={[
+                styles.heroBadgeRow,
+                {
+                  opacity: badgeAnim,
+                  transform: [
+                    {
+                      translateY: badgeAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <Text style={styles.statValue}>{item.value}</Text>
-              <Text style={styles.statLabel}>{item.label}</Text>
-              <Text style={styles.statMeta}>{item.meta}</Text>
-              {item.route ? (
-                <View style={styles.statAction}>
-                  <Text style={styles.statActionText}>{t("archive.viewPage")}</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={14}
-                    color={colors.mutedText}
-                  />
-                </View>
-              ) : null}
-            </Pressable>
-          ))}
-        </View>
-      </LinearGradient>
+              <Badge icon="planet" text={t("archive.heroBadgeAmedArea")} />
+              <Badge icon="pulse" text={t("archive.heroBadgeTribune")} tone="accent" />
+            </Animated.View>
+            <Animated.Text
+              style={[
+                styles.heroTitle,
+                {
+                  opacity: heroTitleAnim,
+                  transform: [
+                    {
+                      translateY: heroTitleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              {t("archive.heroTitle")}
+            </Animated.Text>
+            <Animated.Text
+              style={[
+                styles.heroSubtitle,
+                {
+                  opacity: heroTitleAnim,
+                  transform: [
+                    {
+                      translateY: heroTitleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-10, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              {t("archive.heroSubtitle")}
+            </Animated.Text>
+            <View style={styles.statRow}>
+              {quickStats.map((item, index) => {
+                const cardAnim = statCardsAnim[index];
+                const scaleAnim = useRef(new Animated.Value(1)).current;
+
+                return (
+                  <Animated.View
+                    key={item.label}
+                    style={[
+                      {
+                        opacity: cardAnim,
+                        transform: [
+                          {
+                            translateY: cardAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [30, 0],
+                            }),
+                          },
+                          { scale: scaleAnim },
+                        ],
+                      },
+                    ]}
+                  >
+                    <Pressable
+                      style={styles.statCard}
+                      disabled={!item.route}
+                      onPress={() => item.route && navigation.navigate(item.route)}
+                      onPressIn={() => {
+                        Animated.spring(scaleAnim, {
+                          toValue: 0.96,
+                          tension: 300,
+                          friction: 20,
+                          useNativeDriver: true,
+                        }).start();
+                      }}
+                      onPressOut={() => {
+                        Animated.spring(scaleAnim, {
+                          toValue: 1,
+                          tension: 300,
+                          friction: 20,
+                          useNativeDriver: true,
+                        }).start();
+                      }}
+                    >
+                      <BlurView
+                        intensity={IS_IOS ? 10 : 8}
+                        tint="dark"
+                        style={styles.statCardBlur}
+                      >
+                        <View style={styles.statCardLeft}>
+                          <Text style={styles.statValue}>{item.value}</Text>
+                          <Text style={styles.statLabel}>{item.label}</Text>
+                          <Text style={styles.statMeta}>{item.meta}</Text>
+                        </View>
+                        <View style={styles.statCardRight}>
+                          <Ionicons
+                            name="arrow-forward-circle"
+                            size={32}
+                            color={item.route ? colors.primary : colors.mutedText}
+                            style={{ opacity: item.route ? 0.8 : 0.3 }}
+                          />
+                        </View>
+                      </BlurView>
+                    </Pressable>
+                  </Animated.View>
+                );
+              })}
+            </View>
+          </BlurView>
+        </LinearGradient>
 
         <SectionHeading
           title={t("archive.sectionMoments")}
@@ -237,17 +390,33 @@ const MarsScreen: React.FC = () => {
           contentContainerStyle={styles.momentRow}
         >
           {fanMoments.slice(0, 6).map((moment) => (
-            <View key={moment.id} style={styles.momentCard}>
-              <View style={styles.momentHeader}>
-                <Text style={styles.momentUser}>{moment.user}</Text>
-                <Chip icon="pin" label={moment.source} compact />
-              </View>
-              <Text style={styles.momentCaption}>{moment.caption}</Text>
-              <Text style={styles.momentMeta}>{moment.location}</Text>
-              <Text style={styles.momentMeta}>
-                {t("archive.timeAgo", { time: moment.time })}
-              </Text>
-            </View>
+            <LinearGradient
+              key={moment.id}
+              colors={[
+                "rgba(0, 191, 71, 0.12)",
+                "rgba(11, 17, 28, 0.85)",
+                colors.card,
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.momentCard}
+            >
+              <BlurView
+                intensity={IS_IOS ? 8 : 6}
+                tint="dark"
+                style={styles.momentCardBlur}
+              >
+                <View style={styles.momentHeader}>
+                  <Text style={styles.momentUser}>{moment.user}</Text>
+                  <Chip icon="pin" label={moment.source} compact />
+                </View>
+                <Text style={styles.momentCaption}>{moment.caption}</Text>
+                <Text style={styles.momentMeta}>{moment.location}</Text>
+                <Text style={styles.momentMeta}>
+                  {t("archive.timeAgo", { time: moment.time })}
+                </Text>
+              </BlurView>
+            </LinearGradient>
           ))}
         </ScrollView>
 
@@ -260,31 +429,43 @@ const MarsScreen: React.FC = () => {
           {announcementList.map((item) => (
             <LinearGradient
               key={item.id}
-              colors={["rgba(15,169,88,0.18)", "rgba(12,12,12,0.95)"]}
+              colors={[
+                "rgba(0, 191, 71, 0.15)",
+                "rgba(11, 17, 28, 0.92)",
+                colors.card,
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={styles.announcementCard}
             >
-              <View style={styles.announcementAccent} />
-              <View style={styles.announcementHeader}>
-                <Text style={styles.announcementTitle}>{item.title}</Text>
-                <Chip icon="location" label={item.city} compact />
-              </View>
-              {item.status === "pending" ? (
-                <Chip
-                  icon="time-outline"
-                  label={t("archive.pendingApproval")}
-                  compact
-                />
-              ) : null}
-              <View style={styles.announcementMetaRow}>
-                <Meta icon="time-outline" text={item.date} />
-                <Meta icon="navigate-outline" text={item.location} />
-              </View>
-              <Text style={styles.announcementNote}>{item.note}</Text>
-              <Text style={styles.announcementContact}>
-                {t("archive.contactLabel", {
-                  contact: item.contact || t("archive.contactUnknown"),
-                })}
-              </Text>
+              <BlurView
+                intensity={IS_IOS ? 6 : 4}
+                tint="dark"
+                style={styles.announcementCardBlur}
+              >
+                <View style={styles.announcementAccent} />
+                <View style={styles.announcementHeader}>
+                  <Text style={styles.announcementTitle}>{item.title}</Text>
+                  <Chip icon="location" label={item.city} compact />
+                </View>
+                {item.status === "pending" ? (
+                  <Chip
+                    icon="time-outline"
+                    label={t("archive.pendingApproval")}
+                    compact
+                  />
+                ) : null}
+                <View style={styles.announcementMetaRow}>
+                  <Meta icon="time-outline" text={item.date} />
+                  <Meta icon="navigate-outline" text={item.location} />
+                </View>
+                <Text style={styles.announcementNote}>{item.note}</Text>
+                <Text style={styles.announcementContact}>
+                  {t("archive.contactLabel", {
+                    contact: item.contact || t("archive.contactUnknown"),
+                  })}
+                </Text>
+              </BlurView>
             </LinearGradient>
           ))}
         </View>
@@ -310,7 +491,10 @@ const MarsScreen: React.FC = () => {
           </Text>
           <View style={styles.handoffActions}>
             <Pressable
-              style={styles.secondaryBtn}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+              ]}
               onPress={() => {
                 setFormError(null);
                 setSubmitOpen(true);
@@ -335,17 +519,33 @@ const MarsScreen: React.FC = () => {
           />
           <ScrollView contentContainerStyle={styles.modalContent}>
             {fanMoments.map((moment) => (
-              <View key={moment.id} style={styles.modalCard}>
-                <View style={styles.momentHeader}>
-                  <Text style={styles.momentUser}>{moment.user}</Text>
-                  <Chip icon="pin" label={moment.source} compact />
-                </View>
-                <Text style={styles.momentCaption}>{moment.caption}</Text>
-                <Text style={styles.momentMeta}>{moment.location}</Text>
-                <Text style={styles.momentMeta}>
-                  {t("archive.timeAgo", { time: moment.time })}
-                </Text>
-              </View>
+              <LinearGradient
+                key={moment.id}
+                colors={[
+                  "rgba(0, 191, 71, 0.1)",
+                  "rgba(11, 17, 28, 0.8)",
+                  colors.card,
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.modalCard}
+              >
+                <BlurView
+                  intensity={IS_IOS ? 6 : 4}
+                  tint="dark"
+                  style={styles.modalCardBlur}
+                >
+                  <View style={styles.momentHeader}>
+                    <Text style={styles.momentUser}>{moment.user}</Text>
+                    <Chip icon="pin" label={moment.source} compact />
+                  </View>
+                  <Text style={styles.momentCaption}>{moment.caption}</Text>
+                  <Text style={styles.momentMeta}>{moment.location}</Text>
+                  <Text style={styles.momentMeta}>
+                    {t("archive.timeAgo", { time: moment.time })}
+                  </Text>
+                </BlurView>
+              </LinearGradient>
             ))}
           </ScrollView>
         </SafeAreaView>
@@ -434,7 +634,10 @@ const MarsScreen: React.FC = () => {
               />
             </View>
             <Pressable
-              style={styles.submitBtn}
+              style={({ pressed }) => [
+                styles.submitBtn,
+                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+              ]}
               onPress={handleSubmitAnnouncement}
             >
               <Text style={styles.submitText}>{t("archive.submit")}</Text>
@@ -454,12 +657,18 @@ const ModalHeader = ({
   title: string;
   onClose: () => void;
 }) => (
-  <View style={styles.modalHeader}>
-    <Pressable style={styles.modalClose} onPress={onClose}>
+  <BlurView intensity={IS_IOS ? 20 : 15} tint="dark" style={styles.modalHeader}>
+    <Pressable
+      style={({ pressed }) => [
+        styles.modalClose,
+        pressed && { opacity: 0.6 },
+      ]}
+      onPress={onClose}
+    >
       <Ionicons name="chevron-back" size={20} color={colors.text} />
     </Pressable>
     <Text style={styles.modalTitle}>{title}</Text>
-  </View>
+  </BlurView>
 );
 
 const SectionHeading = ({
@@ -473,9 +682,31 @@ const SectionHeading = ({
   icon: keyof typeof Ionicons.glyphMap;
   onPress?: () => void;
 }) => {
-  const Wrapper = onPress ? Pressable : View;
+  if (onPress) {
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.sectionHeading,
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={onPress}
+      >
+        <View style={styles.sectionIcon}>
+          <Ionicons name={icon} size={18} color={colors.text} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {subtitle ? (
+            <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+          ) : null}
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.mutedText} />
+      </Pressable>
+    );
+  }
+
   return (
-    <Wrapper style={styles.sectionHeading} onPress={onPress}>
+    <View style={styles.sectionHeading}>
       <View style={styles.sectionIcon}>
         <Ionicons name={icon} size={18} color={colors.text} />
       </View>
@@ -485,10 +716,7 @@ const SectionHeading = ({
           <Text style={styles.sectionSubtitle}>{subtitle}</Text>
         ) : null}
       </View>
-      {onPress ? (
-        <Ionicons name="chevron-forward" size={16} color={colors.mutedText} />
-      ) : null}
-    </Wrapper>
+    </View>
   );
 };
 
@@ -566,13 +794,27 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   hero: {
-    padding: spacing.xl,
     borderRadius: 24,
     marginTop: spacing.lg,
     marginBottom: spacing.xl,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    ...shadows.lg,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  heroBlur: {
+    padding: spacing.xl,
+    backgroundColor: "rgba(11, 17, 28, 0.4)",
   },
   heroTitle: {
     color: colors.text,
@@ -592,21 +834,40 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     gap: spacing.sm,
     marginTop: spacing.md,
-    flexWrap: "wrap",
   },
   statCard: {
-    flex: 1,
-    minWidth: 140,
-    padding: spacing.md,
-    backgroundColor: colors.glassStrong,
+    width: "100%",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    ...shadows.sm,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  statCardBlur: {
+    padding: spacing.lg,
+    backgroundColor: "rgba(11, 17, 28, 0.5)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  statCardLeft: {
+    flex: 1,
+    gap: spacing.xs / 2,
+  },
+  statCardRight: {
+    marginLeft: spacing.md,
   },
   statAction: {
     flexDirection: "row",
@@ -666,13 +927,26 @@ const styles = StyleSheet.create({
   },
   momentCard: {
     width: 240,
-    padding: spacing.md,
     borderRadius: 16,
-    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  momentCardBlur: {
+    padding: spacing.md,
+    backgroundColor: "rgba(11, 17, 28, 0.3)",
     gap: spacing.xs / 2,
-    ...shadows.sm,
   },
   momentHeader: {
     flexDirection: "row",
@@ -698,15 +972,27 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   announcementCard: {
-    padding: spacing.md,
     borderRadius: 16,
-    backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    gap: spacing.xs / 2,
     overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 14,
+      },
+      android: {
+        elevation: 7,
+      },
+    }),
+  },
+  announcementCardBlur: {
+    padding: spacing.md,
+    backgroundColor: "rgba(11, 17, 28, 0.4)",
+    gap: spacing.xs / 2,
     position: "relative",
-    ...shadows.sm,
   },
   announcementAccent: {
     position: "absolute",
@@ -928,7 +1214,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderLight,
+    backgroundColor: "rgba(11, 17, 28, 0.5)",
+    overflow: "hidden",
   },
   modalClose: {
     paddingRight: spacing.sm,
@@ -970,11 +1258,25 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
   },
   modalCard: {
-    padding: spacing.md,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+    borderColor: colors.borderLight,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 5,
+      },
+    }),
+  },
+  modalCardBlur: {
+    padding: spacing.md,
+    backgroundColor: "rgba(11, 17, 28, 0.35)",
     gap: spacing.xs / 2,
   },
   modalCardTitle: {

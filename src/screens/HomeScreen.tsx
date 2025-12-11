@@ -62,10 +62,8 @@ const HomeScreen: React.FC = () => {
     close: closeShareModal,
     city: newCity,
     caption: newCaption,
-    imageUrl,
     setCity: setNewCity,
     setCaption: setNewCaption,
-    setImageUrl,
     submit,
   } = useShareMomentForm();
 
@@ -76,8 +74,8 @@ const HomeScreen: React.FC = () => {
     setDetailModalVisible(true);
   }, []);
 
-  const handleAddMoment = useCallback(() => {
-    const newMoment = submit();
+  const handleAddMoment = useCallback((imageUri?: string) => {
+    const newMoment = submit(imageUri);
     if (!newMoment) return;
     setMoments((prev) => [newMoment, ...prev]);
   }, [submit]);
@@ -184,10 +182,8 @@ const HomeScreen: React.FC = () => {
         visible={shareModalVisible}
         newCity={newCity}
         newCaption={newCaption}
-        imageUrl={imageUrl}
         onChangeCity={setNewCity}
         onChangeCaption={setNewCaption}
-        onChangeImageUrl={setImageUrl}
         onSubmit={handleAddMoment}
         onClose={closeShareModal}
       />

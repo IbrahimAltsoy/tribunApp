@@ -12,8 +12,8 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
-import { isValidImageURL } from "../../utils/urlValidator";
 import { VALIDATION_LIMITS } from "../../constants/app";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
@@ -23,11 +23,9 @@ type Props = {
   visible: boolean;
   newCity: string;
   newCaption: string;
-  imageUrl: string;
   onChangeCity: (text: string) => void;
   onChangeCaption: (text: string) => void;
-  onChangeImageUrl: (text: string) => void;
-  onSubmit: () => void;
+  onSubmit: (imageUri?: string) => void;
   onClose: () => void;
 };
 
@@ -35,24 +33,22 @@ const ShareMomentModal: React.FC<Props> = ({
   visible,
   newCity,
   newCaption,
-  imageUrl,
   onChangeCity,
   onChangeCaption,
-  onChangeImageUrl,
   onSubmit,
   onClose,
 }) => {
   const { t } = useTranslation();
   const [cityError, setCityError] = useState<string | null>(null);
   const [captionError, setCaptionError] = useState<string | null>(null);
-  const [imageUrlError, setImageUrlError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  // Reset errors when modal closes
+  // Reset errors and image when modal closes
   useEffect(() => {
     if (!visible) {
       setCityError(null);
       setCaptionError(null);
-      setImageUrlError(null);
+      setSelectedImage(null);
     }
   }, [visible]);
 
@@ -100,19 +96,73 @@ const ShareMomentModal: React.FC<Props> = ({
     return true;
   };
 
-  const validateImageUrl = (url: string): boolean => {
-    if (!url.trim()) {
-      setImageUrlError(null);
-      return true; // Optional field
+  // Pick image from gallery
+  const pickImageFromGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        t("shareMoment.permissionDenied"),
+        t("shareMoment.galleryPermissionMessage")
+      );
+      return;
     }
 
-    if (!isValidImageURL(url)) {
-      setImageUrlError(t("shareMoment.invalidImageUrl"));
-      return false;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  // Take photo with camera
+  const takePhotoWithCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        t("shareMoment.permissionDenied"),
+        t("shareMoment.cameraPermissionMessage")
+      );
+      return;
     }
 
-    setImageUrlError(null);
-    return true;
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  // Show image source selection
+  const selectImageSource = () => {
+    Alert.alert(
+      t("shareMoment.selectImageSource"),
+      "",
+      [
+        {
+          text: t("shareMoment.camera"),
+          onPress: takePhotoWithCamera,
+        },
+        {
+          text: t("shareMoment.gallery"),
+          onPress: pickImageFromGallery,
+        },
+        {
+          text: t("cancel"),
+          style: "cancel",
+        },
+      ]
+    );
   };
 
   const handleCityChange = (text: string) => {
@@ -133,19 +183,11 @@ const ShareMomentModal: React.FC<Props> = ({
     }
   };
 
-  const handleImageUrlChange = (text: string) => {
-    onChangeImageUrl(text);
-    if (imageUrlError || text.trim()) {
-      validateImageUrl(text);
-    }
-  };
-
   const handleSubmit = () => {
     const isCityValid = validateCity(newCity);
     const isCaptionValid = validateCaption(newCaption);
-    const isImageValid = validateImageUrl(imageUrl);
 
-    if (!isCityValid || !isCaptionValid || !isImageValid) {
+    if (!isCityValid || !isCaptionValid) {
       Alert.alert(
         t("error"),
         t("validation.required"),
@@ -154,7 +196,7 @@ const ShareMomentModal: React.FC<Props> = ({
       return;
     }
 
-    onSubmit();
+    onSubmit(selectedImage || undefined);
   };
 
   return (
@@ -233,52 +275,47 @@ const ShareMomentModal: React.FC<Props> = ({
             )}
           </View>
 
-          {/* Image URL Input */}
+          {/* Image Selection */}
           <View>
-            <TextInput
-              placeholder={t("shareMoment.imageUrlPlaceholder")}
-              placeholderTextColor={colors.mutedText}
-              value={imageUrl}
-              onChangeText={handleImageUrlChange}
-              onBlur={() => validateImageUrl(imageUrl)}
-              style={[
-                styles.modalInput,
-                imageUrlError && styles.modalInputError,
-              ]}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
-            {imageUrlError && (
-              <View style={styles.errorContainer}>
-                <Ionicons name="warning-outline" size={14} color={colors.error} />
-                <Text style={styles.errorText}>{imageUrlError}</Text>
+            <Text style={styles.sectionLabel}>
+              {t("shareMoment.addPhoto")} ({t("shareMoment.optional")})
+            </Text>
+
+            {selectedImage ? (
+              <View style={styles.previewBox}>
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.removeImageBtn}
+                  onPress={() => setSelectedImage(null)}
+                >
+                  <Ionicons name="close-circle" size={28} color={colors.error} />
+                </TouchableOpacity>
               </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.imagePickerButton}
+                onPress={selectImageSource}
+              >
+                <Ionicons name="camera-outline" size={32} color={colors.primary} />
+                <Text style={styles.imagePickerText}>
+                  {t("shareMoment.selectPhoto")}
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
-
-          {/* Image Preview */}
-          {imageUrl && !imageUrlError ? (
-            <View style={styles.previewBox}>
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.previewImage}
-                resizeMode="cover"
-                onError={() => {
-                  setImageUrlError(t("shareMoment.invalidImageUrl"));
-                }}
-              />
-            </View>
-          ) : null}
 
           {/* Submit Button */}
           <TouchableOpacity
             style={[
               styles.modalButton,
-              (cityError || captionError || imageUrlError) && styles.modalButtonDisabled,
+              (cityError || captionError) && styles.modalButtonDisabled,
             ]}
             onPress={handleSubmit}
-            disabled={!!(cityError || captionError || imageUrlError)}
+            disabled={!!(cityError || captionError)}
           >
             <Text style={styles.modalButtonText}>{t("shareMoment.submit")}</Text>
           </TouchableOpacity>
@@ -355,16 +392,45 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     fontFamily: typography.medium,
   },
+  sectionLabel: {
+    color: colors.text,
+    fontSize: fontSizes.sm,
+    fontFamily: typography.medium,
+    marginBottom: spacing.xs,
+  },
+  imagePickerButton: {
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: "dashed",
+    borderRadius: 12,
+    padding: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+  },
+  imagePickerText: {
+    color: colors.primary,
+    fontSize: fontSizes.md,
+    fontFamily: typography.medium,
+  },
   previewBox: {
     borderRadius: 12,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.border,
-    marginTop: spacing.xs,
+    position: "relative",
   },
   previewImage: {
     width: "100%",
     height: 160,
+  },
+  removeImageBtn: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 14,
   },
   modalButton: {
     backgroundColor: colors.primary,

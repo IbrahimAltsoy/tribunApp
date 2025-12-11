@@ -9,7 +9,8 @@
       "Bash(npx expo install react-native-reanimated@~3.16.8)",
       "Bash(npx expo install:*)",
       "Bash(npm uninstall:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npx react-native run-android)"
     ]
   }
 }
