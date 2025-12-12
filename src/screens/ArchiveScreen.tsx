@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useRef, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -6,9 +6,12 @@ import {
   View,
   Dimensions,
   Pressable,
+  Animated,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { archiveHighlights } from "../data/mockData";
@@ -19,33 +22,77 @@ import { fontSizes, typography } from "../theme/typography";
 
 /* ================= HERO ================= */
 
-const ArchiveHero = memo(({ onBack }: { onBack?: () => void }) => {
+const IS_IOS = Platform.OS === "ios";
+
+const ArchiveHero = memo(() => {
   const { t } = useTranslation();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   return (
     <LinearGradient
-      colors={[colors.primary, "rgba(15,169,88,0.07)", colors.card]}
+      colors={[
+        colors.primary,
+        "rgba(0, 191, 71, 0.8)",
+        "rgba(11, 17, 28, 0.9)",
+        colors.background,
+      ]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={heroStyles.container}
     >
-      <View style={heroStyles.topRow}>
-        <Pressable onPress={onBack}>
-          <Ionicons name="chevron-back" size={26} color={colors.text} />
-        </Pressable>
+      <BlurView
+        intensity={IS_IOS ? 20 : 15}
+        tint="dark"
+        style={heroStyles.blurContainer}
+      >
+        <View style={heroStyles.topRow}>
+          <MaterialCommunityIcons
+            name="shield-star-outline"
+            size={32}
+            color={colors.primary}
+          />
+        </View>
 
-        {/* Logo alanı istersen kulüp logosu koyulabilir */}
-        <MaterialCommunityIcons
-          name="shield-star-outline"
-          size={28}
-          color={colors.text}
-        />
-      </View>
-
-      <Text style={heroStyles.title}>{t("archive.sectionArchive")}</Text>
-      <Text style={heroStyles.subtitle}>
-        {t("archive.sectionArchiveSubtitle")}
-      </Text>
+        <Animated.Text
+          style={[
+            heroStyles.title,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          {t("archive.sectionArchive")}
+        </Animated.Text>
+        <Animated.Text
+          style={[
+            heroStyles.subtitle,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          {t("archive.sectionArchiveSubtitle")}
+        </Animated.Text>
+      </BlurView>
     </LinearGradient>
   );
 });
@@ -59,17 +106,32 @@ interface HighlightCardProps {
 }
 
 const HighlightCard = memo(({ title, detail, icon }: HighlightCardProps) => (
-  <View style={cardStyles.container}>
-    <MaterialCommunityIcons
-      name={"bookmark-outline"}
-      size={22}
-      color={colors.primary}
-      style={{ marginBottom: 2 }}
-    />
+  <LinearGradient
+    colors={[
+      "rgba(0, 191, 71, 0.1)",
+      "rgba(11, 17, 28, 0.8)",
+      colors.card,
+    ]}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={cardStyles.container}
+  >
+    <BlurView
+      intensity={IS_IOS ? 8 : 6}
+      tint="dark"
+      style={cardStyles.blurContent}
+    >
+      <MaterialCommunityIcons
+        name={"bookmark-outline"}
+        size={22}
+        color={colors.primary}
+        style={{ marginBottom: 2 }}
+      />
 
-    <Text style={cardStyles.title}>{title}</Text>
-    <Text style={cardStyles.body}>{detail}</Text>
-  </View>
+      <Text style={cardStyles.title}>{title}</Text>
+      <Text style={cardStyles.body}>{detail}</Text>
+    </BlurView>
+  </LinearGradient>
 ));
 
 /* ================= SECTION ================= */
@@ -156,29 +218,46 @@ const screen = StyleSheet.create({
 
 const heroStyles = StyleSheet.create({
   container: {
-    padding: spacing.lg,
-    borderRadius: 20,
-    minHeight: Dimensions.get("window").height * 0.18,
-    justifyContent: "flex-end",
+    borderRadius: 24,
+    minHeight: Dimensions.get("window").height * 0.2,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    ...shadows.md,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.3,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  blurContainer: {
+    padding: spacing.xl,
+    backgroundColor: "rgba(11, 17, 28, 0.4)",
+    flex: 1,
+    justifyContent: "flex-end",
   },
   topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   title: {
     color: colors.text,
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.xxl,
     fontFamily: typography.bold,
     marginBottom: spacing.xs,
   },
   subtitle: {
-    color: colors.mutedText,
+    color: colors.text,
     fontFamily: typography.medium,
+    opacity: 0.88,
+    lineHeight: 22,
   },
 });
 
@@ -200,13 +279,26 @@ const sectionStyles = StyleSheet.create({
 
 const cardStyles = StyleSheet.create({
   container: {
-    padding: spacing.md,
-    borderRadius: 14,
-    backgroundColor: colors.card,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.borderLight,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  blurContent: {
+    padding: spacing.md,
+    backgroundColor: "rgba(11, 17, 28, 0.3)",
     gap: spacing.xs,
-    ...shadows.sm,
   },
   title: {
     color: colors.text,

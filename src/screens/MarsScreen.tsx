@@ -15,13 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   announcements as announcementData,
   fanMoments,
   kits,
   players,
 } from "../data/mockData";
-import { colors, shadows } from "../theme/colors";
+import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,8 @@ const MarsScreen: React.FC = () => {
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [announcementList, setAnnouncementList] = useState(announcementData);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [submission, setSubmission] = useState({
     title: "",
     city: "",
@@ -47,6 +50,16 @@ const MarsScreen: React.FC = () => {
     contact: "",
     note: "",
   });
+
+  // Announcement card animations
+  const [announcementCardsAnim] = useState(() =>
+    announcementList.map(() => new Animated.Value(0))
+  );
+
+  // Fan moments animations
+  const [momentCardsAnim] = useState(() =>
+    fanMoments.slice(0, 6).map(() => new Animated.Value(0))
+  );
 
   // Animations
   const badgeAnim = useRef(new Animated.Value(0)).current;
@@ -58,7 +71,7 @@ const MarsScreen: React.FC = () => {
     new Animated.Value(0),
   ]);
 
-  const momentCardWidth = 240;
+  const momentCardWidth = 260;
 
   // Animate hero and stats on mount
   useEffect(() => {
@@ -91,11 +104,63 @@ const MarsScreen: React.FC = () => {
         )
       ),
     ]).start();
-  }, [badgeAnim, heroTitleAnim, statCardsAnim]);
+
+    // Animate moment cards
+    setTimeout(() => {
+      Animated.stagger(
+        70,
+        momentCardsAnim.map((anim) =>
+          Animated.spring(anim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+    }, 300);
+
+    // Animate announcement cards
+    setTimeout(() => {
+      Animated.stagger(
+        60,
+        announcementCardsAnim.map((anim) =>
+          Animated.spring(anim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+    }, 500);
+  }, [badgeAnim, heroTitleAnim, statCardsAnim, momentCardsAnim, announcementCardsAnim]);
 
   const updateSubmission = (key: keyof typeof submission) => (value: string) => {
     setFormError(null);
     setSubmission((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (date) {
+      setSelectedDate(date);
+      // Format: "12 Aralık, 14:30"
+      const day = date.getDate();
+      const monthNames = [
+        "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+        "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+      ];
+      const month = monthNames[date.getMonth()];
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const formattedDate = `${day} ${month}, ${hours}:${minutes}`;
+
+      setSubmission((prev) => ({ ...prev, date: formattedDate }));
+    }
   };
 
   const quickStats: {
@@ -226,6 +291,7 @@ const MarsScreen: React.FC = () => {
       contact: "",
       note: "",
     });
+    setSelectedDate(new Date());
     setFormSuccess(t("archive.formSuccess"));
     setSubmitOpen(false);
   };
@@ -389,35 +455,119 @@ const MarsScreen: React.FC = () => {
           snapToAlignment="start"
           contentContainerStyle={styles.momentRow}
         >
-          {fanMoments.slice(0, 6).map((moment) => (
-            <LinearGradient
-              key={moment.id}
-              colors={[
-                "rgba(0, 191, 71, 0.12)",
-                "rgba(11, 17, 28, 0.85)",
-                colors.card,
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.momentCard}
-            >
-              <BlurView
-                intensity={IS_IOS ? 8 : 6}
-                tint="dark"
-                style={styles.momentCardBlur}
+          {fanMoments.slice(0, 6).map((moment, index) => {
+            const cardAnim = momentCardsAnim[index] || new Animated.Value(1);
+            const scaleAnim = useRef(new Animated.Value(1)).current;
+
+            return (
+              <Animated.View
+                key={moment.id}
+                style={[
+                  {
+                    opacity: cardAnim,
+                    transform: [
+                      {
+                        translateY: cardAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [40, 0],
+                        }),
+                      },
+                      {
+                        scale: Animated.multiply(
+                          cardAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.9, 1],
+                          }),
+                          scaleAnim
+                        ),
+                      },
+                    ],
+                  },
+                ]}
               >
-                <View style={styles.momentHeader}>
-                  <Text style={styles.momentUser}>{moment.user}</Text>
-                  <Chip icon="pin" label={moment.source} compact />
-                </View>
-                <Text style={styles.momentCaption}>{moment.caption}</Text>
-                <Text style={styles.momentMeta}>{moment.location}</Text>
-                <Text style={styles.momentMeta}>
-                  {t("archive.timeAgo", { time: moment.time })}
-                </Text>
-              </BlurView>
-            </LinearGradient>
-          ))}
+                <Pressable
+                  onPressIn={() => {
+                    Animated.spring(scaleAnim, {
+                      toValue: 0.95,
+                      tension: 300,
+                      friction: 20,
+                      useNativeDriver: true,
+                    }).start();
+                  }}
+                  onPressOut={() => {
+                    Animated.spring(scaleAnim, {
+                      toValue: 1,
+                      tension: 300,
+                      friction: 20,
+                      useNativeDriver: true,
+                    }).start();
+                  }}
+                >
+                  <LinearGradient
+                    colors={[
+                      "rgba(0, 191, 71, 0.15)",
+                      "rgba(0, 191, 71, 0.08)",
+                      "rgba(11, 17, 28, 0.9)",
+                      colors.card,
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.momentCard}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 10 : 8}
+                      tint="dark"
+                      style={styles.momentCardBlur}
+                    >
+                      <View style={styles.momentTopBar}>
+                        <View style={styles.momentAvatarWrapper}>
+                          <Ionicons
+                            name="person"
+                            size={16}
+                            color={colors.primary}
+                          />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.momentUser}>{moment.user}</Text>
+                          <View style={styles.momentSourceBadge}>
+                            <Ionicons
+                              name="pin"
+                              size={10}
+                              color={colors.mutedText}
+                            />
+                            <Text style={styles.momentSourceText}>
+                              {moment.source}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <Text style={styles.momentCaption}>{moment.caption}</Text>
+                      <View style={styles.momentFooter}>
+                        <View style={styles.momentMetaItem}>
+                          <Ionicons
+                            name="location-outline"
+                            size={12}
+                            color={colors.mutedText}
+                          />
+                          <Text style={styles.momentMeta}>{moment.location}</Text>
+                        </View>
+                        <View style={styles.momentMetaItem}>
+                          <Ionicons
+                            name="time-outline"
+                            size={12}
+                            color={colors.mutedText}
+                          />
+                          <Text style={styles.momentMeta}>
+                            {t("archive.timeAgo", { time: moment.time })}
+                          </Text>
+                        </View>
+                      </View>
+                    </BlurView>
+                  </LinearGradient>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
         </ScrollView>
 
         <SectionHeading
@@ -426,48 +576,134 @@ const MarsScreen: React.FC = () => {
           icon="megaphone-outline"
         />
         <View style={styles.announcementList}>
-          {announcementList.map((item) => (
-            <LinearGradient
-              key={item.id}
-              colors={[
-                "rgba(0, 191, 71, 0.15)",
-                "rgba(11, 17, 28, 0.92)",
-                colors.card,
-              ]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.announcementCard}
-            >
-              <BlurView
-                intensity={IS_IOS ? 6 : 4}
-                tint="dark"
-                style={styles.announcementCardBlur}
+          {announcementList.map((item, index) => {
+            const cardAnim = announcementCardsAnim[index] || new Animated.Value(1);
+            const scaleAnim = useRef(new Animated.Value(1)).current;
+
+            return (
+              <Animated.View
+                key={item.id}
+                style={[
+                  {
+                    opacity: cardAnim,
+                    transform: [
+                      {
+                        translateY: cardAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [30, 0],
+                        }),
+                      },
+                      { scale: scaleAnim },
+                    ],
+                  },
+                ]}
               >
-                <View style={styles.announcementAccent} />
-                <View style={styles.announcementHeader}>
-                  <Text style={styles.announcementTitle}>{item.title}</Text>
-                  <Chip icon="location" label={item.city} compact />
-                </View>
-                {item.status === "pending" ? (
-                  <Chip
-                    icon="time-outline"
-                    label={t("archive.pendingApproval")}
-                    compact
-                  />
-                ) : null}
-                <View style={styles.announcementMetaRow}>
-                  <Meta icon="time-outline" text={item.date} />
-                  <Meta icon="navigate-outline" text={item.location} />
-                </View>
-                <Text style={styles.announcementNote}>{item.note}</Text>
-                <Text style={styles.announcementContact}>
-                  {t("archive.contactLabel", {
-                    contact: item.contact || t("archive.contactUnknown"),
-                  })}
-                </Text>
-              </BlurView>
-            </LinearGradient>
-          ))}
+                <Pressable
+                  onPressIn={() => {
+                    Animated.spring(scaleAnim, {
+                      toValue: 0.97,
+                      tension: 300,
+                      friction: 20,
+                      useNativeDriver: true,
+                    }).start();
+                  }}
+                  onPressOut={() => {
+                    Animated.spring(scaleAnim, {
+                      toValue: 1,
+                      tension: 300,
+                      friction: 20,
+                      useNativeDriver: true,
+                    }).start();
+                  }}
+                >
+                  <LinearGradient
+                    colors={[
+                      "rgba(0, 191, 71, 0.18)",
+                      "rgba(0, 191, 71, 0.08)",
+                      "rgba(11, 17, 28, 0.95)",
+                      colors.card,
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.announcementCard}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 8 : 6}
+                      tint="dark"
+                      style={styles.announcementCardBlur}
+                    >
+                      <View style={styles.announcementAccent} />
+                      <View style={styles.announcementTopRow}>
+                        <View style={styles.announcementIconWrapper}>
+                          <Ionicons
+                            name="megaphone"
+                            size={20}
+                            color={colors.primary}
+                          />
+                        </View>
+                        {item.status === "pending" ? (
+                          <View style={styles.pendingBadge}>
+                            <Ionicons
+                              name="time-outline"
+                              size={12}
+                              color={colors.accent}
+                            />
+                            <Text style={styles.pendingBadgeText}>
+                              {t("archive.pendingApproval")}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                      <View style={styles.announcementHeader}>
+                        <Text style={styles.announcementTitle}>{item.title}</Text>
+                      </View>
+                      <View style={styles.announcementMetaRow}>
+                        <View style={styles.metaChip}>
+                          <Ionicons
+                            name="location"
+                            size={14}
+                            color={colors.primary}
+                          />
+                          <Text style={styles.metaChipText}>{item.city}</Text>
+                        </View>
+                        <View style={styles.metaChip}>
+                          <Ionicons
+                            name="time-outline"
+                            size={14}
+                            color={colors.mutedText}
+                          />
+                          <Text style={styles.metaChipText}>{item.date}</Text>
+                        </View>
+                      </View>
+                      {item.location ? (
+                        <View style={styles.locationRow}>
+                          <Ionicons
+                            name="navigate-outline"
+                            size={14}
+                            color={colors.mutedText}
+                          />
+                          <Text style={styles.locationText}>{item.location}</Text>
+                        </View>
+                      ) : null}
+                      {item.note ? (
+                        <Text style={styles.announcementNote}>{item.note}</Text>
+                      ) : null}
+                      <View style={styles.announcementFooter}>
+                        <Ionicons
+                          name="person-circle-outline"
+                          size={16}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.announcementContact}>
+                          {item.contact || t("archive.contactUnknown")}
+                        </Text>
+                      </View>
+                    </BlurView>
+                  </LinearGradient>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
         </View>
 
         <SectionHeading
@@ -477,34 +713,73 @@ const MarsScreen: React.FC = () => {
         />
         {formSuccess ? (
           <View style={styles.successBanner}>
-            <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
             <Text style={styles.successText}>{formSuccess}</Text>
           </View>
         ) : null}
-        <View style={styles.handoffCard}>
-          <View style={styles.handoffHeader}>
-            <Ionicons name="shield-checkmark" size={18} color={colors.text} />
-            <Text style={styles.handoffTitle}>{t("archive.moderatedAnnouncements")}</Text>
-          </View>
-          <Text style={styles.handoffBody}>
-            {t("archive.moderationDescription")}
-          </Text>
-          <View style={styles.handoffActions}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-              ]}
-              onPress={() => {
-                setFormError(null);
-                setSubmitOpen(true);
-              }}
-            >
-              <Text style={styles.secondaryText}>{t("archive.announcementForm")}</Text>
-              <Ionicons name="create-outline" size={14} color={colors.text} />
-            </Pressable>
-          </View>
-        </View>
+        <LinearGradient
+          colors={[
+            "rgba(0, 191, 71, 0.12)",
+            "rgba(11, 17, 28, 0.85)",
+            colors.card,
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.handoffCard}
+        >
+          <BlurView
+            intensity={IS_IOS ? 8 : 6}
+            tint="dark"
+            style={styles.handoffCardBlur}
+          >
+            <View style={styles.handoffIconRow}>
+              <View style={styles.handoffIconWrapper}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={24}
+                  color={colors.primary}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.handoffTitle}>
+                  {t("archive.moderatedAnnouncements")}
+                </Text>
+                <Text style={styles.handoffSubtitle}>
+                  {t("archive.moderationDescription")}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.handoffActions}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.createAnnouncementBtn,
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+                ]}
+                onPress={() => {
+                  setFormError(null);
+                  setSubmitOpen(true);
+                }}
+              >
+                <LinearGradient
+                  colors={[colors.primary, "rgba(0, 191, 71, 0.8)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.createAnnouncementBtnGradient}
+                >
+                  <Ionicons name="add-circle" size={18} color={colors.text} />
+                  <Text style={styles.createAnnouncementBtnText}>
+                    {t("archive.announcementForm")}
+                  </Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={16}
+                    color={colors.text}
+                  />
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </BlurView>
+        </LinearGradient>
       </ScrollView>
 
       <Modal
@@ -522,8 +797,9 @@ const MarsScreen: React.FC = () => {
               <LinearGradient
                 key={moment.id}
                 colors={[
-                  "rgba(0, 191, 71, 0.1)",
-                  "rgba(11, 17, 28, 0.8)",
+                  "rgba(0, 191, 71, 0.15)",
+                  "rgba(0, 191, 71, 0.08)",
+                  "rgba(11, 17, 28, 0.9)",
                   colors.card,
                 ]}
                 start={{ x: 0, y: 0 }}
@@ -531,19 +807,53 @@ const MarsScreen: React.FC = () => {
                 style={styles.modalCard}
               >
                 <BlurView
-                  intensity={IS_IOS ? 6 : 4}
+                  intensity={IS_IOS ? 8 : 6}
                   tint="dark"
                   style={styles.modalCardBlur}
                 >
-                  <View style={styles.momentHeader}>
-                    <Text style={styles.momentUser}>{moment.user}</Text>
-                    <Chip icon="pin" label={moment.source} compact />
+                  <View style={styles.momentTopBar}>
+                    <View style={styles.momentAvatarWrapper}>
+                      <Ionicons
+                        name="person"
+                        size={16}
+                        color={colors.primary}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.momentUser}>{moment.user}</Text>
+                      <View style={styles.momentSourceBadge}>
+                        <Ionicons
+                          name="pin"
+                          size={10}
+                          color={colors.mutedText}
+                        />
+                        <Text style={styles.momentSourceText}>
+                          {moment.source}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                   <Text style={styles.momentCaption}>{moment.caption}</Text>
-                  <Text style={styles.momentMeta}>{moment.location}</Text>
-                  <Text style={styles.momentMeta}>
-                    {t("archive.timeAgo", { time: moment.time })}
-                  </Text>
+                  <View style={styles.momentFooter}>
+                    <View style={styles.momentMetaItem}>
+                      <Ionicons
+                        name="location-outline"
+                        size={12}
+                        color={colors.mutedText}
+                      />
+                      <Text style={styles.momentMeta}>{moment.location}</Text>
+                    </View>
+                    <View style={styles.momentMetaItem}>
+                      <Ionicons
+                        name="time-outline"
+                        size={12}
+                        color={colors.mutedText}
+                      />
+                      <Text style={styles.momentMeta}>
+                        {t("archive.timeAgo", { time: moment.time })}
+                      </Text>
+                    </View>
+                  </View>
                 </BlurView>
               </LinearGradient>
             ))}
@@ -604,13 +914,32 @@ const MarsScreen: React.FC = () => {
             </View>
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>{t("archive.form.date")}</Text>
-              <TextInput
-                style={styles.formInput}
-                placeholder={t("archive.form.placeholderDate")}
-                placeholderTextColor={colors.mutedText}
-                value={submission.date}
-                onChangeText={updateSubmission("date")}
-              />
+              <Pressable
+                style={styles.datePickerButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                <Text style={styles.datePickerText}>
+                  {submission.date || t("archive.form.placeholderDate")}
+                </Text>
+              </Pressable>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={selectedDate}
+                  mode="datetime"
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={handleDateChange}
+                  locale="tr-TR"
+                />
+              )}
+              {Platform.OS === "ios" && showDatePicker && (
+                <Pressable
+                  style={styles.datePickerDone}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={styles.datePickerDoneText}>Tamam</Text>
+                </Pressable>
+              )}
             </View>
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>{t("archive.form.contact")}</Text>
@@ -924,29 +1253,86 @@ const styles = StyleSheet.create({
   momentRow: {
     gap: spacing.sm,
     marginBottom: spacing.xl,
+    paddingLeft: spacing.lg,
   },
   momentCard: {
-    width: 240,
-    borderRadius: 16,
+    width: 260,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.borderLight,
     overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.28,
+        shadowRadius: 20,
       },
       android: {
-        elevation: 8,
+        elevation: 10,
       },
     }),
   },
   momentCardBlur: {
-    padding: spacing.md,
-    backgroundColor: "rgba(11, 17, 28, 0.3)",
+    padding: spacing.lg,
+    backgroundColor: "rgba(11, 17, 28, 0.35)",
+    gap: spacing.sm,
+  },
+  momentTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  momentAvatarWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(0, 191, 71, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 191, 71, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  momentUser: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+    marginBottom: 2,
+  },
+  momentSourceBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs / 2,
+  },
+  momentSourceText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  momentCaption: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  momentFooter: {
+    gap: spacing.xs / 2,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.05)",
+  },
+  momentMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+  },
+  momentMeta: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    flex: 1,
   },
   momentHeader: {
     flexDirection: "row",
@@ -954,44 +1340,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.xs / 2,
   },
-  momentUser: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-  },
-  momentCaption: {
-    color: colors.text,
-    fontFamily: typography.medium,
-  },
-  momentMeta: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-  },
   announcementList: {
     gap: spacing.sm,
     marginBottom: spacing.xl,
   },
   announcementCard: {
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.borderLight,
     overflow: "hidden",
+    marginBottom: spacing.sm,
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 18,
       },
       android: {
-        elevation: 7,
+        elevation: 9,
       },
     }),
   },
   announcementCardBlur: {
-    padding: spacing.md,
-    backgroundColor: "rgba(11, 17, 28, 0.4)",
-    gap: spacing.xs / 2,
+    padding: spacing.lg,
+    backgroundColor: "rgba(11, 17, 28, 0.3)",
+    gap: spacing.sm,
     position: "relative",
   },
   announcementAccent: {
@@ -999,78 +1373,208 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 6,
+    width: 4,
     backgroundColor: colors.primary,
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
   },
-  announcementHeader: {
+  announcementTopRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  announcementIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(0, 191, 71, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 191, 71, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pendingBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 8,
+    backgroundColor: "rgba(209, 14, 14, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(209, 14, 14, 0.3)",
+  },
+  pendingBadgeText: {
+    color: colors.accent,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
+  },
+  announcementHeader: {
+    marginBottom: spacing.xs,
   },
   announcementTitle: {
     color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
-    flex: 1,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+    lineHeight: 24,
   },
   announcementMetaRow: {
     flexDirection: "row",
     gap: spacing.sm,
-    marginVertical: spacing.xs / 2,
+    marginBottom: spacing.xs,
+    flexWrap: "wrap",
+  },
+  metaChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 1.5,
+    borderRadius: 8,
+    backgroundColor: "rgba(11, 17, 28, 0.6)",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  metaChipText: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    marginBottom: spacing.xs,
+  },
+  locationText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    flex: 1,
   },
   announcementNote: {
     color: colors.text,
     fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    lineHeight: 22,
+    opacity: 0.9,
+    marginBottom: spacing.sm,
+  },
+  announcementFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.05)",
   },
   announcementContact: {
     color: colors.text,
     fontFamily: typography.semiBold,
-    marginTop: spacing.xs,
+    fontSize: fontSizes.sm,
+    flex: 1,
   },
   handoffCard: {
-    padding: spacing.md,
-    borderRadius: 16,
-    backgroundColor: colors.card,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.borderLight,
     marginBottom: spacing.xl,
-    gap: spacing.sm,
-    ...shadows.sm,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+      },
+      android: {
+        elevation: 10,
+      },
+    }),
   },
-  handoffHeader: {
+  handoffCardBlur: {
+    padding: spacing.lg,
+    backgroundColor: "rgba(11, 17, 28, 0.4)",
+    gap: spacing.md,
+  },
+  handoffIconRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  handoffIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 191, 71, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 191, 71, 0.3)",
     alignItems: "center",
-    gap: spacing.sm,
+    justifyContent: "center",
   },
   handoffTitle: {
     color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+    marginBottom: spacing.xs / 2,
+    lineHeight: 24,
   },
-  handoffBody: {
+  handoffSubtitle: {
     color: colors.mutedText,
     fontFamily: typography.medium,
+    fontSize: fontSizes.md,
     lineHeight: 20,
+    opacity: 0.85,
   },
   handoffActions: {
+    marginTop: spacing.xs,
+  },
+  createAnnouncementBtn: {
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+  createAnnouncementBtnGradient: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  createAnnouncementBtnText: {
+    color: colors.text,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+    flex: 1,
+    textAlign: "center",
   },
   successBanner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    padding: spacing.sm,
-    borderRadius: 12,
-    backgroundColor: colors.glass,
-    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 14,
+    backgroundColor: "rgba(0, 191, 71, 0.15)",
+    borderWidth: 1.5,
     borderColor: colors.primary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
   },
   successText: {
     color: colors.text,
-    fontFamily: typography.semiBold,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
     flex: 1,
   },
   formGroup: {
@@ -1258,26 +1762,26 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
   },
   modalCard: {
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.borderLight,
     overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.22,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 5,
+        elevation: 8,
       },
     }),
   },
   modalCardBlur: {
-    padding: spacing.md,
+    padding: spacing.lg,
     backgroundColor: "rgba(11, 17, 28, 0.35)",
-    gap: spacing.xs / 2,
+    gap: spacing.sm,
   },
   modalCardTitle: {
     color: colors.text,
@@ -1287,6 +1791,34 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     lineHeight: 20,
+  },
+  datePickerButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.card,
+  },
+  datePickerText: {
+    color: colors.text,
+    fontFamily: typography.medium,
+    flex: 1,
+  },
+  datePickerDone: {
+    marginTop: spacing.sm,
+    alignSelf: "flex-end",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  datePickerDoneText: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
   },
 });
 
