@@ -8,8 +8,11 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   Alert,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -206,17 +209,27 @@ const ShareMomentModal: React.FC<Props> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.modalCard}
-        >
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t("shareMoment.title")}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={22} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+          >
+            <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalCard}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  bounces={false}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={styles.scrollContent}
+                >
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>{t("shareMoment.title")}</Text>
+                    <TouchableOpacity onPress={onClose}>
+                      <Ionicons name="close" size={22} color={colors.text} />
+                    </TouchableOpacity>
+                  </View>
 
           {/* City Input */}
           <View>
@@ -308,19 +321,23 @@ const ShareMomentModal: React.FC<Props> = ({
             )}
           </View>
 
-          {/* Submit Button */}
-          <TouchableOpacity
-            style={[
-              styles.modalButton,
-              (cityError || captionError) && styles.modalButtonDisabled,
-            ]}
-            onPress={handleSubmit}
-            disabled={!!(cityError || captionError)}
-          >
-            <Text style={styles.modalButtonText}>{t("shareMoment.submit")}</Text>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
-      </View>
+                  {/* Submit Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.modalButton,
+                      (cityError || captionError) && styles.modalButtonDisabled,
+                    ]}
+                    onPress={handleSubmit}
+                    disabled={!!(cityError || captionError)}
+                  >
+                    <Text style={styles.modalButtonText}>{t("shareMoment.submit")}</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -329,19 +346,28 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
+    justifyContent: "flex-end",
+  },
+  keyboardAvoidingView: {
+    width: "100%",
   },
   modalCard: {
     width: "100%",
     maxHeight: "90%",
-    borderRadius: 18,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     backgroundColor: colors.card,
-    padding: spacing.lg,
-    gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   modalHeader: {
     flexDirection: "row",

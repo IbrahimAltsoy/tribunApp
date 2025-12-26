@@ -9,6 +9,10 @@ import {
   Modal,
   Platform,
   TextInput,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
@@ -17,6 +21,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "react-native";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
@@ -66,6 +72,7 @@ const HomeScreen: React.FC = () => {
     undefined
   );
   const [editCaption, setEditCaption] = useState("");
+  const [editImage, setEditImage] = useState<string | undefined>(undefined);
 
   const {
     visible: shareModalVisible,
@@ -150,8 +157,48 @@ const HomeScreen: React.FC = () => {
   const handleEditMoment = useCallback((moment: FanMomentDto) => {
     setMomentToEdit(moment);
     setEditCaption(moment.description || "");
+    setEditImage(moment.imageUrl);
     setEditModalVisible(true);
   }, []);
+
+  // Pick image for edit
+  const pickEditImage = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert(t("shareMoment.galleryPermissionMessage"));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setEditImage(result.assets[0].uri);
+    }
+  }, [t]);
+
+  // Take photo for edit
+  const takeEditPhoto = useCallback(async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      alert(t("shareMoment.cameraPermissionMessage"));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setEditImage(result.assets[0].uri);
+    }
+  }, [t]);
 
   const handleDeleteMoment = useCallback(
     async (moment: FanMomentDto) => {
@@ -192,6 +239,7 @@ const HomeScreen: React.FC = () => {
         setEditModalVisible(false);
         setMomentToEdit(undefined);
         setEditCaption("");
+        setEditImage(undefined);
       } else {
         alert(t("home.updateFailed"));
       }
@@ -342,86 +390,172 @@ const HomeScreen: React.FC = () => {
       <Modal
         visible={editModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => {
           setEditModalVisible(false);
           setMomentToEdit(undefined);
           setEditCaption("");
+          setEditImage(undefined);
         }}
       >
-        <BlurView intensity={65} tint="dark" style={styles.modalOverlay}>
-          <View style={styles.editModal}>
-            <View style={styles.editHeaderRow}>
-              <View style={styles.editIconCircle}>
-                <Ionicons name="pencil" size={20} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.editTitle}>{t("home.editMoment")}</Text>
-                <Text style={styles.editSubtitle}>
-                  {t("home.editMomentSubtitle")}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => {
-                  setEditModalVisible(false);
-                  setMomentToEdit(undefined);
-                  setEditCaption("");
-                }}
-                style={({ pressed }) => [
-                  styles.closeButton,
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Ionicons name="close" size={24} color={colors.textSecondary} />
-              </Pressable>
-            </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <BlurView intensity={65} tint="dark" style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={styles.keyboardAvoidingView}
+            >
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <View style={styles.editModal}>
+                  <View style={styles.editHeaderRow}>
+                    <View style={styles.editIconCircle}>
+                      <Ionicons name="pencil" size={20} color={colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.editTitle}>{t("home.editMoment")}</Text>
+                      <Text style={styles.editSubtitle}>
+                        {t("home.editMomentSubtitle")}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setEditModalVisible(false);
+                        setMomentToEdit(undefined);
+                        setEditCaption("");
+                        setEditImage(undefined);
+                      }}
+                      style={({ pressed }) => [
+                        styles.closeButton,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <Ionicons name="close" size={24} color={colors.textSecondary} />
+                    </Pressable>
+                  </View>
 
-            <View style={styles.editInputContainer}>
-              <Text style={styles.editLabel}>{t("home.caption")}</Text>
-              <TextInput
-                style={styles.editInput}
-                value={editCaption}
-                onChangeText={setEditCaption}
-                placeholder={t("home.enterCaption")}
-                placeholderTextColor={colors.textTertiary}
-                multiline
-                maxLength={200}
-              />
-              <Text style={styles.editCharCount}>{editCaption.length}/200</Text>
-            </View>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={{ gap: spacing.md }}
+                  >
+                    <View style={styles.editInputContainer}>
+                      <Text style={styles.editLabel}>{t("home.caption")}</Text>
+                      <TextInput
+                        style={styles.editInput}
+                        value={editCaption}
+                        onChangeText={setEditCaption}
+                        placeholder={t("home.enterCaption")}
+                        placeholderTextColor={colors.textTertiary}
+                        multiline
+                        maxLength={200}
+                      />
+                      <Text style={styles.editCharCount}>{editCaption.length}/200</Text>
+                    </View>
 
-            <View style={styles.editActions}>
-              <Pressable
-                onPress={() => {
-                  setEditModalVisible(false);
-                  setMomentToEdit(undefined);
-                  setEditCaption("");
-                }}
-                style={({ pressed }) => [
-                  styles.editCancelButton,
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Text style={styles.editCancelText}>{t("home.cancel")}</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleSaveEdit}
-                style={({ pressed }) => [
-                  styles.editSaveButton,
-                  pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
-                ]}
-              >
-                <LinearGradient
-                  colors={["#0FA958", "#12C26A"]}
-                  style={styles.editSaveGradient}
-                >
-                  <Ionicons name="checkmark" size={20} color={colors.white} />
-                  <Text style={styles.editSaveText}>{t("home.save")}</Text>
-                </LinearGradient>
-              </Pressable>
-            </View>
-          </View>
-        </BlurView>
+                    {/* Image Section */}
+                    <View>
+                      <Text style={styles.editLabel}>
+                        {t("shareMoment.addPhoto")} ({t("shareMoment.optional")})
+                      </Text>
+
+                      {editImage ? (
+                        <View style={styles.editImagePreview}>
+                          <Image
+                            source={{ uri: editImage }}
+                            style={styles.editPreviewImage}
+                            resizeMode="cover"
+                          />
+                          <Pressable
+                            style={styles.editRemoveImage}
+                            onPress={() => setEditImage(undefined)}
+                          >
+                            <Ionicons name="close-circle" size={28} color={colors.error} />
+                          </Pressable>
+                          <Pressable
+                            style={styles.editChangeImage}
+                            onPress={() => {
+                              Alert.alert(
+                                t("shareMoment.selectImageSource"),
+                                "",
+                                [
+                                  { text: t("shareMoment.camera"), onPress: takeEditPhoto },
+                                  { text: t("shareMoment.gallery"), onPress: pickEditImage },
+                                  { text: t("cancel"), style: "cancel" },
+                                ]
+                              );
+                            }}
+                          >
+                            <Ionicons name="camera" size={20} color={colors.white} />
+                            <Text style={styles.editChangeImageText}>
+                              {t("shareMoment.changePhoto")}
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <Pressable
+                          style={styles.editImagePicker}
+                          onPress={() => {
+                            Alert.alert(
+                              t("shareMoment.selectImageSource"),
+                              "",
+                              [
+                                { text: t("shareMoment.camera"), onPress: takeEditPhoto },
+                                { text: t("shareMoment.gallery"), onPress: pickEditImage },
+                                { text: t("cancel"), style: "cancel" },
+                              ]
+                            );
+                          }}
+                        >
+                          <Ionicons name="camera-outline" size={32} color={colors.primary} />
+                          <Text style={styles.editImagePickerText}>
+                            {t("shareMoment.selectPhoto")}
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </ScrollView>
+
+                  <View style={styles.editActions}>
+                    <Pressable
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setEditModalVisible(false);
+                        setMomentToEdit(undefined);
+                        setEditCaption("");
+                        setEditImage(undefined);
+                      }}
+                      style={({ pressed }) => [
+                        styles.editCancelButton,
+                        pressed && { opacity: 0.7 },
+                      ]}
+                    >
+                      <Text style={styles.editCancelText}>{t("home.cancel")}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        handleSaveEdit();
+                      }}
+                      style={({ pressed }) => [
+                        styles.editSaveButton,
+                        pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={["#0FA958", "#12C26A"]}
+                        style={styles.editSaveGradient}
+                      >
+                        <Ionicons name="checkmark" size={20} color={colors.white} />
+                        <Text style={styles.editSaveText}>{t("home.save")}</Text>
+                      </LinearGradient>
+                    </Pressable>
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
+          </BlurView>
+        </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>
   );
@@ -536,9 +670,10 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.55)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
+    justifyContent: "flex-end",
+  },
+  keyboardAvoidingView: {
+    width: "100%",
   },
   languageModal: {
     width: "100%",
@@ -579,12 +714,20 @@ const styles = StyleSheet.create({
   // -------- Edit Modal Styles --------
   editModal: {
     width: "100%",
-    borderRadius: 24,
+    maxHeight: "85%",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "rgba(10,10,10,0.96)",
+    backgroundColor: "rgba(10,10,10,0.98)",
     padding: spacing.lg,
+    paddingBottom: Platform.OS === "ios" ? spacing.xl : spacing.lg,
     gap: spacing.lg,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 15,
   },
   editHeaderRow: {
     flexDirection: "row",
@@ -681,6 +824,58 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontFamily: typography.bold,
     fontSize: fontSizes.md,
+  },
+  editImagePreview: {
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+    position: "relative",
+  },
+  editPreviewImage: {
+    width: "100%",
+    height: 180,
+  },
+  editRemoveImage: {
+    position: "absolute",
+    top: spacing.xs,
+    right: spacing.xs,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    borderRadius: 14,
+  },
+  editChangeImage: {
+    position: "absolute",
+    bottom: spacing.sm,
+    right: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 8,
+  },
+  editChangeImageText: {
+    color: colors.white,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
+  },
+  editImagePicker: {
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: "dashed",
+    borderRadius: 12,
+    padding: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+    minHeight: 120,
+  },
+  editImagePickerText: {
+    color: colors.primary,
+    fontSize: fontSizes.md,
+    fontFamily: typography.medium,
   },
 });
 
