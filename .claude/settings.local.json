@@ -41,7 +41,9 @@
       "Bash(ipconfig:*)",
       "Bash(findstr:*)",
       "Bash(npm start)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Backend integration for FanMoments and Polls\n\n- Add backend services \\(fanMomentService, pollService\\)\n- Add TypeScript types \\(FanMomentDto, PollDto\\)\n- Update all components to use backend DTOs instead of mockData\n- Handle paginated responses from backend API\n- Add defensive programming for undefined checks\n- Remove unused language translations \\(ar, ckb, de, es, fa, fr\\)\n- Keep only TR, EN, KU languages\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)"
     ]
   }
 }

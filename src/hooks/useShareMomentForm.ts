@@ -54,6 +54,7 @@ export const useShareMomentForm = () => {
       likeCount: 0,
       createdAt: new Date().toISOString(),
       imageUrl: imageUri,
+      isOwnMoment: true, // Local moments are always owned by current user
     };
   }, [form, t]);
 
@@ -83,7 +84,11 @@ export const useShareMomentForm = () => {
         console.log("✅ Moment created successfully:", response.data);
         reset();
         setVisible(false);
-        return response.data;
+        // Ensure the moment has isOwnMoment flag set
+        return {
+          ...response.data,
+          isOwnMoment: true,
+        };
       } else {
         console.error("❌ Failed to create moment:", response.error);
         // Fallback to local moment on error

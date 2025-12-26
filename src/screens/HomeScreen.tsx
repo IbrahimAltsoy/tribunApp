@@ -124,7 +124,14 @@ const HomeScreen: React.FC = () => {
     async (imageUri?: string) => {
       const newMoment = await submit(imageUri);
       if (!newMoment) return;
-      setMoments((prev) => [newMoment, ...prev]);
+
+      // Ensure new moment has isOwnMoment flag set to true
+      const momentWithFlag: FanMomentDto = {
+        ...newMoment,
+        isOwnMoment: true,
+      };
+
+      setMoments((prev) => [momentWithFlag, ...prev]);
     },
     [submit]
   );
@@ -185,8 +192,14 @@ const HomeScreen: React.FC = () => {
         console.log("📦 Updated moment data:", response.data);
         console.log("🔍 isOwnMoment flag:", response.data.isOwnMoment);
 
+        // Ensure isOwnMoment flag is preserved after update
+        const updatedMoment: FanMomentDto = {
+          ...response.data,
+          isOwnMoment: true, // Force it to true since we just successfully updated it
+        };
+
         setMoments((prev) =>
-          prev.map((m) => (m.id === momentToEdit.id ? response.data! : m))
+          prev.map((m) => (m.id === momentToEdit.id ? updatedMoment : m))
         );
         setEditModalVisible(false);
         setMomentToEdit(undefined);
