@@ -6,12 +6,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { newsData } from "../../data/mockData";
+import type { NewsDto } from "../../types/news";
 
 const IS_IOS = Platform.OS === "ios";
 
 type Props = {
-  item: (typeof newsData)[0];
+  item: NewsDto;
   onPress?: (id: string) => void;
 };
 
@@ -41,8 +41,23 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
       ? `${item.summary.slice(0, 65).trimEnd()}...`
       : item.summary;
 
+  // Calculate time ago from publishedAt or createdAt
+  const getTimeAgo = () => {
+    const date = new Date(item.publishedAt || item.createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${diffMins} dakika`;
+    if (diffHours < 24) return `${diffHours} saat`;
+    return `${diffDays} gün`;
+  };
+
+  const categoryName = item.category?.name || "Haber";
   const categoryConfig = (() => {
-    const cat = item.category.toLowerCase();
+    const cat = categoryName.toLowerCase();
     if (cat.includes("transfer") || cat.includes("kadro")) {
       return {
         icon: "people" as const,
@@ -74,7 +89,7 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
       >
         <Ionicons name={categoryConfig.icon} size={12} color={categoryConfig.color} />
         <Text style={[styles.newsPillText, { color: categoryConfig.color }]}>
-          {item.category.toUpperCase()}
+          {categoryName.toUpperCase()}
         </Text>
       </BlurView>
 
@@ -92,7 +107,7 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
       <View style={styles.metaRow}>
         <View style={styles.timeRow}>
           <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
-          <Text style={styles.newsMeta}>{item.time} önce</Text>
+          <Text style={styles.newsMeta}>{getTimeAgo()} önce</Text>
         </View>
         <View style={styles.arrowIcon}>
           <Ionicons name="arrow-forward" size={14} color={colors.primary} />
@@ -101,7 +116,7 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
     </View>
   );
 
-  if (item.image) {
+  if (item.imageUrl || item.thumbnailUrl) {
     return (
       <Pressable
         onPress={() => onPress?.(item.id)}
@@ -111,7 +126,7 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
       >
         <Animated.View style={[styles.newsCard, { transform: [{ scale: scaleAnim }] }]}>
           <ImageBackground
-            source={item.image}
+            source={{ uri: item.thumbnailUrl || item.imageUrl }}
             style={styles.newsImage}
             imageStyle={styles.newsImageStyle}
           >

@@ -18,8 +18,9 @@ import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { NewsItem, newsData } from "../data/mockData";
 import { BottomTabParamList } from "../navigation/BottomTabs";
+import { newsService } from "../services/newsService";
+import type { NewsDto, NewsCategoryDto } from "../types/news";
 
 const ALL_CATEGORY_CODE = "__all__";
 
@@ -28,49 +29,71 @@ const FeedScreen: React.FC = () => {
   const route = useRoute<RouteProp<BottomTabParamList, "Feed">>();
   const { t } = useTranslation();
 
-  const categoryValues = useMemo(
-    () => Array.from(new Set(newsData.map((n) => n.category))),
-    []
-  );
-
-  const categories = useMemo(
-    () => [
-      { code: ALL_CATEGORY_CODE, label: t("feed.category_all") },
-      ...categoryValues.map((cat) => ({ code: cat, label: cat })),
-    ],
-    [t, categoryValues]
-  );
-
+  const [categories, setCategories] = useState<NewsCategoryDto[]>([]);
   const [selected, setSelected] = useState<string>(ALL_CATEGORY_CODE);
-  const [activeNews, setActiveNews] = useState<NewsItem | null>(null);
+  const [news, setNews] = useState<NewsDto[]>([]);
+  const [activeNews, setActiveNews] = useState<NewsDto | null>(null);
 
-  const filteredNews = useMemo(() => {
-    if (selected === ALL_CATEGORY_CODE) return newsData;
-    return newsData.filter((item) => item.category === selected);
+  // Load categories from backend
+  useEffect(() => {
+    const loadCategories = async () => {
+      const response = await newsService.getCategories();
+      if (response.success && response.data) {
+        setCategories(response.data);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Load news based on selected category
+  useEffect(() => {
+    const loadNews = async () => {
+      if (selected === ALL_CATEGORY_CODE) {
+        const response = await newsService.getNews(1, 100);
+        if (response.success && response.data) {
+          setNews(response.data.items);
+        }
+      } else {
+        const response = await newsService.getNewsByCategory(selected, 1, 100);
+        if (response.success && response.data) {
+          setNews(response.data.items);
+        }
+      }
+    };
+    loadNews();
   }, [selected]);
 
+  const categoryOptions = useMemo(
+    () => [
+      { id: ALL_CATEGORY_CODE, slug: ALL_CATEGORY_CODE, name: t("feed.category_all"), sortOrder: 0 },
+      ...categories,
+    ],
+    [t, categories]
+  );
+
+  // Load news detail when newsId changes
   useEffect(() => {
     const newsId = route.params?.newsId;
     if (!newsId) return;
 
-    const target = newsData.find((n) => n.id === newsId);
-    if (target) {
-      setActiveNews(target);
-    } else {
-      // Handle missing news item
-      Alert.alert(
-        t("error"),
-        t("feed.newsNotFound"),
-        [
+    const loadNewsDetail = async () => {
+      const response = await newsService.getNewsById(newsId);
+      if (response.success && response.data) {
+        setActiveNews(response.data);
+      } else {
+        // Handle missing news item
+        Alert.alert(t("error"), t("feed.newsNotFound"), [
           {
             text: t("ok"),
             onPress: () => {
               navigation.setParams({ newsId: undefined });
             },
           },
-        ]
-      );
-    }
+        ]);
+      }
+    };
+
+    loadNewsDetail();
   }, [route.params?.newsId, navigation, t]);
 
   const handleCloseDetail = () => {
@@ -93,86 +116,115 @@ const FeedScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipRow}
         >
-          {categories.map((cat) => (
+          {categoryOptions.map((cat) => (
             <Pressable
-              key={cat.code}
+              key={cat.id}
               style={[
                 styles.chip,
-                selected === cat.code && styles.chipActive,
-                { borderColor: selected === cat.code ? colors.primary : colors.border },
+                selected === cat.slug && styles.chipActive,
+                { borderColor: selected === cat.slug ? colors.primary : colors.border },
               ]}
-              onPress={() => setSelected(cat.code)}
+              onPress={() => setSelected(cat.slug)}
             >
               <Text
                 style={[
                   styles.chipText,
-                  selected === cat.code && { color: colors.text },
+                  selected === cat.slug && { color: colors.text },
                 ]}
               >
-                {cat.label}
+                {cat.name}
               </Text>
             </Pressable>
           ))}
         </ScrollView>
 
         <View style={styles.list}>
-          {filteredNews.length === 0 ? (
-            <Text style={styles.cardMeta}>{t("error_unknown")}</Text>
+          {news.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="newspaper-outline" size={48} color={colors.mutedText} />
+              <Text style={styles.emptyStateText}>
+                {selected === ALL_CATEGORY_CODE
+                  ? t("feed.no_news")
+                  : t("feed.no_news_in_category")}
+              </Text>
+            </View>
           ) : (
-            filteredNews.map((news) => (
-              <Pressable
-                key={news.id}
-                onPress={() => setActiveNews(news)}
-                style={styles.card}
-              >
-                {news.image && (
-                  <ImageBackground
-                    source={news.image}
-                    style={styles.cardImage}
-                    imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
-                  >
-                    <LinearGradient
-                      colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
-                      style={StyleSheet.absoluteFillObject}
-                    />
-                    <View style={styles.cardImageContent}>
-                      <View style={styles.cardBadge}>
-                        <Text style={styles.cardBadgeText}>{news.category}</Text>
+            news.map((newsItem) => {
+              // Calculate time ago
+              const getTimeAgo = () => {
+                const date = new Date(newsItem.publishedAt || newsItem.createdAt);
+                const now = new Date();
+                const diffMs = now.getTime() - date.getTime();
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const diffDays = Math.floor(diffHours / 24);
+
+                if (diffMins < 60) return `${diffMins} dakika`;
+                if (diffHours < 24) return `${diffHours} saat`;
+                return `${diffDays} gün`;
+              };
+
+              return (
+                <Pressable
+                  key={newsItem.id}
+                  onPress={() => setActiveNews(newsItem)}
+                  style={styles.card}
+                >
+                  {(newsItem.imageUrl || newsItem.thumbnailUrl) && (
+                    <ImageBackground
+                      source={{ uri: newsItem.thumbnailUrl || newsItem.imageUrl }}
+                      style={styles.cardImage}
+                      imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                    >
+                      <LinearGradient
+                        colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <View style={styles.cardImageContent}>
+                        <View style={styles.cardBadge}>
+                          <Text style={styles.cardBadgeText}>
+                            {newsItem.category?.name || "Haber"}
+                          </Text>
+                        </View>
+                        <Text style={styles.cardTitle}>{newsItem.title}</Text>
                       </View>
-                      <Text style={styles.cardTitle}>{news.title}</Text>
-                    </View>
-                  </ImageBackground>
-                )}
-                <View style={styles.cardBody}>
-                  {!news.image && (
-                    <View style={styles.cardBadge}>
-                      <Text style={styles.cardBadgeText}>{news.category}</Text>
-                    </View>
+                    </ImageBackground>
                   )}
-                  <Text style={styles.cardSummary}>{news.summary}</Text>
-                  <View style={styles.cardFooter}>
-                    <View style={styles.footerMeta}>
-                      <Ionicons
-                        name="time-outline"
-                        size={16}
-                        color={colors.mutedText}
-                      />
-                      <Text style={styles.cardMeta}>
-                        {t("feed.time_ago", { time: news.time })}
-                      </Text>
-                    </View>
-                    <View style={styles.footerMeta}>
-                      <Ionicons
-                        name="eye-outline"
-                        size={16}
-                        color={colors.mutedText}
-                      />
-                      <Text style={styles.cardMeta}>{t("feed.mock_reads")}</Text>
+                  <View style={styles.cardBody}>
+                    {!newsItem.imageUrl && !newsItem.thumbnailUrl && (
+                      <View style={styles.cardBadge}>
+                        <Text style={styles.cardBadgeText}>
+                          {newsItem.category?.name || "Haber"}
+                        </Text>
+                      </View>
+                    )}
+                    <Text style={styles.cardSummary}>{newsItem.summary}</Text>
+                    <View style={styles.cardFooter}>
+                      <View style={styles.footerMeta}>
+                        <Ionicons
+                          name="time-outline"
+                          size={16}
+                          color={colors.mutedText}
+                        />
+                        <Text style={styles.cardMeta}>
+                          {t("feed.time_ago", { time: getTimeAgo() })}
+                        </Text>
+                      </View>
+                      <View style={styles.footerMeta}>
+                        <Ionicons
+                          name="eye-outline"
+                          size={16}
+                          color={colors.mutedText}
+                        />
+                        <Text style={styles.cardMeta}>
+                          {newsItem.viewCount} {t("feed.reads")}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              </Pressable>
-            ))
+                </Pressable>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -195,9 +247,9 @@ const FeedScreen: React.FC = () => {
                 <Text style={styles.closeText}>{t("feed.back")}</Text>
               </Pressable>
 
-              {activeNews.image && (
+              {(activeNews.imageUrl || activeNews.thumbnailUrl) && (
                 <ImageBackground
-                  source={activeNews.image}
+                  source={{ uri: activeNews.imageUrl || activeNews.thumbnailUrl }}
                   style={styles.detailHero}
                   imageStyle={{ borderRadius: 20 }}
                 >
@@ -206,43 +258,74 @@ const FeedScreen: React.FC = () => {
                     style={StyleSheet.absoluteFillObject}
                   />
                   <View style={styles.detailBadge}>
-                    <Text style={styles.detailBadgeText}>{activeNews.category}</Text>
+                    <Text style={styles.detailBadgeText}>
+                      {activeNews.category?.name || "Haber"}
+                    </Text>
                   </View>
                   <View style={styles.detailHeroText}>
                     <Text style={styles.detailTitle}>{activeNews.title}</Text>
                     <View style={styles.detailMetaRow}>
                       <Ionicons name="time-outline" size={16} color={colors.text} />
                       <Text style={styles.detailMeta}>
-                        {t("feed.time_ago", { time: activeNews.time })}
+                        {t("feed.time_ago", {
+                          time: (() => {
+                            const date = new Date(
+                              activeNews.publishedAt || activeNews.createdAt
+                            );
+                            const now = new Date();
+                            const diffMs = now.getTime() - date.getTime();
+                            const diffMins = Math.floor(diffMs / 60000);
+                            const diffHours = Math.floor(diffMins / 60);
+                            const diffDays = Math.floor(diffHours / 24);
+
+                            if (diffMins < 60) return `${diffMins} dakika`;
+                            if (diffHours < 24) return `${diffHours} saat`;
+                            return `${diffDays} gün`;
+                          })(),
+                        })}
                       </Text>
                     </View>
                   </View>
                 </ImageBackground>
               )}
 
-              {!activeNews.image && (
+              {!activeNews.imageUrl && !activeNews.thumbnailUrl && (
                 <View style={styles.detailHeader}>
                   <View style={styles.detailBadge}>
-                    <Text style={styles.detailBadgeText}>{activeNews.category}</Text>
+                    <Text style={styles.detailBadgeText}>
+                      {activeNews.category?.name || "Haber"}
+                    </Text>
                   </View>
                   <Text style={styles.detailTitle}>{activeNews.title}</Text>
                   <View style={styles.detailMetaRow}>
                     <Ionicons name="time-outline" size={16} color={colors.mutedText} />
                     <Text style={styles.detailMeta}>
-                      {t("feed.time_ago", { time: activeNews.time })}
+                      {t("feed.time_ago", {
+                        time: (() => {
+                          const date = new Date(
+                            activeNews.publishedAt || activeNews.createdAt
+                          );
+                          const now = new Date();
+                          const diffMs = now.getTime() - date.getTime();
+                          const diffMins = Math.floor(diffMs / 60000);
+                          const diffHours = Math.floor(diffMins / 60);
+                          const diffDays = Math.floor(diffHours / 24);
+
+                          if (diffMins < 60) return `${diffMins} dakika`;
+                          if (diffHours < 24) return `${diffHours} saat`;
+                          return `${diffDays} gün`;
+                        })(),
+                      })}
                     </Text>
                   </View>
                 </View>
               )}
 
-              {(activeNews.body?.length
-                ? activeNews.body
-                : [activeNews.summary]
-              ).map((paragraph, idx) => (
-                <Text key={idx} style={styles.detailBody}>
-                  {paragraph}
-                </Text>
-              ))}
+              {activeNews.content ? (
+                <Text style={styles.detailBody}>{activeNews.content}</Text>
+              ) : (
+                <Text style={styles.detailBody}>{activeNews.summary}</Text>
+              )}
             </ScrollView>
           )}
         </SafeAreaView>
@@ -292,6 +375,18 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xxl * 2,
+    gap: spacing.md,
+  },
+  emptyStateText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    textAlign: "center",
   },
   card: {
     borderRadius: 16,

@@ -28,8 +28,12 @@
     "subtitle": "Nûçeyên Amedspor bi daneyên mox",
     "category_all": "Hemû",
     "mock_reads": "Xwendina mox",
+    "reads": "xwendin",
     "back": "Vegere",
-    "time_ago": "{{time}} berê"
+    "time_ago": "{{time}} berê",
+    "newsNotFound": "Nûçe nehat dîtin",
+    "no_news": "Hîn nûçe tune",
+    "no_news_in_category": "Di vê kategoriyê de hîn nûçe tune"
   },
   "fixture": {
     "title": "Navenda Lîstikan",

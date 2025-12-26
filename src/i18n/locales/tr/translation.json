@@ -281,9 +281,12 @@
     "subtitle": "Mock verilerle güncel Amedspor gündemi",
     "category_all": "Tüm",
     "mock_reads": "Mock okuma",
+    "reads": "okunma",
     "back": "Geri",
     "time_ago": "{{time}} önce",
-    "newsNotFound": "Haber bulunamadı"
+    "newsNotFound": "Haber bulunamadı",
+    "no_news": "Henüz haber yok",
+    "no_news_in_category": "Bu kategoride henüz haber yok"
   },
   "team": {
     "title": "Takım",

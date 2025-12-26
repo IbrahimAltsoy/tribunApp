@@ -239,9 +239,12 @@
     "subtitle": "Latest Amedspor buzz with mock data",
     "category_all": "All",
     "mock_reads": "Mock reads",
+    "reads": "reads",
     "back": "Back",
     "time_ago": "{{time}} ago",
-    "newsNotFound": "News not found"
+    "newsNotFound": "News not found",
+    "no_news": "No news yet",
+    "no_news_in_category": "No news in this category yet"
   },
   "team": {
     "title": "Team",

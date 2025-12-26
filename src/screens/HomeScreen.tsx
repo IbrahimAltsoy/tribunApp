@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
 import { mediaService } from "../services/mediaService";
+import { newsService } from "../services/newsService";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
@@ -48,6 +49,7 @@ import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
+import type { NewsDto } from "../types/news";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
@@ -56,9 +58,7 @@ const HomeScreen: React.FC = () => {
     useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const { t, i18n } = useTranslation();
 
-  // Memoize featured news slce
-  const featuredNews = useMemo(() => newsData.slice(0, 5), []);
-
+  const [news, setNews] = useState<NewsDto[]>([]);
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -85,6 +85,19 @@ const HomeScreen: React.FC = () => {
     setCaption: setNewCaption,
     submit,
   } = useShareMomentForm();
+
+  // Backend'den News yükle
+  useEffect(() => {
+    const loadNews = async () => {
+      const response = await newsService.getLatestNews(5);
+      if (response.success && response.data) {
+        setNews(response.data);
+      } else {
+        setNews([]);
+      }
+    };
+    loadNews();
+  }, []);
 
   // Backend'den FanMoments yüklee
   useEffect(() => {
@@ -299,8 +312,12 @@ const HomeScreen: React.FC = () => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.newsRow}
         >
-          {featuredNews.map((news) => (
-            <NewsCard key={news.id} item={news} onPress={handleNewsPress} />
+          {news.map((newsItem) => (
+            <NewsCard
+              key={newsItem.id}
+              item={newsItem}
+              onPress={handleNewsPress}
+            />
           ))}
         </ScrollView>
 
@@ -634,7 +651,7 @@ const HomeScreen: React.FC = () => {
       </Modal>
     </SafeAreaView>
   );
-};;;;;;;;;;;;;;;;;;;;;;;
+};;;;;;;;;;;;;;;;;;;;;;;;;;
 
 const styles = StyleSheet.create({
   safeArea: {
