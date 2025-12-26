@@ -98,7 +98,7 @@ const getFanMoments = async (
  * @deprecated Use getFanMoments instead
  */
 const getApprovedFanMoments = async (): Promise<{ success: boolean; data?: FanMomentDto[]; error?: string }> => {
-  return getFanMoments(1, 100, 'Approved');
+  return getFanMoments(1, 100, "Approved");
 };
 
 /**
