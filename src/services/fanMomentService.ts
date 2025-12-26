@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type {
   FanMomentDto,
   CreateFanMomentRequest,
@@ -12,10 +12,11 @@ const API_URL = `${API_BASE_URL}/api/fanmoments`;
 
 /**
  * Get or create a unique session ID for this device
+ * Uses SecureStore for persistent storage across app restarts
  */
 const getSessionId = async (): Promise<string> => {
   try {
-    let sessionId = await AsyncStorage.getItem('userSessionId');
+    let sessionId = await SecureStore.getItemAsync('userSessionId');
 
     if (!sessionId) {
       // Generate a new UUID v4
@@ -25,10 +26,11 @@ const getSessionId = async (): Promise<string> => {
         return v.toString(16);
       });
 
-      await AsyncStorage.setItem('userSessionId', sessionId);
-      console.log('📱 New session ID created:', sessionId);
+      await SecureStore.setItemAsync('userSessionId', sessionId);
+      console.log('📱 ⚠️ NEW SESSION ID CREATED (this should only happen ONCE!):', sessionId);
+      console.log('📱 ℹ️ Using SecureStore for persistent storage');
     } else {
-      console.log('📱 Existing session ID loaded:', sessionId);
+      console.log('📱 ✅ Existing session ID loaded from SecureStore:', sessionId);
     }
 
     return sessionId;

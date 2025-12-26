@@ -58,9 +58,13 @@ const HomeScreen: React.FC = () => {
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
   const [allVideosVisible, setAllVideosVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [selectedMoment, setSelectedMoment] = useState<FanMomentDto | undefined>(undefined);
+  const [selectedMoment, setSelectedMoment] = useState<
+    FanMomentDto | undefined
+  >(undefined);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [momentToEdit, setMomentToEdit] = useState<FanMomentDto | undefined>(undefined);
+  const [momentToEdit, setMomentToEdit] = useState<FanMomentDto | undefined>(
+    undefined
+  );
   const [editCaption, setEditCaption] = useState("");
 
   const {
@@ -80,7 +84,11 @@ const HomeScreen: React.FC = () => {
       const response = await fanMomentService.getFanMoments(1, 10, "Approved");
       console.log("📦 Full response:", JSON.stringify(response, null, 2));
       if (response.success && response.data) {
-        console.log("✅ Backend verisi geldi:", response.data.length, "moments");
+        console.log(
+          "✅ Backend verisi geldi:",
+          response.data.length,
+          "moments"
+        );
         setMoments(response.data);
       } else {
         console.log("❌ Backend hatası:", response.error);
@@ -112,6 +120,16 @@ const HomeScreen: React.FC = () => {
     };
     loadPoll();
   }, [i18n.language]);
+
+  // Debug: Track moments state changes
+  useEffect(() => {
+    console.log("🔍 [MOMENTS STATE CHANGED] Total moments:", moments.length);
+    moments.forEach((m, idx) => {
+      console.log(
+        `  ${idx}: id=${m.id.substring(0, 8)}... description="${m.description?.substring(0, 30)}..." isOwnMoment=${m.isOwnMoment} hasImage=${!!m.imageUrl}`
+      );
+    });
+  }, [moments]);
 
   const momentList = useMemo(() => moments, [moments]);
 
@@ -154,8 +172,13 @@ const HomeScreen: React.FC = () => {
   }, [t]);
 
   const handleEditMoment = useCallback((moment: FanMomentDto) => {
+    console.log("✏️ [EDIT CLICKED] Moment to edit:", {
+      id: moment.id,
+      description: moment.description,
+      isOwnMoment: moment.isOwnMoment,
+    });
     setMomentToEdit(moment);
-    setEditCaption(moment.description || '');
+    setEditCaption(moment.description || "");
     setEditModalVisible(true);
   }, []);
 
@@ -164,10 +187,9 @@ const HomeScreen: React.FC = () => {
       try {
         const response = await fanMomentService.deleteOwnFanMoment(moment.id);
         if (response.success) {
-          console.log("✅ Moment deleted successfully");
+          console.log("✅ Moment delted successflly");
           setMoments((prev) => prev.filter((m) => m.id !== moment.id));
         } else {
-          console.error("❌ Failed to delete moment:", response.error);
           alert(t("home.deleteFailed"));
         }
       } catch (error) {
@@ -181,6 +203,12 @@ const HomeScreen: React.FC = () => {
   const handleSaveEdit = useCallback(async () => {
     if (!momentToEdit) return;
 
+    console.log("🔧 [UPDATE START] momentToEdit:", {
+      id: momentToEdit.id,
+      description: momentToEdit.description,
+      isOwnMoment: momentToEdit.isOwnMoment,
+    });
+
     try {
       const response = await fanMomentService.updateOwnFanMoment(
         momentToEdit.id,
@@ -188,9 +216,11 @@ const HomeScreen: React.FC = () => {
       );
 
       if (response.success && response.data) {
-        console.log("✅ Moment updated successfully");
-        console.log("📦 Updated moment data:", response.data);
-        console.log("🔍 isOwnMoment flag:", response.data.isOwnMoment);
+        console.log("✅ [UPDATE SUCCESS] Backend response data:", {
+          id: response.data.id,
+          description: response.data.description,
+          isOwnMoment: response.data.isOwnMoment,
+        });
 
         // Ensure isOwnMoment flag is preserved after update
         const updatedMoment: FanMomentDto = {
@@ -198,9 +228,44 @@ const HomeScreen: React.FC = () => {
           isOwnMoment: true, // Force it to true since we just successfully updated it
         };
 
-        setMoments((prev) =>
-          prev.map((m) => (m.id === momentToEdit.id ? updatedMoment : m))
-        );
+        console.log("🔧 [FORCED FLAG] updatedMoment:", {
+          id: updatedMoment.id,
+          description: updatedMoment.description,
+          isOwnMoment: updatedMoment.isOwnMoment,
+        });
+
+        setMoments((prev) => {
+          console.log("🔧 [BEFORE UPDATE] moments count:", prev.length);
+          const oldMoment = prev.find((m) => m.id === momentToEdit.id);
+          console.log(
+            "🔧 [OLD MOMENT]:",
+            oldMoment
+              ? {
+                  id: oldMoment.id,
+                  description: oldMoment.description,
+                  isOwnMoment: oldMoment.isOwnMoment,
+                }
+              : "NOT FOUND"
+          );
+
+          const newArray = prev.map((m) =>
+            m.id === momentToEdit.id ? updatedMoment : m
+          );
+          const newMoment = newArray.find((m) => m.id === momentToEdit.id);
+          console.log(
+            "🔧 [NEW MOMENT]:",
+            newMoment
+              ? {
+                  id: newMoment.id,
+                  description: newMoment.description,
+                  isOwnMoment: newMoment.isOwnMoment,
+                }
+              : "NOT FOUND"
+          );
+
+          return newArray;
+        });
+
         setEditModalVisible(false);
         setMomentToEdit(undefined);
         setEditCaption("");
@@ -439,7 +504,7 @@ const HomeScreen: React.FC = () => {
       </Modal>
     </SafeAreaView>
   );
-};;
+};;;;
 
 const styles = StyleSheet.create({
   safeArea: {

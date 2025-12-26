@@ -38,6 +38,15 @@ const AnimatedMomentCard: React.FC<{
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
+  // Debug: Log what we receive
+  console.log(`🎴 [MOMENT CARD] Rendering moment ${moment.id.substring(0, 8)}:`, {
+    description: moment.description?.substring(0, 20),
+    isOwnMoment: moment.isOwnMoment,
+    hasOnEdit: !!onEdit,
+    hasOnDelete: !!onDelete,
+    willShowButtons: !!(moment.isOwnMoment && (onEdit || onDelete)),
+  });
+
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.95,
@@ -150,6 +159,52 @@ const AnimatedMomentCard: React.FC<{
           </ImageBackground>
         ) : (
           <View style={[styles.momentImage, styles.momentFallback]}>
+            {/* Owner Actions - Top Right Corner (for non-image moments) */}
+            {moment.isOwnMoment && (onEdit || onDelete) && (
+              <View style={styles.ownerActions}>
+                {onEdit && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="pencil" size={16} color={colors.primary} />
+                    </BlurView>
+                  </Pressable>
+                )}
+                {onDelete && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={colors.error} />
+                    </BlurView>
+                  </Pressable>
+                )}
+              </View>
+            )}
+
             <Text style={styles.momentCaption}>{moment.description || ''}</Text>
             <Text style={styles.momentLocation}>{moment.username}</Text>
             <Text style={styles.momentTime}>

@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type { PollDto, VotePollRequest } from '../types/poll';
 
 // Get API URL from environment or use default
@@ -10,10 +10,11 @@ let currentLanguage = 'tr';
 
 /**
  * Get or create a unique session ID for this device
+ * Uses SecureStore for persistent storage across app restarts
  */
 const getSessionId = async (): Promise<string> => {
   try {
-    let sessionId = await AsyncStorage.getItem('userSessionId');
+    let sessionId = await SecureStore.getItemAsync('userSessionId');
 
     if (!sessionId) {
       // Generate a new UUID v4
@@ -23,8 +24,8 @@ const getSessionId = async (): Promise<string> => {
         return v.toString(16);
       });
 
-      await AsyncStorage.setItem('userSessionId', sessionId);
-      console.log('📱 New session ID created:', sessionId);
+      await SecureStore.setItemAsync('userSessionId', sessionId);
+      console.log('📱 New session ID created (SecureStore):', sessionId);
     }
 
     return sessionId;
