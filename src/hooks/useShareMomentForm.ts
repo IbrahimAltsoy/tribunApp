@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { FanMomentDto } from "../types/fanMoment";
 import { fanMomentService } from "../services/fanMomentService";
+import { mediaService } from "../services/mediaService";
 import { getSession } from "../utils/sessionManager";
 
 type ShareMomentFormState = {
@@ -71,12 +72,26 @@ export const useShareMomentForm = () => {
       const session = await getSession();
       const nickname = session?.nickname || t("home.momentDefaults.user");
 
+      // Upload image first if provided
+      let uploadedImageUrl: string | undefined = undefined;
+      if (imageUri) {
+        console.log("📤 Uploading image before creating moment...");
+        const uploadResponse = await mediaService.uploadImageAnonymous(imageUri);
+
+        if (uploadResponse.success && uploadResponse.data?.url) {
+          uploadedImageUrl = uploadResponse.data.url;
+          console.log("✅ Image uploaded:", uploadedImageUrl);
+        } else {
+          console.warn("⚠️ Image upload failed, creating moment without image:", uploadResponse.error);
+        }
+      }
+
       // Send to backend
       const response = await fanMomentService.createFanMoment({
         nickname,
         city: trimmedCity || t("home.momentDefaults.city"),
         caption: trimmedCaption || t("home.momentDefaults.caption"),
-        imageUrl: imageUri,
+        imageUrl: uploadedImageUrl, // Use uploaded URL instead of local URI
         source: "App",
       });
 

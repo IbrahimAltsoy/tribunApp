@@ -23,6 +23,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
+import { mediaService } from "../services/mediaService";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
 import NewsCard from "../components/home/NewsCard";
@@ -55,7 +56,7 @@ const HomeScreen: React.FC = () => {
     useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const { t, i18n } = useTranslation();
 
-  // Memoize featured news slice
+  // Memoize featured news slce
   const featuredNews = useMemo(() => newsData.slice(0, 5), []);
 
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
@@ -220,9 +221,30 @@ const HomeScreen: React.FC = () => {
     if (!momentToEdit) return;
 
     try {
+      // Upload new image if changed
+      let uploadedImageUrl: string | undefined = editImage;
+
+      // Check if image was changed (editImage is different from original)
+      if (editImage && editImage !== momentToEdit.imageUrl && editImage.startsWith('file://')) {
+        console.log("📤 Uploading new image for edit...");
+        const uploadResponse = await mediaService.uploadImageAnonymous(editImage);
+
+        if (uploadResponse.success && uploadResponse.data?.url) {
+          uploadedImageUrl = uploadResponse.data.url;
+          console.log("✅ New image uploaded:", uploadedImageUrl);
+        } else {
+          console.warn("⚠️ Image upload failed:", uploadResponse.error);
+          alert(t("home.imageUploadFailed") || "Image upload failed");
+          return;
+        }
+      }
+
       const response = await fanMomentService.updateOwnFanMoment(
         momentToEdit.id,
-        { caption: editCaption }
+        {
+          caption: editCaption,
+          imageUrl: uploadedImageUrl,
+        }
       );
 
       if (response.success && response.data) {
@@ -246,7 +268,7 @@ const HomeScreen: React.FC = () => {
     } catch (error) {
       alert(t("home.updateFailed"));
     }
-  }, [momentToEdit, editCaption, t]);
+  }, [momentToEdit, editCaption, editImage, t]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -408,10 +430,16 @@ const HomeScreen: React.FC = () => {
                 <View style={styles.editModal}>
                   <View style={styles.editHeaderRow}>
                     <View style={styles.editIconCircle}>
-                      <Ionicons name="pencil" size={20} color={colors.primary} />
+                      <Ionicons
+                        name="pencil"
+                        size={20}
+                        color={colors.primary}
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.editTitle}>{t("home.editMoment")}</Text>
+                      <Text style={styles.editTitle}>
+                        {t("home.editMoment")}
+                      </Text>
                       <Text style={styles.editSubtitle}>
                         {t("home.editMomentSubtitle")}
                       </Text>
@@ -429,7 +457,11 @@ const HomeScreen: React.FC = () => {
                         pressed && { opacity: 0.7 },
                       ]}
                     >
-                      <Ionicons name="close" size={24} color={colors.textSecondary} />
+                      <Ionicons
+                        name="close"
+                        size={24}
+                        color={colors.textSecondary}
+                      />
                     </Pressable>
                   </View>
 
@@ -450,13 +482,16 @@ const HomeScreen: React.FC = () => {
                         multiline
                         maxLength={200}
                       />
-                      <Text style={styles.editCharCount}>{editCaption.length}/200</Text>
+                      <Text style={styles.editCharCount}>
+                        {editCaption.length}/200
+                      </Text>
                     </View>
 
                     {/* Image Section */}
                     <View>
                       <Text style={styles.editLabel}>
-                        {t("shareMoment.addPhoto")} ({t("shareMoment.optional")})
+                        {t("shareMoment.addPhoto")} ({t("shareMoment.optional")}
+                        )
                       </Text>
 
                       {editImage ? (
@@ -470,7 +505,11 @@ const HomeScreen: React.FC = () => {
                             style={styles.editRemoveImage}
                             onPress={() => setEditImage(undefined)}
                           >
-                            <Ionicons name="close-circle" size={28} color={colors.error} />
+                            <Ionicons
+                              name="close-circle"
+                              size={28}
+                              color={colors.error}
+                            />
                           </Pressable>
                           <Pressable
                             style={styles.editChangeImage}
@@ -479,14 +518,24 @@ const HomeScreen: React.FC = () => {
                                 t("shareMoment.selectImageSource"),
                                 "",
                                 [
-                                  { text: t("shareMoment.camera"), onPress: takeEditPhoto },
-                                  { text: t("shareMoment.gallery"), onPress: pickEditImage },
+                                  {
+                                    text: t("shareMoment.camera"),
+                                    onPress: takeEditPhoto,
+                                  },
+                                  {
+                                    text: t("shareMoment.gallery"),
+                                    onPress: pickEditImage,
+                                  },
                                   { text: t("cancel"), style: "cancel" },
                                 ]
                               );
                             }}
                           >
-                            <Ionicons name="camera" size={20} color={colors.white} />
+                            <Ionicons
+                              name="camera"
+                              size={20}
+                              color={colors.white}
+                            />
                             <Text style={styles.editChangeImageText}>
                               {t("shareMoment.changePhoto")}
                             </Text>
@@ -500,14 +549,24 @@ const HomeScreen: React.FC = () => {
                               t("shareMoment.selectImageSource"),
                               "",
                               [
-                                { text: t("shareMoment.camera"), onPress: takeEditPhoto },
-                                { text: t("shareMoment.gallery"), onPress: pickEditImage },
+                                {
+                                  text: t("shareMoment.camera"),
+                                  onPress: takeEditPhoto,
+                                },
+                                {
+                                  text: t("shareMoment.gallery"),
+                                  onPress: pickEditImage,
+                                },
                                 { text: t("cancel"), style: "cancel" },
                               ]
                             );
                           }}
                         >
-                          <Ionicons name="camera-outline" size={32} color={colors.primary} />
+                          <Ionicons
+                            name="camera-outline"
+                            size={32}
+                            color={colors.primary}
+                          />
                           <Text style={styles.editImagePickerText}>
                             {t("shareMoment.selectPhoto")}
                           </Text>
@@ -530,7 +589,9 @@ const HomeScreen: React.FC = () => {
                         pressed && { opacity: 0.7 },
                       ]}
                     >
-                      <Text style={styles.editCancelText}>{t("home.cancel")}</Text>
+                      <Text style={styles.editCancelText}>
+                        {t("home.cancel")}
+                      </Text>
                     </Pressable>
                     <Pressable
                       onPress={() => {
@@ -539,15 +600,24 @@ const HomeScreen: React.FC = () => {
                       }}
                       style={({ pressed }) => [
                         styles.editSaveButton,
-                        pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                        pressed && {
+                          opacity: 0.8,
+                          transform: [{ scale: 0.98 }],
+                        },
                       ]}
                     >
                       <LinearGradient
                         colors={["#0FA958", "#12C26A"]}
                         style={styles.editSaveGradient}
                       >
-                        <Ionicons name="checkmark" size={20} color={colors.white} />
-                        <Text style={styles.editSaveText}>{t("home.save")}</Text>
+                        <Ionicons
+                          name="checkmark"
+                          size={20}
+                          color={colors.white}
+                        />
+                        <Text style={styles.editSaveText}>
+                          {t("home.save")}
+                        </Text>
                       </LinearGradient>
                     </Pressable>
                   </View>
