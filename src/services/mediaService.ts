@@ -1,4 +1,3 @@
-import * as FileSystem from 'expo-file-system';
 import * as SecureStore from 'expo-secure-store';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
@@ -30,8 +29,8 @@ const getSessionId = async (): Promise<string> => {
 };
 
 /**
- * Upload image to backend (anonymous upload with sessionId)
- * Converts local file URI to base64 and sends to backend
+ * Upload image to backend using multipart/form-data (anonymous upload with sessionId)
+ * This is simpler and more reliable than base64 encoding
  */
 const uploadImageAnonymous = async (
   imageUri: string
@@ -39,35 +38,35 @@ const uploadImageAnonymous = async (
   try {
     const sessionId = await getSessionId();
 
-    // Read file as base64
-    const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    // Get file extension from URI
-    const fileExtension = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`;
-
-    // Create data URL for backend
-    const dataUrl = `data:${mimeType};base64,${base64}`;
-
-    console.log('📤 Uploading image...', {
-      size: base64.length,
-      mimeType,
+    console.log('📤 Uploading image via multipart...', {
+      uri: imageUri,
       sessionId: sessionId.substring(0, 8) + '...',
     });
 
-    // Send to backend
-    const response = await fetch(`${API_URL}/upload-base64`, {
+    // Create FormData for multipart upload
+    const formData = new FormData();
+
+    // Get filename from URI
+    const filename = imageUri.split('/').pop() || `moment-${Date.now()}.jpg`;
+    const fileExtension = filename.split('.').pop()?.toLowerCase() || 'jpg';
+    const mimeType = `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`;
+
+    // Create file object for FormData
+    const file = {
+      uri: imageUri,
+      type: mimeType,
+      name: filename,
+    } as any;
+
+    formData.append('file', file);
+
+    // Send to backend with sessionId in header
+    const response = await fetch(`${API_URL}/upload-anonymous`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'X-Session-Id': sessionId,
       },
-      body: JSON.stringify({
-        sessionId,
-        imageData: dataUrl,
-        fileName: `moment-${Date.now()}.${fileExtension}`,
-      }),
+      body: formData,
     });
 
     if (!response.ok) {
@@ -78,10 +77,18 @@ const uploadImageAnonymous = async (
     const json = await response.json();
 
     console.log('✅ Image uploaded successfully');
+    console.log('📊 Response JSON:', JSON.stringify(json, null, 2));
+
+    // Backend returns camelCase: { success: true, data: { publicUrl, objectName, ... } }
+    const publicUrl = json.data?.publicUrl || json.publicUrl;
+    console.log('📊 Public URL:', publicUrl);
 
     return {
       success: true,
-      data: json.data || json,
+      data: {
+        url: publicUrl,
+        ...json.data,
+      },
     };
   } catch (error) {
     console.error('❌ Error uploading image:', error);

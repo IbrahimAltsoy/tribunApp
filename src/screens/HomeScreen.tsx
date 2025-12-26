@@ -86,7 +86,7 @@ const HomeScreen: React.FC = () => {
     submit,
   } = useShareMomentForm();
 
-  // Backend'den FanMoments yükle
+  // Backend'den FanMoments yüklee
   useEffect(() => {
     const loadMoments = async () => {
       const response = await fanMomentService.getFanMoments(1, 10, "Approved");
@@ -225,9 +225,14 @@ const HomeScreen: React.FC = () => {
       let uploadedImageUrl: string | undefined = editImage;
 
       // Check if image was changed (editImage is different from original)
-      if (editImage && editImage !== momentToEdit.imageUrl && editImage.startsWith('file://')) {
+      if (
+        editImage &&
+        editImage !== momentToEdit.imageUrl &&
+        editImage.startsWith("file://")
+      ) {
         console.log("📤 Uploading new image for edit...");
-        const uploadResponse = await mediaService.uploadImageAnonymous(editImage);
+        const uploadResponse =
+          await mediaService.uploadImageAnonymous(editImage);
 
         if (uploadResponse.success && uploadResponse.data?.url) {
           uploadedImageUrl = uploadResponse.data.url;
@@ -629,7 +634,7 @@ const HomeScreen: React.FC = () => {
       </Modal>
     </SafeAreaView>
   );
-};;;;
+};;;;;;;;;;;;;;;;;;;;;;;
 
 const styles = StyleSheet.create({
   safeArea: {
