@@ -173,7 +173,11 @@ export type FanMoment = {
   time: string;
   timestamp?: string;
   source: "Tribun" | "Sehir Meydani" | "Ev/Izleme";
-  image?: ImageSourcePropType;
+  image?: ImageSourcePropType | { uri: string } | string;
+  video?: string;
+  likeCount?: number;
+  status?: 'Pending' | 'Approved' | 'Rejected';
+  isOwnMoment?: boolean; // Ownership flag from backend
 };
 
 export type MatchResult = {

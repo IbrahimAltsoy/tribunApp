@@ -18,7 +18,6 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   announcements as announcementData,
-  fanMoments,
   kits,
   players,
 } from "../data/mockData";
@@ -28,7 +27,9 @@ import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { MarsStackParamList } from "../navigation/types";
+import type { FanMomentDto } from "../types/fanMoment";
 import { radii } from "../theme/spacing";
+import { fanMomentService } from "../services/fanMomentService";
 
 const IS_IOS = Platform.OS === "ios";
 
@@ -39,6 +40,7 @@ const MarsScreen: React.FC = () => {
   const [submitOpen, setSubmitOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [announcementList, setAnnouncementList] = useState(announcementData);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -58,10 +60,24 @@ const MarsScreen: React.FC = () => {
 
   // Fan moments animations
   const [momentCardsAnim] = useState(() =>
-    fanMoments.slice(0, 6).map(() => new Animated.Value(0))
+    Array(6).fill(0).map(() => new Animated.Value(0))
   );
 
   // Animations
+
+  // Backend'den FanMoments yükle
+  useEffect(() => {
+    const loadMoments = async () => {
+      const response = await fanMomentService.getFanMoments(1, 20, 'Approved');
+      if (response.success && response.data) {
+        console.log('✅ MarsScreen - Backend verisi:', response.data.length);
+        setMoments(response.data);
+      } else {
+        console.log('❌ MarsScreen - Backend hatası:', response.error);
+      }
+    };
+    loadMoments();
+  }, []);
   const badgeAnim = useRef(new Animated.Value(0)).current;
   const heroTitleAnim = useRef(new Animated.Value(0)).current;
   const [statCardsAnim] = useState(() => [
@@ -109,7 +125,7 @@ const MarsScreen: React.FC = () => {
     setTimeout(() => {
       Animated.stagger(
         70,
-        momentCardsAnim.map((anim) =>
+        momentCardsAnim.map((anim: Animated.Value) =>
           Animated.spring(anim, {
             toValue: 1,
             tension: 50,
@@ -455,7 +471,7 @@ const MarsScreen: React.FC = () => {
           snapToAlignment="start"
           contentContainerStyle={styles.momentRow}
         >
-          {fanMoments.slice(0, 6).map((moment, index) => {
+          {moments.slice(0, 6).map((moment, index) => {
             const cardAnim = momentCardsAnim[index] || new Animated.Value(1);
             const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -528,29 +544,11 @@ const MarsScreen: React.FC = () => {
                           />
                         </View>
                         <View style={{ flex: 1 }}>
-                          <Text style={styles.momentUser}>{moment.user}</Text>
-                          <View style={styles.momentSourceBadge}>
-                            <Ionicons
-                              name="pin"
-                              size={10}
-                              color={colors.mutedText}
-                            />
-                            <Text style={styles.momentSourceText}>
-                              {moment.source}
-                            </Text>
-                          </View>
+                          <Text style={styles.momentUser}>{moment.username}</Text>
                         </View>
                       </View>
-                      <Text style={styles.momentCaption}>{moment.caption}</Text>
+                      <Text style={styles.momentCaption}>{moment.description || ''}</Text>
                       <View style={styles.momentFooter}>
-                        <View style={styles.momentMetaItem}>
-                          <Ionicons
-                            name="location-outline"
-                            size={12}
-                            color={colors.mutedText}
-                          />
-                          <Text style={styles.momentMeta}>{moment.location}</Text>
-                        </View>
                         <View style={styles.momentMetaItem}>
                           <Ionicons
                             name="time-outline"
@@ -558,7 +556,7 @@ const MarsScreen: React.FC = () => {
                             color={colors.mutedText}
                           />
                           <Text style={styles.momentMeta}>
-                            {t("archive.timeAgo", { time: moment.time })}
+                            {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
                           </Text>
                         </View>
                       </View>
@@ -793,7 +791,7 @@ const MarsScreen: React.FC = () => {
             onClose={() => setMomentOpen(false)}
           />
           <ScrollView contentContainerStyle={styles.modalContent}>
-            {fanMoments.map((moment) => (
+            {moments.map((moment) => (
               <LinearGradient
                 key={moment.id}
                 colors={[
@@ -820,29 +818,11 @@ const MarsScreen: React.FC = () => {
                       />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.momentUser}>{moment.user}</Text>
-                      <View style={styles.momentSourceBadge}>
-                        <Ionicons
-                          name="pin"
-                          size={10}
-                          color={colors.mutedText}
-                        />
-                        <Text style={styles.momentSourceText}>
-                          {moment.source}
-                        </Text>
-                      </View>
+                      <Text style={styles.momentUser}>{moment.username}</Text>
                     </View>
                   </View>
-                  <Text style={styles.momentCaption}>{moment.caption}</Text>
+                  <Text style={styles.momentCaption}>{moment.description || ''}</Text>
                   <View style={styles.momentFooter}>
-                    <View style={styles.momentMetaItem}>
-                      <Ionicons
-                        name="location-outline"
-                        size={12}
-                        color={colors.mutedText}
-                      />
-                      <Text style={styles.momentMeta}>{moment.location}</Text>
-                    </View>
                     <View style={styles.momentMetaItem}>
                       <Ionicons
                         name="time-outline"
@@ -850,7 +830,7 @@ const MarsScreen: React.FC = () => {
                         color={colors.mutedText}
                       />
                       <Text style={styles.momentMeta}>
-                        {t("archive.timeAgo", { time: moment.time })}
+                        {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
                       </Text>
                     </View>
                   </View>

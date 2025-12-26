@@ -15,24 +15,26 @@ import { BlurView } from "expo-blur";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { fanMoments } from "../../data/mockData";
 import { useTranslation } from "react-i18next";
+import type { FanMomentDto } from "../../types/fanMoment";
 
 const IS_IOS = Platform.OS === "ios";
 
-type FanMoment = (typeof fanMoments)[0];
-
 type Props = {
-  moments: FanMoment[];
+  moments: FanMomentDto[];
   onPressAdd: () => void;
   onPressMore: () => void;
-  onSelectMoment: (moment: FanMoment) => void;
+  onSelectMoment: (moment: FanMomentDto) => void;
+  onEditMoment?: (moment: FanMomentDto) => void;
+  onDeleteMoment?: (moment: FanMomentDto) => void;
 };
 
 const AnimatedMomentCard: React.FC<{
-  moment: FanMoment;
+  moment: FanMomentDto;
   onPress: () => void;
-}> = ({ moment, onPress }) => {
+  onEdit?: () => void;
+  onDelete?: () => void;
+}> = ({ moment, onPress, onEdit, onDelete }) => {
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -63,9 +65,9 @@ const AnimatedMomentCard: React.FC<{
       <Animated.View
         style={[styles.momentCard, { transform: [{ scale: scaleAnim }] }]}
       >
-        {moment.image ? (
+        {moment.imageUrl ? (
           <ImageBackground
-            source={moment.image}
+            source={{ uri: moment.imageUrl }}
             style={styles.momentImage}
             imageStyle={styles.momentImageStyle}
           >
@@ -75,49 +77,83 @@ const AnimatedMomentCard: React.FC<{
               style={StyleSheet.absoluteFillObject}
             />
 
+            {/* Owner Actions - Top Right Corner */}
+            {moment.isOwnMoment && (onEdit || onDelete) && (
+              <View style={styles.ownerActions}>
+                {onEdit && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="pencil" size={16} color={colors.primary} />
+                    </BlurView>
+                  </Pressable>
+                )}
+                {onDelete && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={colors.error} />
+                    </BlurView>
+                  </Pressable>
+                )}
+              </View>
+            )}
+
             {/* Glassmorphism Content Container */}
             <View style={styles.momentContent}>
-              {/* Source Badge with Blur */}
-              <BlurView
-                intensity={IS_IOS ? 30 : 20}
-                tint="dark"
-                style={[
-                  styles.momentSourcePill,
-                  moment.source === "Tribun" && styles.momentSourcePillTribun,
-                ]}
-              >
-                <Text style={styles.momentSourceText}>{moment.source}</Text>
-              </BlurView>
-
               {/* Caption with better hierarchy */}
               <Text style={styles.momentCaption} numberOfLines={2}>
-                {moment.caption}
+                {moment.description || ''}
               </Text>
 
-              {/* Location & Time Row */}
+              {/* Username & Time Row */}
               <View style={styles.momentFooter}>
                 <View style={styles.momentLocationRow}>
                   <Ionicons
-                    name="location"
+                    name="person"
                     size={14}
                     color={colors.primary}
                   />
                   <Text style={styles.momentLocation} numberOfLines={1}>
-                    {moment.location}
+                    {moment.username}
                   </Text>
                 </View>
                 <Text style={styles.momentTime}>
-                  {t("home.timeAgo", { time: moment.time })}
+                  {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
                 </Text>
               </View>
             </View>
           </ImageBackground>
         ) : (
           <View style={[styles.momentImage, styles.momentFallback]}>
-            <Text style={styles.momentCaption}>{moment.caption}</Text>
-            <Text style={styles.momentLocation}>{moment.location}</Text>
+            <Text style={styles.momentCaption}>{moment.description || ''}</Text>
+            <Text style={styles.momentLocation}>{moment.username}</Text>
             <Text style={styles.momentTime}>
-              {t("home.timeAgo", { time: moment.time })}
+              {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
             </Text>
           </View>
         )}
@@ -131,9 +167,11 @@ const FanMomentsSection: React.FC<Props> = ({
   onPressAdd,
   onPressMore,
   onSelectMoment,
+  onEditMoment,
+  onDeleteMoment,
 }) => {
   const { t } = useTranslation();
-  const visibleMoments = moments.slice(0, 5);
+  const visibleMoments = (moments || []).slice(0, 5);
 
   const addCardScale = useRef(new Animated.Value(1)).current;
   const moreCardScale = useRef(new Animated.Value(1)).current;
@@ -271,6 +309,8 @@ const FanMomentsSection: React.FC<Props> = ({
           key={moment.id}
           moment={moment}
           onPress={() => onSelectMoment(moment)}
+          onEdit={onEditMoment ? () => onEditMoment(moment) : undefined}
+          onDelete={onDeleteMoment ? () => onDeleteMoment(moment) : undefined}
         />
       ))}
 
@@ -406,6 +446,46 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.md,
     gap: spacing.xs,
+  },
+
+  // Owner Action Buttons
+  ownerActions: {
+    position: "absolute",
+    top: spacing.sm,
+    right: spacing.sm,
+    flexDirection: "row",
+    gap: spacing.xs,
+    zIndex: 10,
+  },
+  actionButton: {
+    borderRadius: radii.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  actionButtonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
+  actionButtonBlur: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(10, 10, 10, 0.7)",
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
   },
 
   // Add Card Styles

@@ -14,15 +14,13 @@ import { useTranslation } from "react-i18next";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { fanMoments } from "../../data/mockData";
-
-type FanMoment = (typeof fanMoments)[0];
+import type { FanMomentDto } from "../../types/fanMoment";
 
 type Props = {
   visible: boolean;
-  moments: FanMoment[];
+  moments: FanMomentDto[];
   onClose: () => void;
-  onSelect: (moment: FanMoment) => void;
+  onSelect: (moment: FanMomentDto) => void;
 };
 
 const AllMomentsModal: React.FC<Props> = ({
@@ -58,9 +56,9 @@ const AllMomentsModal: React.FC<Props> = ({
               style={styles.allItem}
               onPress={() => onSelect(moment)}
             >
-              {moment.image ? (
+              {moment.imageUrl ? (
                 <ImageBackground
-                  source={moment.image}
+                  source={{ uri: moment.imageUrl }}
                   style={styles.allImage}
                   imageStyle={{ borderRadius: 12 }}
                 >
@@ -73,19 +71,9 @@ const AllMomentsModal: React.FC<Props> = ({
                 <View style={[styles.allImage, styles.momentFallback]} />
               )}
               <View style={styles.allText}>
-                <View
-                  style={[
-                    styles.momentSourcePill,
-                    moment.source === "Tribun" && {
-                      backgroundColor: colors.accent,
-                    },
-                  ]}
-                >
-                  <Text style={styles.momentSourceText}>{moment.source}</Text>
-                </View>
-                <Text style={styles.allCaption}>{moment.caption}</Text>
+                <Text style={styles.allCaption}>{moment.description || ''}</Text>
                 <Text style={styles.allMeta}>
-                  {moment.location} • {t("home.timeAgo", { time: moment.time })}
+                  {moment.username} • {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
                 </Text>
               </View>
             </Pressable>

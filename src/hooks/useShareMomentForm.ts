@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { FanMoment } from "../data/mockData";
+import type { FanMomentDto } from "../types/fanMoment";
+import { fanMomentService } from "../services/fanMomentService";
+import { getSession } from "../utils/sessionManager";
 
 type ShareMomentFormState = {
   city: string;
@@ -36,7 +38,7 @@ export const useShareMomentForm = () => {
 
   const open = useCallback(() => setVisible(true), []);
 
-  const buildMoment = useCallback((imageUri?: string): FanMoment | null => {
+  const buildMoment = useCallback((imageUri?: string): FanMomentDto | null => {
     const trimmedCity = form.city.trim();
     const trimmedCaption = form.caption.trim();
 
@@ -46,22 +48,59 @@ export const useShareMomentForm = () => {
 
     return {
       id: `local-${Date.now()}`,
-      user: t("home.momentDefaults.user"),
-      location: trimmedCity || t("home.momentDefaults.city"),
-      caption: trimmedCaption || t("home.momentDefaults.caption"),
-      time: t("home.momentDefaults.time"),
-      source: "Tribun",
-      image: imageUri ? { uri: imageUri } : undefined,
+      username: t("home.momentDefaults.user"),
+      description: trimmedCaption || t("home.momentDefaults.caption"),
+      status: 'Pending' as const,
+      likeCount: 0,
+      createdAt: new Date().toISOString(),
+      imageUrl: imageUri,
     };
   }, [form, t]);
 
-  const submit = useCallback((imageUri?: string) => {
-    const moment = buildMoment(imageUri);
-    if (!moment) return null;
-    reset();
-    setVisible(false);
-    return moment;
-  }, [buildMoment, reset]);
+  const submit = useCallback(async (imageUri?: string): Promise<FanMomentDto | null> => {
+    const trimmedCity = form.city.trim();
+    const trimmedCaption = form.caption.trim();
+
+    if (!trimmedCity && !trimmedCaption && !imageUri) {
+      return null;
+    }
+
+    try {
+      // Get session for nickname
+      const session = await getSession();
+      const nickname = session?.nickname || t("home.momentDefaults.user");
+
+      // Send to backend
+      const response = await fanMomentService.createFanMoment({
+        nickname,
+        city: trimmedCity || t("home.momentDefaults.city"),
+        caption: trimmedCaption || t("home.momentDefaults.caption"),
+        imageUrl: imageUri,
+        source: "App",
+      });
+
+      if (response.success && response.data) {
+        console.log("✅ Moment created successfully:", response.data);
+        reset();
+        setVisible(false);
+        return response.data;
+      } else {
+        console.error("❌ Failed to create moment:", response.error);
+        // Fallback to local moment on error
+        const localMoment = buildMoment(imageUri);
+        reset();
+        setVisible(false);
+        return localMoment;
+      }
+    } catch (error) {
+      console.error("❌ Error creating moment:", error);
+      // Fallback to local moment on error
+      const localMoment = buildMoment(imageUri);
+      reset();
+      setVisible(false);
+      return localMoment;
+    }
+  }, [form, buildMoment, reset, t]);
 
   const canSubmit = useMemo(
     () =>

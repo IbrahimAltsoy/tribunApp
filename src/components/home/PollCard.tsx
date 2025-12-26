@@ -6,16 +6,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { polls } from "../../data/mockData";
+import type { PollDto } from "../../types/poll";
 
 const IS_IOS = Platform.OS === "ios";
 
 type Props = {
-  poll: (typeof polls)[0];
+  poll: PollDto;
 };
 
 const PollOption: React.FC<{
-  option: (typeof polls)[0]["options"][0];
+  option: PollDto["options"][0];
   percentage: number;
   index: number;
 }> = ({ option, percentage, index }) => {
@@ -103,7 +103,11 @@ const PollCard: React.FC<Props> = React.memo(({ poll }) => {
     }).start();
   }, []);
 
-  const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+  const totalVotes = poll.options.reduce((sum, opt) => sum + opt.voteCount, 0);
+
+  const closesInText = poll.closesAt
+    ? new Date(poll.closesAt).toLocaleDateString('tr-TR')
+    : 'Devam ediyor';
 
   return (
     <Animated.View style={[styles.pollCard, { opacity: fadeAnim }]}>
@@ -136,7 +140,7 @@ const PollCard: React.FC<Props> = React.memo(({ poll }) => {
           <Text style={styles.pollTitle}>{poll.question}</Text>
           <View style={styles.pollMetaRow}>
             <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
-            <Text style={styles.pollMeta}>{poll.closesIn} kaldı</Text>
+            <Text style={styles.pollMeta}>{closesInText}</Text>
           </View>
         </View>
       </View>
@@ -144,8 +148,7 @@ const PollCard: React.FC<Props> = React.memo(({ poll }) => {
       {/* Poll Options */}
       <View style={styles.pollOptionsContainer}>
         {poll.options.map((opt, index) => {
-          const pct = Math.round((opt.votes / totalVotes) * 100);
-          return <PollOption key={opt.id} option={opt} percentage={pct} index={index} />;
+          return <PollOption key={opt.id} option={opt} percentage={opt.votePercentage} index={index} />;
         })}
       </View>
 

@@ -12,13 +12,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { fanMoments } from "../../data/mockData";
-
-type FanMoment = (typeof fanMoments)[0];
+import type { FanMomentDto } from "../../types/fanMoment";
 
 type Props = {
   visible: boolean;
-  moment?: FanMoment;
+  moment?: FanMomentDto;
   onClose: () => void;
 };
 
@@ -34,9 +32,9 @@ const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose }) => (
         <TouchableOpacity style={styles.detailClose} onPress={onClose}>
           <Ionicons name="close" size={22} color={colors.text} />
         </TouchableOpacity>
-        {moment?.image ? (
+        {moment?.imageUrl ? (
           <ImageBackground
-            source={moment.image}
+            source={{ uri: moment.imageUrl }}
             style={styles.detailImage}
             imageStyle={{ borderRadius: 16 }}
           >
@@ -47,25 +45,15 @@ const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose }) => (
           </ImageBackground>
         ) : (
           <View style={[styles.detailImage, styles.momentFallback]}>
-            <Text style={styles.momentCaption}>{moment?.caption}</Text>
+            <Text style={styles.momentCaption}>{moment?.description || ''}</Text>
           </View>
         )}
         <View style={styles.detailContent}>
-          <View
-            style={[
-              styles.momentSourcePill,
-              moment?.source === "Tribun" && {
-                backgroundColor: colors.accent,
-              },
-            ]}
-          >
-            <Text style={styles.momentSourceText}>{moment?.source}</Text>
-          </View>
-          <Text style={styles.detailCaption}>{moment?.caption}</Text>
+          <Text style={styles.detailCaption}>{moment?.description || ''}</Text>
           <Text style={styles.detailMeta}>
-            {moment?.location} ¶ú {moment?.time} Çônce
+            {new Date(moment?.createdAt || '').toLocaleDateString('tr-TR')}
           </Text>
-          <Text style={styles.detailMeta}>PaylaYan: {moment?.user}</Text>
+          <Text style={styles.detailMeta}>Paylaşan: {moment?.username}</Text>
         </View>
       </View>
     </View>

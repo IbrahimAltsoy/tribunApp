@@ -5,34 +5,22 @@ import { I18nManager } from "react-native";
 
 import en from "./locales/en/translation.json";
 import tr from "./locales/tr/translation.json";
-import de from "./locales/de/translation.json";
-import fr from "./locales/fr/translation.json";
-import es from "./locales/es/translation.json";
-import ar from "./locales/ar/translation.json";
-import kmr from "./locales/kmr/translation.json";
-import ckb from "./locales/ckb/translation.json";
-import fa from "./locales/fa/translation.json";
+import ku from "./locales/kmr/translation.json"; // Backend'de "ku" olarak kullanılıyor
 
 const resources = {
   en: { translation: en },
   tr: { translation: tr },
-  de: { translation: de },
-  fr: { translation: fr },
-  es: { translation: es },
-  ar: { translation: ar },
-  fa: { translation: fa },
-  kmr: { translation: kmr },
-  ckb: { translation: ckb },
+  ku: { translation: ku }, // Backend ile eşleşmesi için "ku" olarak
 };
 
-const RTL_LANGS = ["ar", "fa"];
+const RTL_LANGS = []; // Artık RTL dil yok
 const fallbackLng = "en";
 
 const normalizeLanguage = (tag) => {
   if (!tag) return null;
   const base = tag.split("-")[0];
-  if (base === "ku") return "kmr";
-  if (base === "ckb") return "ckb";
+  // Cihaz dilinde "ku" gelirse backend ile eşleşmesi için "ku" döndür
+  if (base === "ku") return "ku";
   if (resources[base]) return base;
   return null;
 };
@@ -56,7 +44,7 @@ const applyRTL = (lng) => {
 };
 
 const localeForFormatting = (lng) => {
-  if (lng === "kmr") return "ku"; // Intl desteği için en yakın karşılık
+  // "ku" Intl formatında kullanılabilir
   return lng || fallbackLng;
 };
 
@@ -93,13 +81,7 @@ i18n.on("languageChanged", (lng) => {
 export const availableLanguages = [
   { code: "tr", label: "Türkçe" },
   { code: "en", label: "English" },
-  { code: "de", label: "Deutsch" },
-  { code: "fr", label: "Français" },
-  { code: "es", label: "Español" },
-  { code: "ar", label: "العربية" },
-  { code: "fa", label: "فارسی" },
-  { code: "kmr", label: "Kurmancî" },
-  { code: "ckb", label: "سۆرانی" },
+  { code: "ku", label: "Kurdî" }, // Backend ile eşleşen kod
 ];
 
 export default i18n;

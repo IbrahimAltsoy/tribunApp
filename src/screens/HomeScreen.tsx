@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -8,6 +8,7 @@ import {
   View,
   Modal,
   Platform,
+  TextInput,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
@@ -36,25 +37,31 @@ import { BottomTabParamList } from "../navigation/BottomTabs";
 import { useShareMomentForm } from "../hooks/useShareMomentForm";
 import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
+import { fanMomentService } from "../services/fanMomentService";
+import { pollService } from "../services/pollService";
+import type { PollDto } from "../types/poll";
+import type { FanMomentDto } from "../types/fanMoment";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
 const HomeScreen: React.FC = () => {
   const navigation =
     useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Memoize featured news slice
   const featuredNews = useMemo(() => newsData.slice(0, 5), []);
 
-  const [moments, setMoments] = useState(fanMoments);
+  const [moments, setMoments] = useState<FanMomentDto[]>([]);
+  const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
   const [allVideosVisible, setAllVideosVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
-  const [selectedMoment, setSelectedMoment] = useState<
-    (typeof fanMoments)[0] | undefined
-  >(undefined);
+  const [selectedMoment, setSelectedMoment] = useState<FanMomentDto | undefined>(undefined);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [momentToEdit, setMomentToEdit] = useState<FanMomentDto | undefined>(undefined);
+  const [editCaption, setEditCaption] = useState("");
 
   const {
     visible: shareModalVisible,
@@ -67,18 +74,60 @@ const HomeScreen: React.FC = () => {
     submit,
   } = useShareMomentForm();
 
+  // Backend'den FanMoments yükle
+  useEffect(() => {
+    const loadMoments = async () => {
+      const response = await fanMomentService.getFanMoments(1, 10, "Approved");
+      console.log("📦 Full response:", JSON.stringify(response, null, 2));
+      if (response.success && response.data) {
+        console.log("✅ Backend verisi geldi:", response.data.length, "moments");
+        setMoments(response.data);
+      } else {
+        console.log("❌ Backend hatası:", response.error);
+        // Hata durumunda boş array set et
+        setMoments([]);
+      }
+    };
+    loadMoments();
+  }, []);
+
+  // Backend'den Poll yükle (dil değişikliğinde yeniden yükle)
+  useEffect(() => {
+    const loadPoll = async () => {
+      const currentLanguage = i18n.language;
+      console.log("📊 Loading poll with language:", currentLanguage);
+
+      pollService.setLanguage(currentLanguage);
+      const response = await pollService.getActivePoll();
+      console.log("📦 Poll response:", JSON.stringify(response, null, 2));
+
+      if (response.success && response.data) {
+        console.log("✅ Poll loaded:", response.data.question);
+        setActivePoll(response.data);
+      } else {
+        console.log("❌ Poll error:", response.error);
+        // Backend hatası durumunda null set et
+        setActivePoll(null);
+      }
+    };
+    loadPoll();
+  }, [i18n.language]);
+
   const momentList = useMemo(() => moments, [moments]);
 
-  const handleOpenDetail = useCallback((moment: (typeof fanMoments)[0]) => {
+  const handleOpenDetail = useCallback((moment: FanMomentDto) => {
     setSelectedMoment(moment);
     setDetailModalVisible(true);
   }, []);
 
-  const handleAddMoment = useCallback((imageUri?: string) => {
-    const newMoment = submit(imageUri);
-    if (!newMoment) return;
-    setMoments((prev) => [newMoment, ...prev]);
-  }, [submit]);
+  const handleAddMoment = useCallback(
+    async (imageUri?: string) => {
+      const newMoment = await submit(imageUri);
+      if (!newMoment) return;
+      setMoments((prev) => [newMoment, ...prev]);
+    },
+    [submit]
+  );
 
   const handleNewsPress = useCallback(
     (id: string) => {
@@ -97,6 +146,61 @@ const HomeScreen: React.FC = () => {
     });
   }, [t]);
 
+  const handleEditMoment = useCallback((moment: FanMomentDto) => {
+    setMomentToEdit(moment);
+    setEditCaption(moment.description || '');
+    setEditModalVisible(true);
+  }, []);
+
+  const handleDeleteMoment = useCallback(
+    async (moment: FanMomentDto) => {
+      try {
+        const response = await fanMomentService.deleteOwnFanMoment(moment.id);
+        if (response.success) {
+          console.log("✅ Moment deleted successfully");
+          setMoments((prev) => prev.filter((m) => m.id !== moment.id));
+        } else {
+          console.error("❌ Failed to delete moment:", response.error);
+          alert(t("home.deleteFailed"));
+        }
+      } catch (error) {
+        console.error("❌ Error deleting moment:", error);
+        alert(t("home.deleteFailed"));
+      }
+    },
+    [t]
+  );
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!momentToEdit) return;
+
+    try {
+      const response = await fanMomentService.updateOwnFanMoment(
+        momentToEdit.id,
+        { caption: editCaption }
+      );
+
+      if (response.success && response.data) {
+        console.log("✅ Moment updated successfully");
+        console.log("📦 Updated moment data:", response.data);
+        console.log("🔍 isOwnMoment flag:", response.data.isOwnMoment);
+
+        setMoments((prev) =>
+          prev.map((m) => (m.id === momentToEdit.id ? response.data! : m))
+        );
+        setEditModalVisible(false);
+        setMomentToEdit(undefined);
+        setEditCaption("");
+      } else {
+        console.error("❌ Failed to update moment:", response.error);
+        alert(t("home.updateFailed"));
+      }
+    } catch (error) {
+      console.error("❌ Error updating moment:", error);
+      alert(t("home.updateFailed"));
+    }
+  }, [momentToEdit, editCaption, t]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -108,6 +212,8 @@ const HomeScreen: React.FC = () => {
           onPressAdd={openShareModal}
           onPressMore={() => setAllMomentsVisible(true)}
           onSelectMoment={handleOpenDetail}
+          onEditMoment={handleEditMoment}
+          onDeleteMoment={handleDeleteMoment}
         />
 
         <SectionHeader
@@ -133,7 +239,7 @@ const HomeScreen: React.FC = () => {
           title={t("home.poll.title")}
           subtitle={t("home.poll.weekMatch")}
         />
-        <PollCard poll={polls[0]} />
+        {activePoll && <PollCard poll={activePoll} />}
 
         <SectionHeader
           title={t("home.supportTitle")}
@@ -232,9 +338,95 @@ const HomeScreen: React.FC = () => {
           </View>
         </BlurView>
       </Modal>
+
+      {/* Edit Moment Modal */}
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setEditModalVisible(false);
+          setMomentToEdit(undefined);
+          setEditCaption("");
+        }}
+      >
+        <BlurView intensity={65} tint="dark" style={styles.modalOverlay}>
+          <View style={styles.editModal}>
+            <View style={styles.editHeaderRow}>
+              <View style={styles.editIconCircle}>
+                <Ionicons name="pencil" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.editTitle}>{t("home.editMoment")}</Text>
+                <Text style={styles.editSubtitle}>
+                  {t("home.editMomentSubtitle")}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => {
+                  setEditModalVisible(false);
+                  setMomentToEdit(undefined);
+                  setEditCaption("");
+                }}
+                style={({ pressed }) => [
+                  styles.closeButton,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={styles.editInputContainer}>
+              <Text style={styles.editLabel}>{t("home.caption")}</Text>
+              <TextInput
+                style={styles.editInput}
+                value={editCaption}
+                onChangeText={setEditCaption}
+                placeholder={t("home.enterCaption")}
+                placeholderTextColor={colors.textTertiary}
+                multiline
+                maxLength={200}
+              />
+              <Text style={styles.editCharCount}>{editCaption.length}/200</Text>
+            </View>
+
+            <View style={styles.editActions}>
+              <Pressable
+                onPress={() => {
+                  setEditModalVisible(false);
+                  setMomentToEdit(undefined);
+                  setEditCaption("");
+                }}
+                style={({ pressed }) => [
+                  styles.editCancelButton,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.editCancelText}>{t("home.cancel")}</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSaveEdit}
+                style={({ pressed }) => [
+                  styles.editSaveButton,
+                  pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                ]}
+              >
+                <LinearGradient
+                  colors={["#0FA958", "#12C26A"]}
+                  style={styles.editSaveGradient}
+                >
+                  <Ionicons name="checkmark" size={20} color={colors.white} />
+                  <Text style={styles.editSaveText}>{t("home.save")}</Text>
+                </LinearGradient>
+              </Pressable>
+            </View>
+          </View>
+        </BlurView>
+      </Modal>
     </SafeAreaView>
   );
-};
+};;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -383,6 +575,113 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
     fontFamily: typography.medium,
     fontSize: fontSizes.xs,
+  },
+
+  // -------- Edit Modal Styles --------
+  editModal: {
+    width: "100%",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "rgba(10,10,10,0.96)",
+    padding: spacing.lg,
+    gap: spacing.lg,
+  },
+  editHeaderRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    alignItems: "center",
+  },
+  editIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15, 169, 88, 0.15)",
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  editTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.lg,
+    marginBottom: spacing.xs / 2,
+  },
+  editSubtitle: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    backgroundColor: colors.card,
+  },
+  editInputContainer: {
+    gap: spacing.sm,
+  },
+  editLabel: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
+  },
+  editInput: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: spacing.md,
+    color: colors.text,
+    fontFamily: typography.regular,
+    fontSize: fontSizes.md,
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  editCharCount: {
+    color: colors.textTertiary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+    textAlign: "right",
+  },
+  editActions: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  editCancelButton: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editCancelText: {
+    color: colors.textSecondary,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.md,
+  },
+  editSaveButton: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  editSaveGradient: {
+    flexDirection: "row",
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xs,
+  },
+  editSaveText: {
+    color: colors.white,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
   },
 });
 
