@@ -38,15 +38,6 @@ const AnimatedMomentCard: React.FC<{
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Debug: Log what we receive
-  console.log(`🎴 [MOMENT CARD] Rendering moment ${moment.id.substring(0, 8)}:`, {
-    description: moment.description?.substring(0, 20),
-    isOwnMoment: moment.isOwnMoment,
-    hasOnEdit: !!onEdit,
-    hasOnDelete: !!onDelete,
-    willShowButtons: !!(moment.isOwnMoment && (onEdit || onDelete)),
-  });
-
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
       toValue: 0.95,

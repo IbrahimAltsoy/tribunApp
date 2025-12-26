@@ -82,17 +82,9 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     const loadMoments = async () => {
       const response = await fanMomentService.getFanMoments(1, 10, "Approved");
-      console.log("📦 Full response:", JSON.stringify(response, null, 2));
       if (response.success && response.data) {
-        console.log(
-          "✅ Backend verisi geldi:",
-          response.data.length,
-          "moments"
-        );
         setMoments(response.data);
       } else {
-        console.log("❌ Backend hatası:", response.error);
-        // Hata durumunda boş array set et
         setMoments([]);
       }
     };
@@ -103,33 +95,17 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     const loadPoll = async () => {
       const currentLanguage = i18n.language;
-      console.log("📊 Loading poll with language:", currentLanguage);
-
       pollService.setLanguage(currentLanguage);
       const response = await pollService.getActivePoll();
-      console.log("📦 Poll response:", JSON.stringify(response, null, 2));
 
       if (response.success && response.data) {
-        console.log("✅ Poll loaded:", response.data.question);
         setActivePoll(response.data);
       } else {
-        console.log("❌ Poll error:", response.error);
-        // Backend hatası durumunda null set et
         setActivePoll(null);
       }
     };
     loadPoll();
   }, [i18n.language]);
-
-  // Debug: Track moments state changes
-  useEffect(() => {
-    console.log("🔍 [MOMENTS STATE CHANGED] Total moments:", moments.length);
-    moments.forEach((m, idx) => {
-      console.log(
-        `  ${idx}: id=${m.id.substring(0, 8)}... description="${m.description?.substring(0, 30)}..." isOwnMoment=${m.isOwnMoment} hasImage=${!!m.imageUrl}`
-      );
-    });
-  }, [moments]);
 
   const momentList = useMemo(() => moments, [moments]);
 
@@ -172,11 +148,6 @@ const HomeScreen: React.FC = () => {
   }, [t]);
 
   const handleEditMoment = useCallback((moment: FanMomentDto) => {
-    console.log("✏️ [EDIT CLICKED] Moment to edit:", {
-      id: moment.id,
-      description: moment.description,
-      isOwnMoment: moment.isOwnMoment,
-    });
     setMomentToEdit(moment);
     setEditCaption(moment.description || "");
     setEditModalVisible(true);
@@ -187,13 +158,11 @@ const HomeScreen: React.FC = () => {
       try {
         const response = await fanMomentService.deleteOwnFanMoment(moment.id);
         if (response.success) {
-          console.log("✅ Moment delted successflly");
           setMoments((prev) => prev.filter((m) => m.id !== moment.id));
         } else {
           alert(t("home.deleteFailed"));
         }
       } catch (error) {
-        console.error("❌ Error deleting moment:", error);
         alert(t("home.deleteFailed"));
       }
     },
@@ -203,12 +172,6 @@ const HomeScreen: React.FC = () => {
   const handleSaveEdit = useCallback(async () => {
     if (!momentToEdit) return;
 
-    console.log("🔧 [UPDATE START] momentToEdit:", {
-      id: momentToEdit.id,
-      description: momentToEdit.description,
-      isOwnMoment: momentToEdit.isOwnMoment,
-    });
-
     try {
       const response = await fanMomentService.updateOwnFanMoment(
         momentToEdit.id,
@@ -216,65 +179,23 @@ const HomeScreen: React.FC = () => {
       );
 
       if (response.success && response.data) {
-        console.log("✅ [UPDATE SUCCESS] Backend response data:", {
-          id: response.data.id,
-          description: response.data.description,
-          isOwnMoment: response.data.isOwnMoment,
-        });
-
         // Ensure isOwnMoment flag is preserved after update
         const updatedMoment: FanMomentDto = {
           ...response.data,
-          isOwnMoment: true, // Force it to true since we just successfully updated it
+          isOwnMoment: true,
         };
 
-        console.log("🔧 [FORCED FLAG] updatedMoment:", {
-          id: updatedMoment.id,
-          description: updatedMoment.description,
-          isOwnMoment: updatedMoment.isOwnMoment,
-        });
-
-        setMoments((prev) => {
-          console.log("🔧 [BEFORE UPDATE] moments count:", prev.length);
-          const oldMoment = prev.find((m) => m.id === momentToEdit.id);
-          console.log(
-            "🔧 [OLD MOMENT]:",
-            oldMoment
-              ? {
-                  id: oldMoment.id,
-                  description: oldMoment.description,
-                  isOwnMoment: oldMoment.isOwnMoment,
-                }
-              : "NOT FOUND"
-          );
-
-          const newArray = prev.map((m) =>
-            m.id === momentToEdit.id ? updatedMoment : m
-          );
-          const newMoment = newArray.find((m) => m.id === momentToEdit.id);
-          console.log(
-            "🔧 [NEW MOMENT]:",
-            newMoment
-              ? {
-                  id: newMoment.id,
-                  description: newMoment.description,
-                  isOwnMoment: newMoment.isOwnMoment,
-                }
-              : "NOT FOUND"
-          );
-
-          return newArray;
-        });
+        setMoments((prev) =>
+          prev.map((m) => (m.id === momentToEdit.id ? updatedMoment : m))
+        );
 
         setEditModalVisible(false);
         setMomentToEdit(undefined);
         setEditCaption("");
       } else {
-        console.error("❌ Failed to update moment:", response.error);
         alert(t("home.updateFailed"));
       }
     } catch (error) {
-      console.error("❌ Error updating moment:", error);
       alert(t("home.updateFailed"));
     }
   }, [momentToEdit, editCaption, t]);
