@@ -56,6 +56,7 @@ export type StandingRow = {
   pts: number; // Puan (Points)
   positionChange?: number; // +1, -2, 0 etc. for arrows
   logo?: string; // Team logo URL or placeholder
+  form?: string[]; // Last 5 matches: ["W", "D", "L", "W", "D"] format - optional for mock data
 };
 
 export type Legend = {
@@ -189,6 +190,8 @@ export type MatchResult = {
   homeScore: number;
   awayScore: number;
   competition?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 };
 
 export type UpcomingMatch = {
@@ -200,6 +203,8 @@ export type UpcomingMatch = {
   awayTeam: string;
   venue?: string;
   competition?: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 };
 
 export type LeagueLegendItem = {
@@ -2584,55 +2589,48 @@ export const womensUpcomingFixtures: UpcomingMatch[] = [
 export const mensLeagueLegend: LeagueLegendItem[] = [
   {
     id: "ml1",
-    color: "#1a3a52",
-    label: "Yükselme",
-    description: "Süper Lig'e direk yükselme",
+    color: "#3b82f6", // Mavi - Süper Lig'e terfi
+    label: "Bir üst lige terfi",
+    description: "Süper Lig",
     positions: "1-2",
   },
   {
     id: "ml2",
-    color: "#ffa500",
-    label: "Play-off Finalist",
-    description: "Play-off finali",
+    color: "#f59e0b", // Turuncu - Final
+    label: "Finallere yükseldi",
+    description: "TFF 1. Lig (Playofflar: Final)",
     positions: "3",
   },
   {
     id: "ml3",
-    color: "#4a90e2",
-    label: "Play-off",
-    description: "Yükselme play-off",
-    positions: "4-5",
+    color: "#eab308", // Sarı - Çeyrek final
+    label: "Finallere yükseldi",
+    description: "TFF 1. Lig (Playofflar: Çeyrek finaller)",
+    positions: "4-7",
   },
   {
     id: "ml4",
-    color: "#d32f2f",
-    label: "Düşme",
-    description: "2. Lig'e küme düşme",
-    positions: "17-18",
+    color: "#ef4444", // Kırmızı - Küme düşme
+    label: "Küme düşme",
+    description: "2. Lig'e düşme",
+    positions: "17-20",
   },
 ];
 
 export const womensLeagueLegend: LeagueLegendItem[] = [
   {
     id: "wl1",
-    color: "#1a3a52",
-    label: "Yükselme",
-    description: "Süper Lig'e yükselme",
+    color: "#3b82f6", // Mavi - Kupaya katılım
+    label: "Takım Kupaya katılım",
+    description: "Kadınlar Şampiyonlar Ligi (Elemeler - Birinci Tur)",
     positions: "1",
   },
   {
     id: "wl2",
-    color: "#ffa500",
-    label: "Play-off",
-    description: "Yükselme play-off",
-    positions: "2-3",
-  },
-  {
-    id: "wl3",
-    color: "#d32f2f",
-    label: "Düşme",
-    description: "2. Lig'e küme düşme",
-    positions: "13-14",
+    color: "#ef4444", // Kırmızı - Küme düşme
+    label: "Küme düşme",
+    description: "2. Lig'e düşme",
+    positions: "14-15-16",
   },
 ];
 

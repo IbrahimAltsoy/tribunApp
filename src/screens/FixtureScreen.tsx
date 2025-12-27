@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+import { footballService } from "../services/footballService";
+import type { StandingTableDto, MatchDetailDto, LiveScoreDto } from "../types/football";
 import {
   mensStandings,
   womensStandings,
@@ -40,26 +42,166 @@ const FixtureScreen = () => {
   const [selectedPastWeek, setSelectedPastWeek] = useState<number>(14);
   const [selectedUpcomingWeek, setSelectedUpcomingWeek] = useState<number>(15);
 
+  // Backend standings state
+  const [backendStandings, setBackendStandings] = useState<StandingRow[]>([]);
+  const [currentWeekFromBackend, setCurrentWeekFromBackend] = useState<number | null>(null);
+
+  // Backend matches state
+  const [backendPastMatches, setBackendPastMatches] = useState<MatchResult[]>([]);
+  const [backendUpcomingMatches, setBackendUpcomingMatches] = useState<UpcomingMatch[]>([]);
+
+  // Live match state
+  const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
+
+  // Helper function to extract week number from round name
+  const extractWeekNumber = (roundName: string): number => {
+    const match = roundName.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
+  // Helper function to map backend match to MatchResult
+  const mapToMatchResult = (match: MatchDetailDto): MatchResult => {
+    const weekNumber = extractWeekNumber(match.roundName);
+    const matchDate = new Date(match.matchDate);
+
+    return {
+      id: match.fixtureId.toString(),
+      week: weekNumber,
+      date: matchDate.toLocaleDateString('tr-TR'),
+      homeTeam: match.homeTeam.name,
+      awayTeam: match.awayTeam.name,
+      homeScore: match.fullTimeScore?.home || 0,
+      awayScore: match.fullTimeScore?.away || 0,
+      competition: match.roundName,
+      homeTeamLogo: match.homeTeam.logoUrl || undefined,
+      awayTeamLogo: match.awayTeam.logoUrl || undefined,
+    };
+  };
+
+  // Helper function to map backend match to UpcomingMatch
+  const mapToUpcomingMatch = (match: MatchDetailDto): UpcomingMatch => {
+    const weekNumber = extractWeekNumber(match.roundName);
+    const matchDate = new Date(match.matchDate);
+
+    return {
+      id: match.fixtureId.toString(),
+      week: weekNumber,
+      date: matchDate.toLocaleDateString('tr-TR'),
+      time: matchDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      homeTeam: match.homeTeam.name,
+      awayTeam: match.awayTeam.name,
+      venue: match.venueName,
+      competition: match.roundName,
+      homeTeamLogo: match.homeTeam.logoUrl || undefined,
+      awayTeamLogo: match.awayTeam.logoUrl || undefined,
+    };
+  };
+
+  // Load standings from backend
+  useEffect(() => {
+    const loadStandings = async () => {
+      // Season IDs: Mens = 25749, Womens = 26532
+      const seasonId = selectedGender === "mens" ? 25749 : 26532;
+
+      const response = await footballService.getStandingsTable(seasonId);
+      if (response.success && response.data) {
+        // Map backend data to StandingRow format
+        const mappedStandings: StandingRow[] = response.data.map((team) => ({
+          pos: team.position,
+          team: team.teamName,
+          logo: team.teamLogo,
+          mp: team.played,
+          w: team.won,
+          d: team.drawn,
+          l: team.lost,
+          gf: team.goalsFor,
+          ga: team.goalsAgainst,
+          gd: team.goalDifference,
+          pts: team.points,
+          form: team.lastFiveMatches,
+          positionChange: 0, // Backend doesn't provide this yet
+        }));
+        setBackendStandings(mappedStandings);
+
+        // Get the highest "played" value from backend data - this is the current week
+        const maxPlayed = Math.max(...response.data.map((team) => team.played));
+        setCurrentWeekFromBackend(maxPlayed);
+      } else {
+        // Fallback to empty array if fetch fails
+        setBackendStandings([]);
+        setCurrentWeekFromBackend(null);
+      }
+    };
+    loadStandings();
+  }, [selectedGender]);
+
+  // Load team schedule from backend
+  useEffect(() => {
+    const loadSchedule = async () => {
+      // Team IDs: Mens = 3570, Womens = 261209
+      const teamId = selectedGender === "mens" ? 3570 : 261209;
+
+      const response = await footballService.getTeamSchedule(teamId);
+      if (response.success && response.data) {
+        // Map last five matches
+        const pastMatches = response.data.lastFiveMatches.map(mapToMatchResult);
+        setBackendPastMatches(pastMatches);
+
+        // Map upcoming five matches
+        const upcomingMatches = response.data.upcomingFiveMatches.map(mapToUpcomingMatch);
+        setBackendUpcomingMatches(upcomingMatches);
+      } else {
+        // Fallback to empty arrays if fetch fails
+        setBackendPastMatches([]);
+        setBackendUpcomingMatches([]);
+      }
+    };
+    loadSchedule();
+  }, [selectedGender]);
+
+  // Auto-select the latest week for past results when backend data loads
+  useEffect(() => {
+    if (backendPastMatches.length > 0) {
+      const maxWeek = Math.max(...backendPastMatches.map((match) => match.week));
+      setSelectedPastWeek(maxWeek);
+    }
+  }, [backendPastMatches]);
+
+  // Auto-select the earliest week for upcoming fixtures when backend data loads
+  useEffect(() => {
+    if (backendUpcomingMatches.length > 0) {
+      const minWeek = Math.min(...backendUpcomingMatches.map((match) => match.week));
+      setSelectedUpcomingWeek(minWeek);
+    }
+  }, [backendUpcomingMatches]);
+
   // Get current data based on gender
-  const currentStandings = useMemo(
-    () => (selectedGender === "mens" ? mensStandings : womensStandings),
-    [selectedGender]
-  );
+  const currentStandings = useMemo(() => {
+    // Use backend data if available, otherwise fallback to mock data
+    if (backendStandings.length > 0) {
+      return backendStandings;
+    }
+    return selectedGender === "mens" ? mensStandings : womensStandings;
+  }, [selectedGender, backendStandings]);
 
-  const currentPastResults = useMemo(
-    () => (selectedGender === "mens" ? mensPastResults : womensPastResults),
-    [selectedGender]
-  );
+  const currentPastResults = useMemo(() => {
+    // Use backend data if available, otherwise fallback to mock data
+    if (backendPastMatches.length > 0) {
+      return backendPastMatches;
+    }
+    return selectedGender === "mens" ? mensPastResults : womensPastResults;
+  }, [selectedGender, backendPastMatches]);
 
-  const currentUpcomingFixtures = useMemo(
-    () =>
-      selectedGender === "mens" ? mensUpcomingFixtures : womensUpcomingFixtures,
-    [selectedGender]
-  );
+  const currentUpcomingFixtures = useMemo(() => {
+    // Use backend data if available, otherwise fallback to mock data
+    if (backendUpcomingMatches.length > 0) {
+      return backendUpcomingMatches;
+    }
+    return selectedGender === "mens" ? mensUpcomingFixtures : womensUpcomingFixtures;
+  }, [selectedGender, backendUpcomingMatches]);
 
   const currentLeagueLegend = useMemo(
-    () =>
-      selectedGender === "mens" ? mensLeagueLegend : womensLeagueLegend,
+    () => (selectedGender === "mens" ? mensLeagueLegend : womensLeagueLegend),
     [selectedGender]
   );
 
@@ -69,22 +211,92 @@ const FixtureScreen = () => {
     [selectedGender]
   );
 
-  // League info based on gender
-  const leagueInfo = useMemo(
-    () =>
-      selectedGender === "mens"
-        ? {
-            name: t("fixture.standings.leagueMens"),
-            week: 18,
-            ourTeam: "Amedspor",
-          }
-        : {
-            name: t("fixture.standings.leagueWomens"),
-            week: 14,
-            ourTeam: "Amed SK",
-          },
-    [selectedGender, t]
-  );
+  // League info based on gender - static league name, dynamic week from backend
+  const leagueInfo = useMemo(() => {
+    const ourTeamName = selectedGender === "mens" ? "Amedspor" : "Amed SK";
+
+    // Use backend week if available, otherwise fallback to mock data or default
+    const latestWeek = currentWeekFromBackend
+      || (currentPastResults.length > 0
+        ? Math.max(...currentPastResults.map((r) => r.week))
+        : selectedGender === "mens"
+          ? 18
+          : 14);
+
+    return selectedGender === "mens"
+      ? {
+          name: "TFF 1.Lig 2025-2026",
+          week: latestWeek,
+          ourTeam: ourTeamName,
+        }
+      : {
+          name: "TFF Kadınlar 2.Lig 2025-2026",
+          week: latestWeek,
+          ourTeam: ourTeamName,
+        };
+  }, [selectedGender, currentWeekFromBackend, currentPastResults]);
+
+  // Load live scores only during match time (smarter polling) - ONLY FOR MEN'S TEAM
+  useEffect(() => {
+    // Only run for men's team
+    if (selectedGender !== "mens") {
+      setLiveMatch(null);
+      return;
+    }
+
+    const loadLiveScores = async () => {
+      const response = await footballService.getLiveScores();
+      if (response.success && response.data) {
+        // Filter for Amedspor men's team only (Team ID: 3570)
+        const amedMatch = response.data.find(
+          (match) =>
+            match.homeTeamId === 3570 || match.awayTeamId === 3570
+        );
+        setLiveMatch(amedMatch || null);
+      } else {
+        setLiveMatch(null);
+      }
+    };
+
+    const checkIfShouldPoll = () => {
+      // Get next upcoming match
+      const nextMatch = currentUpcomingFixtures.length > 0 ? currentUpcomingFixtures[0] : null;
+
+      if (!nextMatch) {
+        setLiveMatch(null);
+        return false;
+      }
+
+      // Parse match date and time (TR format: "27.12.2024" and "15:00")
+      const [day, month, year] = nextMatch.date.split('.');
+      const matchDateTime = new Date(`${year}-${month}-${day}T${nextMatch.time}`);
+      const now = new Date();
+
+      // Start polling 30 minutes before match and continue for 3 hours after match start
+      const startPollingTime = new Date(matchDateTime.getTime() - 30 * 60 * 1000); // 30 min before
+      const endPollingTime = new Date(matchDateTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after
+
+      return now >= startPollingTime && now <= endPollingTime;
+    };
+
+    // Check initially
+    if (checkIfShouldPoll()) {
+      loadLiveScores();
+
+      // Poll every 20 seconds during match time
+      const interval = setInterval(() => {
+        if (checkIfShouldPoll()) {
+          loadLiveScores();
+        } else {
+          setLiveMatch(null);
+        }
+      }, 20000);
+
+      return () => clearInterval(interval);
+    } else {
+      setLiveMatch(null);
+    }
+  }, [selectedGender, currentUpcomingFixtures]);
 
   // Get available weeks for past results (last 5 weeks)
   const pastWeeks = useMemo(() => {
@@ -109,7 +321,8 @@ const FixtureScreen = () => {
   );
 
   const selectedUpcomingMatches = useMemo(
-    () => currentUpcomingFixtures.filter((f) => f.week === selectedUpcomingWeek),
+    () =>
+      currentUpcomingFixtures.filter((f) => f.week === selectedUpcomingWeek),
     [currentUpcomingFixtures, selectedUpcomingWeek]
   );
 
@@ -151,6 +364,22 @@ const FixtureScreen = () => {
     </View>
   );
 
+  // Get position background color based on league rules
+  const getPositionColor = (pos: number): string | undefined => {
+    if (selectedGender === "mens") {
+      // TFF 1. Lig (Men's)
+      if (pos >= 1 && pos <= 2) return "#3b82f6"; // Mavi - Süper Lig'e terfi
+      if (pos === 3) return "#f59e0b"; // Turuncu - Final
+      if (pos >= 4 && pos <= 7) return "#eab308"; // Sarı - Çeyrek final
+      if (pos >= 17 && pos <= 20) return "#ef4444"; // Kırmızı - Küme düşme
+    } else {
+      // Women's league
+      if (pos === 1) return "#3b82f6"; // Mavi - Kupaya katılım (Kadınlar Şampiyonlar Ligi)
+      if (pos >= 14 && pos <= 16) return "#ef4444"; // Kırmızı - Küme düşme
+    }
+    return undefined;
+  };
+
   // Render Standing Row
   const renderStandingRow = useCallback(
     ({ item, index }: { item: StandingRow; index: number }) => {
@@ -162,15 +391,18 @@ const FixtureScreen = () => {
         item.positionChange && item.positionChange > 0
           ? "▲"
           : item.positionChange && item.positionChange < 0
-          ? "▼"
-          : "►";
+            ? "▼"
+            : "►";
 
       const positionColor =
         item.positionChange && item.positionChange > 0
           ? colors.primary
           : item.positionChange && item.positionChange < 0
-          ? colors.accent
-          : colors.mutedText;
+            ? colors.accent
+            : colors.mutedText;
+
+      // Get background color for position
+      const positionBgColor = getPositionColor(item.pos);
 
       return (
         <View
@@ -180,18 +412,21 @@ const FixtureScreen = () => {
             index === currentStandings.length - 1 && styles.standingRowLast,
           ]}
         >
-          {/* Rank with colored circle */}
+          {/* Rank with colored circlee */}
           <View style={styles.rankCell}>
             <View
               style={[
                 styles.rankCircle,
-                index === 0 && styles.rankCircleFirst,
-                index === 1 && styles.rankCircleSecond,
+                positionBgColor && { backgroundColor: positionBgColor },
                 isOurTeam && styles.rankCircleOurTeam,
               ]}
             >
               <Text
-                style={[styles.rankText, isOurTeam && styles.rankTextHighlight]}
+                style={[
+                  styles.rankText,
+                  positionBgColor && { color: "#ffffff" },
+                  isOurTeam && styles.rankTextHighlight,
+                ]}
               >
                 {item.pos}
               </Text>
@@ -260,13 +495,43 @@ const FixtureScreen = () => {
               {item.pts}
             </Text>
           </View>
+
+          {/* Form - Last 5 matches */}
+          <View style={styles.formCell}>
+            <View style={styles.formContainer}>
+              {item.form && item.form.map((result: string, index: number) => {
+                let formBgColor = colors.mutedText;
+                let formText = result;
+
+                if (result === "W" || result === "G") {
+                  formBgColor = "#22c55e"; // Green for win
+                  formText = "G";
+                } else if (result === "D" || result === "B") {
+                  formBgColor = "#eab308"; // Yellow for draw
+                  formText = "B";
+                } else if (result === "L" || result === "M") {
+                  formBgColor = "#ef4444"; // Red for loss
+                  formText = "M";
+                }
+
+                return (
+                  <View
+                    key={`${item.team}-form-${index}`}
+                    style={[styles.formBadge, { backgroundColor: formBgColor }]}
+                  >
+                    <Text style={styles.formText}>{formText}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
         </View>
       );
     },
     [currentStandings.length, leagueInfo.ourTeam]
   );
 
-  // Render Standings Section
+  // Render Standings Sectionn
   const renderStandingsSection = () => (
     <View style={styles.standingsSection}>
       {/* League Header */}
@@ -280,7 +545,7 @@ const FixtureScreen = () => {
         </View>
       </View>
 
-      {/* View Tabs */}
+      {/* View Tabss */}
       <View style={styles.viewTabs}>
         <Pressable
           style={[
@@ -388,6 +653,9 @@ const FixtureScreen = () => {
                   {t("fixture.standings.points")}
                 </Text>
               </View>
+              <View style={styles.formCell}>
+                <Text style={styles.headerText}>Form</Text>
+              </View>
             </View>
 
             {/* Table Rows */}
@@ -409,7 +677,11 @@ const FixtureScreen = () => {
   const renderLeagueLegend = () => (
     <View style={styles.legendCard}>
       <View style={styles.legendHeader}>
-        <Ionicons name="information-circle-outline" size={20} color={colors.text} />
+        <Ionicons
+          name="information-circle-outline"
+          size={20}
+          color={colors.text}
+        />
         <Text style={styles.legendTitle}>{t("fixture.legend.title")}</Text>
       </View>
       <View style={styles.legendItems}>
@@ -475,20 +747,19 @@ const FixtureScreen = () => {
   // Render Past Match Result
   const renderPastMatch = useCallback(
     ({ item }: { item: MatchResult }) => {
-      const isOurTeam =
-        item.homeTeam === ourTeam || item.awayTeam === ourTeam;
+      const isOurTeam = item.homeTeam === ourTeam || item.awayTeam === ourTeam;
       const ourScore =
         item.homeTeam === ourTeam
           ? item.homeScore
           : item.awayTeam === ourTeam
-          ? item.awayScore
-          : null;
+            ? item.awayScore
+            : null;
       const opponentScore =
         item.homeTeam === ourTeam
           ? item.awayScore
           : item.awayTeam === ourTeam
-          ? item.homeScore
-          : null;
+            ? item.homeScore
+            : null;
 
       let resultColor = colors.mutedText;
       if (isOurTeam && ourScore !== null && opponentScore !== null) {
@@ -498,48 +769,51 @@ const FixtureScreen = () => {
 
       return (
         <View
-          style={[
-            styles.matchCard,
-            isOurTeam && styles.matchCardHighlight,
-          ]}
+          style={[styles.matchCard, isOurTeam && styles.matchCardHighlight]}
         >
           <Text style={styles.matchDate}>{item.date}</Text>
           <View style={styles.matchRow}>
-            <Text
-              style={[
-                styles.matchTeam,
-                isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
-              ]}
-            >
-              {item.homeTeam}
-            </Text>
-            <View style={styles.matchScore}>
+            <View style={styles.teamWithLogo}>
+              {item.homeTeamLogo && (
+                <Image
+                  source={{ uri: item.homeTeamLogo }}
+                  style={styles.matchTeamLogo}
+                />
+              )}
               <Text
                 style={[
-                  styles.matchScoreText,
-                  { color: resultColor },
+                  styles.matchTeam,
+                  isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
                 ]}
               >
+                {item.homeTeam}
+              </Text>
+            </View>
+            <View style={styles.matchScore}>
+              <Text style={[styles.matchScoreText, { color: resultColor }]}>
                 {item.homeScore}
               </Text>
               <Text style={styles.matchScoreSeparator}>-</Text>
-              <Text
-                style={[
-                  styles.matchScoreText,
-                  { color: resultColor },
-                ]}
-              >
+              <Text style={[styles.matchScoreText, { color: resultColor }]}>
                 {item.awayScore}
               </Text>
             </View>
-            <Text
-              style={[
-                styles.matchTeam,
-                isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
-              ]}
-            >
-              {item.awayTeam}
-            </Text>
+            <View style={styles.teamWithLogo}>
+              {item.awayTeamLogo && (
+                <Image
+                  source={{ uri: item.awayTeamLogo }}
+                  style={styles.matchTeamLogo}
+                />
+              )}
+              <Text
+                style={[
+                  styles.matchTeam,
+                  isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
+                ]}
+              >
+                {item.awayTeam}
+              </Text>
+            </View>
           </View>
         </View>
       );
@@ -550,15 +824,11 @@ const FixtureScreen = () => {
   // Render Upcoming Match Fixture
   const renderUpcomingMatch = useCallback(
     ({ item }: { item: UpcomingMatch }) => {
-      const isOurTeam =
-        item.homeTeam === ourTeam || item.awayTeam === ourTeam;
+      const isOurTeam = item.homeTeam === ourTeam || item.awayTeam === ourTeam;
 
       return (
         <View
-          style={[
-            styles.matchCard,
-            isOurTeam && styles.matchCardHighlight,
-          ]}
+          style={[styles.matchCard, isOurTeam && styles.matchCardHighlight]}
         >
           <View style={styles.upcomingMatchHeader}>
             <Text style={styles.matchDate}>{item.date}</Text>
@@ -568,29 +838,49 @@ const FixtureScreen = () => {
             </View>
           </View>
           <View style={styles.matchRow}>
-            <Text
-              style={[
-                styles.matchTeam,
-                isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
-              ]}
-            >
-              {item.homeTeam}
-            </Text>
+            <View style={styles.teamWithLogo}>
+              {item.homeTeamLogo && (
+                <Image
+                  source={{ uri: item.homeTeamLogo }}
+                  style={styles.matchTeamLogo}
+                />
+              )}
+              <Text
+                style={[
+                  styles.matchTeam,
+                  isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
+                ]}
+              >
+                {item.homeTeam}
+              </Text>
+            </View>
             <View style={styles.matchVs}>
               <Text style={styles.matchVsText}>vs</Text>
             </View>
-            <Text
-              style={[
-                styles.matchTeam,
-                isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
-              ]}
-            >
-              {item.awayTeam}
-            </Text>
+            <View style={styles.teamWithLogo}>
+              {item.awayTeamLogo && (
+                <Image
+                  source={{ uri: item.awayTeamLogo }}
+                  style={styles.matchTeamLogo}
+                />
+              )}
+              <Text
+                style={[
+                  styles.matchTeam,
+                  isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
+                ]}
+              >
+                {item.awayTeam}
+              </Text>
+            </View>
           </View>
           {item.venue && (
             <View style={styles.matchVenueRow}>
-              <Ionicons name="location-outline" size={12} color={colors.mutedText} />
+              <Ionicons
+                name="location-outline"
+                size={12}
+                color={colors.mutedText}
+              />
               <Text style={styles.matchVenue}>{item.venue}</Text>
             </View>
           )}
@@ -639,7 +929,11 @@ const FixtureScreen = () => {
   const renderUpcomingFixturesSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Ionicons name="calendar-clear-outline" size={22} color={colors.primary} />
+        <Ionicons
+          name="calendar-clear-outline"
+          size={22}
+          color={colors.primary}
+        />
         <Text style={styles.sectionTitle}>
           {t("fixture.upcomingFixtures.title")}
         </Text>
@@ -672,6 +966,83 @@ const FixtureScreen = () => {
     </View>
   );
 
+  // Render Live Match Section
+  const renderLiveMatchSection = () => {
+    if (!liveMatch) {
+      return (
+        <View style={styles.noLiveMatchCard}>
+          <Ionicons name="radio-outline" size={24} color={colors.mutedText} />
+          <Text style={styles.noLiveMatchText}>Şu anda canlı maç bulunmuyor</Text>
+        </View>
+      );
+    }
+
+    // Get home and away teams
+    const homeTeam = liveMatch.participants.find((p) => p.location === "home");
+    const awayTeam = liveMatch.participants.find((p) => p.location === "away");
+
+    // Get latest scores from events (goals)
+    const goalEvents = liveMatch.events
+      .filter((e) => e.typeId === 14) // 14 = goal event
+      .sort((a, b) => (b.minute || 0) - (a.minute || 0));
+
+    let homeScore = 0;
+    let awayScore = 0;
+
+    goalEvents.forEach((goal) => {
+      if (goal.participantId === homeTeam?.id) {
+        homeScore++;
+      } else if (goal.participantId === awayTeam?.id) {
+        awayScore++;
+      }
+    });
+
+    // Get current minute
+    const latestEvent = liveMatch.events.sort((a, b) => (b.minute || 0) - (a.minute || 0))[0];
+    const currentMinute = latestEvent?.minute || 0;
+
+    return (
+      <View style={styles.liveMatchCard}>
+        {/* Live Indicator */}
+        <View style={styles.liveIndicator}>
+          <View style={styles.livePulse} />
+          <Text style={styles.liveText}>CANLI</Text>
+          <Text style={styles.liveMinute}>{currentMinute}'</Text>
+        </View>
+
+        {/* Match Details */}
+        <View style={styles.liveMatchContent}>
+          {/* Home Team */}
+          <View style={styles.liveTeamContainer}>
+            {homeTeam?.logo && (
+              <Image source={{ uri: homeTeam.logo }} style={styles.liveTeamLogo} />
+            )}
+            <Text style={styles.liveTeamName} numberOfLines={1}>
+              {homeTeam?.name || ""}
+            </Text>
+          </View>
+
+          {/* Score */}
+          <View style={styles.liveScoreContainer}>
+            <Text style={styles.liveScore}>{homeScore}</Text>
+            <Text style={styles.liveScoreSeparator}>-</Text>
+            <Text style={styles.liveScore}>{awayScore}</Text>
+          </View>
+
+          {/* Away Team */}
+          <View style={styles.liveTeamContainer}>
+            {awayTeam?.logo && (
+              <Image source={{ uri: awayTeam.logo }} style={styles.liveTeamLogo} />
+            )}
+            <Text style={styles.liveTeamName} numberOfLines={1}>
+              {awayTeam?.name || ""}
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
@@ -683,6 +1054,9 @@ const FixtureScreen = () => {
             <Text style={styles.headerSubtitle}>{t("fixture.subtitle")}</Text>
           </View>
         </View>
+
+        {/* Live Match Section - AT THE TOP */}
+        {renderLiveMatchSection()}
 
         {/* Gender Selector */}
         {renderGenderSelector()}
@@ -982,6 +1356,30 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
 
+  // Form Cell
+  formCell: {
+    width: 120,
+    paddingHorizontal: spacing.xs,
+    justifyContent: "center",
+  },
+  formContainer: {
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+  },
+  formBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  formText: {
+    fontSize: 10,
+    fontFamily: typography.bold,
+    color: "#ffffff",
+  },
+
   // Legend Card
   legendCard: {
     marginHorizontal: spacing.lg,
@@ -1106,6 +1504,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: spacing.sm,
   },
+  teamWithLogo: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  matchTeamLogo: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
   matchTeam: {
     flex: 1,
     fontSize: fontSizes.sm,
@@ -1183,5 +1592,98 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
     color: colors.mutedText,
     textAlign: "center",
+  },
+
+  // Live Match Styles
+  noLiveMatchCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+  noLiveMatchText: {
+    fontSize: fontSizes.md,
+    fontFamily: typography.medium,
+    color: colors.mutedText,
+  },
+  liveMatchCard: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#ef4444",
+  },
+  liveIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  livePulse: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ef4444",
+  },
+  liveText: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.bold,
+    color: "#ef4444",
+    letterSpacing: 1,
+  },
+  liveMinute: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.bold,
+    color: "#ffffff",
+    marginLeft: "auto",
+  },
+  liveMatchContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  liveTeamContainer: {
+    flex: 1,
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  liveTeamLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  liveTeamName: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.semiBold,
+    color: "#ffffff",
+    textAlign: "center",
+  },
+  liveScoreContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  liveScore: {
+    fontSize: 32,
+    fontFamily: typography.bold,
+    color: "#ffffff",
+  },
+  liveScoreSeparator: {
+    fontSize: 24,
+    fontFamily: typography.medium,
+    color: "#666666",
   },
 });

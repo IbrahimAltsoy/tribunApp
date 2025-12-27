@@ -266,7 +266,7 @@ const HomeScreen: React.FC = () => {
       );
 
       if (response.success && response.data) {
-        // Ensure isOwnMoment flag is preserved after update
+        // Ensure isOwnMoment flag is preserved after updat
         const updatedMoment: FanMomentDto = {
           ...response.data,
           isOwnMoment: true,
