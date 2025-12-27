@@ -44,11 +44,17 @@ const FixtureScreen = () => {
 
   // Backend standings state
   const [backendStandings, setBackendStandings] = useState<StandingRow[]>([]);
-  const [currentWeekFromBackend, setCurrentWeekFromBackend] = useState<number | null>(null);
+  const [currentWeekFromBackend, setCurrentWeekFromBackend] = useState<
+    number | null
+  >(null);
 
   // Backend matches state
-  const [backendPastMatches, setBackendPastMatches] = useState<MatchResult[]>([]);
-  const [backendUpcomingMatches, setBackendUpcomingMatches] = useState<UpcomingMatch[]>([]);
+  const [backendPastMatches, setBackendPastMatches] = useState<MatchResult[]>(
+    []
+  );
+  const [backendUpcomingMatches, setBackendUpcomingMatches] = useState<
+    UpcomingMatch[]
+  >([]);
 
   // Live match state
   const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
@@ -67,7 +73,7 @@ const FixtureScreen = () => {
     return {
       id: match.fixtureId.toString(),
       week: weekNumber,
-      date: matchDate.toLocaleDateString('tr-TR'),
+      date: matchDate.toLocaleDateString("tr-TR"),
       homeTeam: match.homeTeam.name,
       awayTeam: match.awayTeam.name,
       homeScore: match.fullTimeScore?.home || 0,
@@ -86,8 +92,11 @@ const FixtureScreen = () => {
     return {
       id: match.fixtureId.toString(),
       week: weekNumber,
-      date: matchDate.toLocaleDateString('tr-TR'),
-      time: matchDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      date: matchDate.toLocaleDateString("tr-TR"),
+      time: matchDate.toLocaleTimeString("tr-TR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       homeTeam: match.homeTeam.name,
       awayTeam: match.awayTeam.name,
       venue: match.venueName,
@@ -105,23 +114,8 @@ const FixtureScreen = () => {
 
       const response = await footballService.getStandingsTable(seasonId);
       if (response.success && response.data) {
-        // Map backend data to StandingRow format
-        const mappedStandings: StandingRow[] = response.data.map((team) => ({
-          pos: team.position,
-          team: team.teamName,
-          logo: team.teamLogo,
-          mp: team.played,
-          w: team.won,
-          d: team.drawn,
-          l: team.lost,
-          gf: team.goalsFor,
-          ga: team.goalsAgainst,
-          gd: team.goalDifference,
-          pts: team.points,
-          form: team.lastFiveMatches,
-          positionChange: 0, // Backend doesn't provide this yet
-        }));
-        setBackendStandings(mappedStandings);
+        // Store raw backend data - we'll filter by view type later
+        setBackendStandings(response.data as any);
 
         // Get the highest "played" value from backend data - this is the current week
         const maxPlayed = Math.max(...response.data.map((team) => team.played));
@@ -148,7 +142,8 @@ const FixtureScreen = () => {
         setBackendPastMatches(pastMatches);
 
         // Map upcoming five matches
-        const upcomingMatches = response.data.upcomingFiveMatches.map(mapToUpcomingMatch);
+        const upcomingMatches =
+          response.data.upcomingFiveMatches.map(mapToUpcomingMatch);
         setBackendUpcomingMatches(upcomingMatches);
       } else {
         // Fallback to empty arrays if fetch fails
@@ -162,7 +157,9 @@ const FixtureScreen = () => {
   // Auto-select the latest week for past results when backend data loads
   useEffect(() => {
     if (backendPastMatches.length > 0) {
-      const maxWeek = Math.max(...backendPastMatches.map((match) => match.week));
+      const maxWeek = Math.max(
+        ...backendPastMatches.map((match) => match.week)
+      );
       setSelectedPastWeek(maxWeek);
     }
   }, [backendPastMatches]);
@@ -170,7 +167,9 @@ const FixtureScreen = () => {
   // Auto-select the earliest week for upcoming fixtures when backend data loads
   useEffect(() => {
     if (backendUpcomingMatches.length > 0) {
-      const minWeek = Math.min(...backendUpcomingMatches.map((match) => match.week));
+      const minWeek = Math.min(
+        ...backendUpcomingMatches.map((match) => match.week)
+      );
       setSelectedUpcomingWeek(minWeek);
     }
   }, [backendUpcomingMatches]);
@@ -179,10 +178,75 @@ const FixtureScreen = () => {
   const currentStandings = useMemo(() => {
     // Use backend data if available, otherwise fallback to mock data
     if (backendStandings.length > 0) {
-      return backendStandings;
+      // Map backend data based on standings view (general/home/away)
+      const mapped = backendStandings.map((team: any) => {
+        let stats;
+        let points;
+
+        if (standingsView === "home") {
+          stats = {
+            mp: team.homePlayed,
+            w: team.homeWon,
+            d: team.homeDrawn,
+            l: team.homeLost,
+            gf: team.homeGoalsFor,
+            ga: team.homeGoalsAgainst,
+            gd: team.homeGoalDifference,
+          };
+          // Calculate home points: win=3, draw=1, loss=0
+          points = team.homeWon * 3 + team.homeDrawn;
+        } else if (standingsView === "away") {
+          stats = {
+            mp: team.awayPlayed,
+            w: team.awayWon,
+            d: team.awayDrawn,
+            l: team.awayLost,
+            gf: team.awayGoalsFor,
+            ga: team.awayGoalsAgainst,
+            gd: team.awayGoalDifference,
+          };
+          // Calculate away points: win=3, draw=1, loss=0
+          points = team.awayWon * 3 + team.awayDrawn;
+        } else {
+          // general view
+          stats = {
+            mp: team.played,
+            w: team.won,
+            d: team.drawn,
+            l: team.lost,
+            gf: team.goalsFor,
+            ga: team.goalsAgainst,
+            gd: team.goalDifference,
+          };
+          points = team.points;
+        }
+
+        return {
+          pos: team.position, // Will be updated after sorting
+          team: team.teamName,
+          logo: team.teamLogo,
+          ...stats,
+          pts: points,
+          form: team.lastFiveMatches,
+          positionChange: 0,
+        };
+      });
+
+      // Sort by points (desc), then goal difference (desc), then goals for (desc)
+      const sorted = mapped.sort((a, b) => {
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        return b.gf - a.gf;
+      });
+
+      // Update positions after sorting
+      return sorted.map((team, index) => ({
+        ...team,
+        pos: index + 1,
+      }));
     }
     return selectedGender === "mens" ? mensStandings : womensStandings;
-  }, [selectedGender, backendStandings]);
+  }, [selectedGender, backendStandings, standingsView]);
 
   const currentPastResults = useMemo(() => {
     // Use backend data if available, otherwise fallback to mock data
@@ -197,7 +261,9 @@ const FixtureScreen = () => {
     if (backendUpcomingMatches.length > 0) {
       return backendUpcomingMatches;
     }
-    return selectedGender === "mens" ? mensUpcomingFixtures : womensUpcomingFixtures;
+    return selectedGender === "mens"
+      ? mensUpcomingFixtures
+      : womensUpcomingFixtures;
   }, [selectedGender, backendUpcomingMatches]);
 
   const currentLeagueLegend = useMemo(
@@ -216,8 +282,9 @@ const FixtureScreen = () => {
     const ourTeamName = selectedGender === "mens" ? "Amedspor" : "Amed SK";
 
     // Use backend week if available, otherwise fallback to mock data or default
-    const latestWeek = currentWeekFromBackend
-      || (currentPastResults.length > 0
+    const latestWeek =
+      currentWeekFromBackend ||
+      (currentPastResults.length > 0
         ? Math.max(...currentPastResults.map((r) => r.week))
         : selectedGender === "mens"
           ? 18
@@ -249,8 +316,7 @@ const FixtureScreen = () => {
       if (response.success && response.data) {
         // Filter for Amedspor men's team only (Team ID: 3570)
         const amedMatch = response.data.find(
-          (match) =>
-            match.homeTeamId === 3570 || match.awayTeamId === 3570
+          (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
         );
         setLiveMatch(amedMatch || null);
       } else {
@@ -260,7 +326,8 @@ const FixtureScreen = () => {
 
     const checkIfShouldPoll = () => {
       // Get next upcoming match
-      const nextMatch = currentUpcomingFixtures.length > 0 ? currentUpcomingFixtures[0] : null;
+      const nextMatch =
+        currentUpcomingFixtures.length > 0 ? currentUpcomingFixtures[0] : null;
 
       if (!nextMatch) {
         setLiveMatch(null);
@@ -268,13 +335,19 @@ const FixtureScreen = () => {
       }
 
       // Parse match date and time (TR format: "27.12.2024" and "15:00")
-      const [day, month, year] = nextMatch.date.split('.');
-      const matchDateTime = new Date(`${year}-${month}-${day}T${nextMatch.time}`);
+      const [day, month, year] = nextMatch.date.split(".");
+      const matchDateTime = new Date(
+        `${year}-${month}-${day}T${nextMatch.time}`
+      );
       const now = new Date();
 
       // Start polling 30 minutes before match and continue for 3 hours after match start
-      const startPollingTime = new Date(matchDateTime.getTime() - 30 * 60 * 1000); // 30 min before
-      const endPollingTime = new Date(matchDateTime.getTime() + 3 * 60 * 60 * 1000); // 3 hours after
+      const startPollingTime = new Date(
+        matchDateTime.getTime() - 30 * 60 * 1000
+      ); // 30 min before
+      const endPollingTime = new Date(
+        matchDateTime.getTime() + 3 * 60 * 60 * 1000
+      ); // 3 hours after
 
       return now >= startPollingTime && now <= endPollingTime;
     };
@@ -499,30 +572,34 @@ const FixtureScreen = () => {
           {/* Form - Last 5 matches */}
           <View style={styles.formCell}>
             <View style={styles.formContainer}>
-              {item.form && item.form.map((result: string, index: number) => {
-                let formBgColor = colors.mutedText;
-                let formText = result;
+              {item.form &&
+                item.form.map((result: string, index: number) => {
+                  let formBgColor = colors.mutedText;
+                  let formText = result;
 
-                if (result === "W" || result === "G") {
-                  formBgColor = "#22c55e"; // Green for win
-                  formText = "G";
-                } else if (result === "D" || result === "B") {
-                  formBgColor = "#eab308"; // Yellow for draw
-                  formText = "B";
-                } else if (result === "L" || result === "M") {
-                  formBgColor = "#ef4444"; // Red for loss
-                  formText = "M";
-                }
+                  if (result === "W" || result === "G") {
+                    formBgColor = "#22c55e"; // Green for win
+                    formText = "G";
+                  } else if (result === "D" || result === "B") {
+                    formBgColor = "#eab308"; // Yellow for draw
+                    formText = "B";
+                  } else if (result === "L" || result === "M") {
+                    formBgColor = "#ef4444"; // Red for loss
+                    formText = "M";
+                  }
 
-                return (
-                  <View
-                    key={`${item.team}-form-${index}`}
-                    style={[styles.formBadge, { backgroundColor: formBgColor }]}
-                  >
-                    <Text style={styles.formText}>{formText}</Text>
-                  </View>
-                );
-              })}
+                  return (
+                    <View
+                      key={`${item.team}-form-${index}`}
+                      style={[
+                        styles.formBadge,
+                        { backgroundColor: formBgColor },
+                      ]}
+                    >
+                      <Text style={styles.formText}>{formText}</Text>
+                    </View>
+                  );
+                })}
             </View>
           </View>
         </View>
@@ -531,7 +608,7 @@ const FixtureScreen = () => {
     [currentStandings.length, leagueInfo.ourTeam]
   );
 
-  // Render Standings Sectionn
+  // Render Standings Sections
   const renderStandingsSection = () => (
     <View style={styles.standingsSection}>
       {/* League Header */}
@@ -783,7 +860,9 @@ const FixtureScreen = () => {
               <Text
                 style={[
                   styles.matchTeam,
-                  isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
+                  isOurTeam &&
+                    item.homeTeam === ourTeam &&
+                    styles.matchTeamBold,
                 ]}
               >
                 {item.homeTeam}
@@ -808,7 +887,9 @@ const FixtureScreen = () => {
               <Text
                 style={[
                   styles.matchTeam,
-                  isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
+                  isOurTeam &&
+                    item.awayTeam === ourTeam &&
+                    styles.matchTeamBold,
                 ]}
               >
                 {item.awayTeam}
@@ -848,7 +929,9 @@ const FixtureScreen = () => {
               <Text
                 style={[
                   styles.matchTeam,
-                  isOurTeam && item.homeTeam === ourTeam && styles.matchTeamBold,
+                  isOurTeam &&
+                    item.homeTeam === ourTeam &&
+                    styles.matchTeamBold,
                 ]}
               >
                 {item.homeTeam}
@@ -867,7 +950,9 @@ const FixtureScreen = () => {
               <Text
                 style={[
                   styles.matchTeam,
-                  isOurTeam && item.awayTeam === ourTeam && styles.matchTeamBold,
+                  isOurTeam &&
+                    item.awayTeam === ourTeam &&
+                    styles.matchTeamBold,
                 ]}
               >
                 {item.awayTeam}
@@ -972,7 +1057,9 @@ const FixtureScreen = () => {
       return (
         <View style={styles.noLiveMatchCard}>
           <Ionicons name="radio-outline" size={24} color={colors.mutedText} />
-          <Text style={styles.noLiveMatchText}>Şu anda canlı maç bulunmuyor</Text>
+          <Text style={styles.noLiveMatchText}>
+            Şu anda canlı maç bulunmuyor
+          </Text>
         </View>
       );
     }
@@ -998,7 +1085,9 @@ const FixtureScreen = () => {
     });
 
     // Get current minute
-    const latestEvent = liveMatch.events.sort((a, b) => (b.minute || 0) - (a.minute || 0))[0];
+    const latestEvent = liveMatch.events.sort(
+      (a, b) => (b.minute || 0) - (a.minute || 0)
+    )[0];
     const currentMinute = latestEvent?.minute || 0;
 
     return (
@@ -1015,7 +1104,10 @@ const FixtureScreen = () => {
           {/* Home Team */}
           <View style={styles.liveTeamContainer}>
             {homeTeam?.logo && (
-              <Image source={{ uri: homeTeam.logo }} style={styles.liveTeamLogo} />
+              <Image
+                source={{ uri: homeTeam.logo }}
+                style={styles.liveTeamLogo}
+              />
             )}
             <Text style={styles.liveTeamName} numberOfLines={1}>
               {homeTeam?.name || ""}
@@ -1032,7 +1124,10 @@ const FixtureScreen = () => {
           {/* Away Team */}
           <View style={styles.liveTeamContainer}>
             {awayTeam?.logo && (
-              <Image source={{ uri: awayTeam.logo }} style={styles.liveTeamLogo} />
+              <Image
+                source={{ uri: awayTeam.logo }}
+                style={styles.liveTeamLogo}
+              />
             )}
             <Text style={styles.liveTeamName} numberOfLines={1}>
               {awayTeam?.name || ""}

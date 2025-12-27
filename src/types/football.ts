@@ -12,6 +12,24 @@ export interface StandingTableDto {
   goalsAgainst: number;
   goalDifference: number;
   lastFiveMatches: string[]; // ["W", "D", "L", "W", "D"] format
+
+  // Home statistics
+  homePlayed: number;
+  homeWon: number;
+  homeDrawn: number;
+  homeLost: number;
+  homeGoalsFor: number;
+  homeGoalsAgainst: number;
+  homeGoalDifference: number;
+
+  // Away statistics
+  awayPlayed: number;
+  awayWon: number;
+  awayDrawn: number;
+  awayLost: number;
+  awayGoalsFor: number;
+  awayGoalsAgainst: number;
+  awayGoalDifference: number;
 }
 
 // Backend'den gelen StandingsTableResponse - exactly matches C# StandingsTableResponse
