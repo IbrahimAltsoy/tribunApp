@@ -15,7 +15,13 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { footballService } from "../services/footballService";
-import type { StandingTableDto, MatchDetailDto, LiveScoreDto } from "../types/football";
+import { goalNotificationService } from "../services/goalNotificationService";
+import { GoalCelebration } from "../components/GoalCelebration";
+import type {
+  StandingTableDto,
+  MatchDetailDto,
+  LiveScoreDto,
+} from "../types/football";
 import {
   mensStandings,
   womensStandings,
@@ -58,14 +64,28 @@ const FixtureScreen = () => {
 
   // Live match state
   const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
+  const [previousGoalIds, setPreviousGoalIds] = useState<Set<number>>(
+    new Set()
+  );
+  const [previousMatchState, setPreviousMatchState] = useState<number | null>(
+    null
+  );
 
-  // Helper function to extract week number from round nam
+  // Goal celebration state
+  const [showGoalCelebration, setShowGoalCelebration] = useState(false);
+  const [goalCelebrationData, setGoalCelebrationData] = useState<{
+    teamName: string;
+    playerName: string;
+    minute: number;
+  } | null>(null);
+
+  // Helper function to extract week number from round name
   const extractWeekNumber = (roundName: string): number => {
     const match = roundName.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   };
 
-  // Helper function to map backend match to MatchResul
+  // Helper function to map backend match to MatchResult
   const mapToMatchResult = (match: MatchDetailDto): MatchResult => {
     const weekNumber = extractWeekNumber(match.roundName);
     const matchDate = new Date(match.matchDate);
@@ -313,63 +333,112 @@ const FixtureScreen = () => {
 
     const loadLiveScores = async () => {
       const response = await footballService.getLiveScores();
+      console.log("🏟️ Live scores response:", response);
       if (response.success && response.data) {
+        console.log("✅ Live scores data:", response.data);
         // Filter for Amedspor men's team only (Team ID: 3570)
         const amedMatch = response.data.find(
           (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
         );
-        setLiveMatch(amedMatch || null);
-      } else {
-        setLiveMatch(null);
-      }
-    };
+        console.log("⚽ Amed match:", amedMatch);
 
-    const checkIfShouldPoll = () => {
-      // Get next upcoming match
-      const nextMatch =
-        currentUpcomingFixtures.length > 0 ? currentUpcomingFixtures[0] : null;
+        // Detect new goals and match state changes
+        if (amedMatch) {
+          const currentGoals = amedMatch.events.filter((e) => {
+            const isGoal =
+              e.typeId === 14 || e.typeId === 80 || e.typeId === 82; // Goal, Own Goal, Penalty Scored
+            return isGoal && !e.rescinded;
+          });
 
-      if (!nextMatch) {
-        setLiveMatch(null);
-        return false;
-      }
+          const currentGoalIds = new Set(currentGoals.map((g) => g.id));
+          const currentStateId = amedMatch.stateId;
 
-      // Parse match date and time (TR format: "27.12.2024" and "15:00")
-      const [day, month, year] = nextMatch.date.split(".");
-      const matchDateTime = new Date(
-        `${year}-${month}-${day}T${nextMatch.time}`
-      );
-      const now = new Date();
+          // Only check for new goals if we have previous data (not first load)
+          if (previousGoalIds.size > 0) {
+            // Check for new goals
+            currentGoals.forEach((goal) => {
+              if (!previousGoalIds.has(goal.id)) {
+                // New goal detected!
+                const scoringTeam = amedMatch.participants.find(
+                  (p) => p.id === goal.participantId
+                );
 
-      // Start polling 30 minutes before match and continue for 3 hours after match start
-      const startPollingTime = new Date(
-        matchDateTime.getTime() - 30 * 60 * 1000
-      ); // 30 min before
-      const endPollingTime = new Date(
-        matchDateTime.getTime() + 3 * 60 * 60 * 1000
-      ); // 3 hours after
+                const teamName = scoringTeam?.name || "Takım";
+                const playerName = goal.playerName || "Oyuncu";
+                const minute = goal.minute || 0;
 
-      return now >= startPollingTime && now <= endPollingTime;
-    };
+                // Trigger all celebration effects
+                goalNotificationService.celebrateGoal(
+                  teamName,
+                  playerName,
+                  minute
+                );
 
-    // Check initially
-    if (checkIfShouldPoll()) {
-      loadLiveScores();
+                // Show goal animation overlay
+                setGoalCelebrationData({ teamName, playerName, minute });
+                setShowGoalCelebration(true);
+              }
+            });
 
-      // Poll every 20 seconds during match time
-      const interval = setInterval(() => {
-        if (checkIfShouldPoll()) {
-          loadLiveScores();
+            // Check if match just finished (state changed to finished)
+            if (
+              previousMatchState !== null &&
+              previousMatchState !== 5 &&
+              currentStateId === 5
+            ) {
+              // Match just finished
+              const homeTeam = amedMatch.participants.find(
+                (p) => p.location === "home"
+              );
+              const awayTeam = amedMatch.participants.find(
+                (p) => p.location === "away"
+              );
+
+              goalNotificationService.showGoalNotification(
+                "Maç Bitti",
+                `${homeTeam?.name || ""} vs ${awayTeam?.name || ""}`,
+                90
+              );
+            }
+          }
+
+          setPreviousGoalIds(currentGoalIds);
+          setPreviousMatchState(currentStateId || null);
+
+          // If match is finished (stateId 5), don't update live match anymore
+          if (currentStateId === 5) {
+            setLiveMatch(null);
+          } else {
+            setLiveMatch(amedMatch);
+          }
         } else {
+          // No match found, reset state
+          setPreviousGoalIds(new Set());
+          setPreviousMatchState(null);
           setLiveMatch(null);
         }
-      }, 20000);
+      } else {
+        console.log("❌ Live scores error:", response.error);
+        setLiveMatch(null);
+      }
+    };
 
-      return () => clearInterval(interval);
-    } else {
-      setLiveMatch(null);
-    }
-  }, [selectedGender, currentUpcomingFixtures]);
+    // Load live scores initially
+    loadLiveScores();
+
+    // Poll every 20 seconds, but stop if match is finished
+    const interval = setInterval(async () => {
+      // Check if match is finished before polling
+      if (previousMatchState === 5) {
+        clearInterval(interval);
+        console.log("⏹️ Match finished, stopping polling");
+        return;
+      }
+      loadLiveScores();
+    }, 20000);
+
+    return () => clearInterval(interval);
+  }, [selectedGender, previousMatchState]);
 
   // Get available weeks for past results (last 5 weeks)
   const pastWeeks = useMemo(() => {
@@ -1090,6 +1159,66 @@ const FixtureScreen = () => {
     )[0];
     const currentMinute = latestEvent?.minute || 0;
 
+    // Get all important events
+    const allEvents = liveMatch.events
+      .filter((e) => {
+        const importantTypes = [14, 17, 18, 10, 80, 81, 82, 1697];
+        return importantTypes.includes(e.typeId || 0) && !e.rescinded;
+      })
+      .sort((a, b) => (a.minute || 0) - (b.minute || 0));
+
+    const firstHalfEvents = allEvents.filter((e) => (e.minute || 0) <= 45);
+    const secondHalfEvents = allEvents.filter((e) => (e.minute || 0) > 45);
+
+    // Helper to render individual event
+    const renderEvent = (event: any, key: string) => {
+      // Substitution (typeId 18)
+      if (event.typeId === 18) {
+        return (
+          <View key={key} style={styles.eventRow}>
+            <Text style={styles.eventMinute}>{event.minute}'</Text>
+            <Text style={styles.eventIcon}>🔄</Text>
+            <View style={styles.substitutionContainer}>
+              {/* Player Out (Red) */}
+              <View style={styles.substitutionPlayer}>
+                <Text style={styles.substitutionArrow}>← </Text>
+                <Text
+                  style={[styles.eventText, styles.playerOut]}
+                  numberOfLines={1}
+                >
+                  {event.relatedPlayerName || "Oyuncu"}
+                </Text>
+              </View>
+              {/* Player In (Green) */}
+              <View style={styles.substitutionPlayer}>
+                <Text style={styles.substitutionArrow}>→ </Text>
+                <Text
+                  style={[styles.eventText, styles.playerIn]}
+                  numberOfLines={1}
+                >
+                  {event.playerName || "Oyuncu"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        );
+      }
+
+      // Other events (goals, cards, VAR)
+      const icon =
+        event.typeId === 14 ? "⚽" : event.typeId === 17 ? "🟨" : "📹";
+      const text = event.playerName || event.addition || "Olay";
+      return (
+        <View key={key} style={styles.eventRow}>
+          <Text style={styles.eventMinute}>{event.minute}'</Text>
+          <Text style={styles.eventIcon}>{icon}</Text>
+          <Text style={styles.eventText} numberOfLines={1}>
+            {text}
+          </Text>
+        </View>
+      );
+    };
+
     return (
       <View style={styles.liveMatchCard}>
         {/* Live Indicator */}
@@ -1134,6 +1263,31 @@ const FixtureScreen = () => {
             </Text>
           </View>
         </View>
+
+        {/* Match Events */}
+        {allEvents.length > 0 && (
+          <View style={styles.eventsContainer}>
+            {/* First Half */}
+            {firstHalfEvents.length > 0 && (
+              <View style={styles.halfSection}>
+                <Text style={styles.halfTitle}>1. YARI</Text>
+                {firstHalfEvents.map((event, idx) =>
+                  renderEvent(event, `first-${idx}`)
+                )}
+              </View>
+            )}
+
+            {/* Second Half */}
+            {secondHalfEvents.length > 0 && (
+              <View style={styles.halfSection}>
+                <Text style={styles.halfTitle}>2. YARI</Text>
+                {secondHalfEvents.map((event, idx) =>
+                  renderEvent(event, `second-${idx}`)
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </View>
     );
   };
@@ -1168,6 +1322,20 @@ const FixtureScreen = () => {
         {/* Upcoming Fixtures */}
         {renderUpcomingFixturesSection()}
       </ScrollView>
+
+      {/* Goal Celebration Overlay */}
+      {showGoalCelebration && goalCelebrationData && (
+        <GoalCelebration
+          visible={showGoalCelebration}
+          teamName={goalCelebrationData.teamName}
+          playerName={goalCelebrationData.playerName}
+          minute={goalCelebrationData.minute}
+          onComplete={() => {
+            setShowGoalCelebration(false);
+            setGoalCelebrationData(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -1780,5 +1948,65 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: typography.medium,
     color: "#666666",
+  },
+  eventsContainer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
+  },
+  halfSection: {
+    marginBottom: spacing.md,
+  },
+  halfTitle: {
+    fontSize: fontSizes.xs,
+    fontFamily: typography.bold,
+    color: "#999999",
+    marginBottom: spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  eventMinute: {
+    fontSize: fontSizes.xs,
+    fontFamily: typography.semiBold,
+    color: "#cccccc",
+    width: 40,
+  },
+  eventIcon: {
+    fontSize: 16,
+    width: 24,
+    textAlign: "center",
+  },
+  eventText: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.medium,
+    color: "#ffffff",
+    flex: 1,
+  },
+  substitutionContainer: {
+    flex: 1,
+    flexDirection: "column",
+    gap: 4,
+  },
+  substitutionPlayer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  substitutionArrow: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.bold,
+    marginRight: 4,
+  },
+  playerOut: {
+    color: "#ff6b6b",
+  },
+  playerIn: {
+    color: "#51cf66",
   },
 });

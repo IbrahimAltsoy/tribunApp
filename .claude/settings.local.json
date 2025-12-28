@@ -49,7 +49,11 @@
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef migrations remove:*)",
       "Bash(ls:*)",
-      "Bash(dotnet ef:*)"
+      "Bash(dotnet ef:*)",
+      "Bash(npm run android:*)",
+      "Bash(adb logcat:*)",
+      "Bash(tasklist:*)",
+      "Bash(netstat:*)"
     ]
   }
 }
