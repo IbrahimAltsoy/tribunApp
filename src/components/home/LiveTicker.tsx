@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   Pressable,
   Animated,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -17,7 +18,8 @@ import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { liveMatch } from "../../data/mockData";
+import { footballService } from "../../services/footballService";
+import type { ClipContentDto } from "../../types/football";
 
 const IS_IOS = Platform.OS === "ios";
 
@@ -27,9 +29,26 @@ type LiveTickerProps = {
 
 const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
   const { t } = useTranslation();
-  const visibleEvents = liveMatch.events.slice(0, 5);
-  const hasMore = liveMatch.events.length > 5;
+  const [clips, setClips] = useState<ClipContentDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const moreCardScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    loadClips();
+  }, []);
+
+  const loadClips = async () => {
+    try {
+      const response = await footballService.getClipContents();
+      if (response.success && response.data) {
+        setClips(response.data);
+      }
+    } catch (error) {
+      console.log("Error loading clips:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleMorePressIn = () => {
     Animated.spring(moreCardScale, {
@@ -49,6 +68,25 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
     }).start();
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (clips.length === 0) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>{t("home.liveTicker.noVideos") || "Henüz video yok"}</Text>
+      </View>
+    );
+  }
+
+  const visibleClips = clips.slice(0, 5);
+  const hasMore = clips.length > 5;
+
   return (
     <ScrollView
       horizontal
@@ -58,8 +96,8 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
       snapToInterval={316}
       snapToAlignment="start"
     >
-      {visibleEvents.map((event) => (
-        <LiveEventCard key={event.id} event={event} />
+      {visibleClips.map((clip) => (
+        <ClipCard key={clip.id} clip={clip} />
       ))}
 
       {/* More Videos Card */}
@@ -93,7 +131,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
               <Text style={styles.moreTitle}>{t("home.liveTicker.moreVideos")}</Text>
               <Text style={styles.moreSubtitle}>{t("home.liveTicker.video")}</Text>
               <Text style={styles.moreCount}>
-                {t("home.liveTicker.videoCount", { count: liveMatch.events.length - 5 })}
+                {t("home.liveTicker.videoCount", { count: clips.length - 5 })}
               </Text>
             </BlurView>
           </Animated.View>
@@ -103,22 +141,22 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
   );
 };
 
-const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
-  const { t } = useTranslation();
+const ClipCard = ({ clip }: { clip: ClipContentDto }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const thumb =
-    event.thumb ||
-    (event.thumbUrl
-      ? { uri: event.thumbUrl }
-      : require("../../assets/footboll/1.jpg"));
-  const clipUrl = event.clip?.embedUrl || event.clip?.url || event.videoUrl;
+  // Determine URL to open: ExternalUrl for redirects, VideoUrl for playback
+  const urlToOpen = clip.externalUrl || clip.videoUrl;
 
-  const handleVideoPress = () => {
-    if (clipUrl) {
-      openURLSafely(clipUrl, {
-        errorTitle: t("error"),
-        invalidUrlMessage: t("validation.urlBlocked"),
+  // Get thumbnail (use default if not provided)
+  const thumb = clip.thumbnailUrl
+    ? { uri: clip.thumbnailUrl }
+    : require("../../assets/footboll/1.jpg");
+
+  const handlePress = () => {
+    if (urlToOpen) {
+      openURLSafely(urlToOpen, {
+        errorTitle: "Error",
+        invalidUrlMessage: "Cannot open this video",
       });
     }
   };
@@ -142,7 +180,7 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
   };
 
   const platformIcon = (() => {
-    switch (event.clip?.platform) {
+    switch (clip.platform) {
       case "youtube":
       case "bein":
       case "trt":
@@ -156,93 +194,19 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
     }
   })();
 
-  const platformLabel = (() => {
-    switch (event.clip?.platform) {
-      case "bein":
-        return "beIN SPORTS";
-      case "trt":
-        return "TRT Spor";
-      case "youtube":
-        return "YouTube";
-      case "x":
-        return "X (Twitter)";
-      case "instagram":
-        return "Instagram";
-      default:
-        return "Harici";
-    }
-  })();
-
-  const eventTypeConfig = (() => {
-    switch (event.type) {
-      case "goal":
-        return {
-          icon: "football" as const,
-          color: colors.primary,
-          bgColor: "rgba(0, 191, 71, 0.15)",
-          borderColor: colors.primary,
-        };
-      case "card":
-        return {
-          icon: "warning" as const,
-          color: colors.accent,
-          bgColor: "rgba(209, 14, 14, 0.15)",
-          borderColor: colors.accent,
-        };
-      default:
-        return {
-          icon: "sparkles" as const,
-          color: colors.white,
-          bgColor: "rgba(255, 255, 255, 0.1)",
-          borderColor: colors.glassStroke,
-        };
-    }
-  })();
-
   return (
     <Animated.View style={[styles.card, { transform: [{ scale: scaleAnim }] }]}>
-      {/* Card Header: Event Type Badge + Minute */}
-      <View style={styles.cardHeader}>
-        {/* <BlurView
-          intensity={IS_IOS ? 20 : 15}
-          tint="dark"
-          style={[
-            styles.badge,
-            {
-              backgroundColor: eventTypeConfig.bgColor,
-              borderColor: eventTypeConfig.borderColor,
-            },
-          ]}
-        >
-          <Ionicons
-            name={eventTypeConfig.icon}
-            size={16}
-            color={eventTypeConfig.color}
-          />
-          <Text style={[styles.badgeText, { color: eventTypeConfig.color }]}>
-            {event.type.toUpperCase()}
-          </Text>
-        </BlurView> */}
-
-        {/* Live Minute Indicator */}
-        {/* <View style={styles.minuteBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.minute}>{event.minute}'</Text>
-        </View> */}
-      </View>
-
-      {/* Event Caption */}
+      {/* Title */}
       <Text style={styles.caption} numberOfLines={2}>
-        <Text style={styles.playerName}>{event.player}</Text>
-        <Text style={styles.captionDetail}> • {event.detail}</Text>
+        {clip.title}
       </Text>
 
       {/* Video Thumbnail with Glassmorphism */}
       <Pressable
-        onPress={handleVideoPress}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        disabled={!clipUrl}
+        disabled={!urlToOpen}
         style={styles.videoContainer}
       >
         <ImageBackground
@@ -268,11 +232,13 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
                 size={14}
                 color={colors.primary}
               />
-              <Text style={styles.sourceText}>{platformLabel}</Text>
+              <Text style={styles.sourceText}>
+                {clip.provider || clip.platform.toUpperCase()}
+              </Text>
             </BlurView>
 
             {/* Play Icon */}
-            {clipUrl && (
+            {urlToOpen && (
               <View style={styles.playIconWrapper}>
                 <LinearGradient
                   colors={[colors.primary, colors.accent]}
@@ -287,14 +253,13 @@ const LiveEventCard = ({ event }: { event: (typeof liveMatch.events)[0] }) => {
           </View>
 
           {/* Video Info */}
-          <View style={styles.videoInfo}>
-            <Text style={styles.clipTitle} numberOfLines={1}>
-              Amedspor vs {liveMatch.away} • {event.minute}'
-            </Text>
-            <Text style={styles.clipNote} numberOfLines={2}>
-              {event.clip?.note || "Video oynatmak için tıklayın"}
-            </Text>
-          </View>
+          {clip.description && (
+            <View style={styles.videoInfo}>
+              <Text style={styles.clipNote} numberOfLines={2}>
+                {clip.description}
+              </Text>
+            </View>
+          )}
         </ImageBackground>
       </Pressable>
     </Animated.View>
@@ -306,6 +271,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
     paddingVertical: spacing.xs,
+  },
+
+  loadingContainer: {
+    height: 260,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  emptyContainer: {
+    height: 260,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.xl,
+  },
+
+  emptyText: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    textAlign: "center",
   },
 
   // Card Styles
@@ -330,65 +315,12 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // Card Header
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.md,
-    borderWidth: 1.5,
-    overflow: "hidden",
-  },
-  badgeText: {
-    fontFamily: typography.bold,
-    fontSize: fontSizes.xs,
-    letterSpacing: 0.5,
-  },
-
-  // Live Minute Badge
-  minuteBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.md,
-    backgroundColor: "rgba(209, 14, 14, 0.15)",
-    borderWidth: 1,
-    borderColor: colors.accent,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.accent,
-  },
-  minute: {
-    color: colors.white,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.sm,
-  },
-
   // Caption
   caption: {
-    color: colors.text,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
-  },
-  playerName: {
-    fontFamily: typography.bold,
     color: colors.white,
-  },
-  captionDetail: {
-    color: colors.textSecondary,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+    lineHeight: 20,
   },
 
   // Video Container
@@ -457,14 +389,6 @@ const styles = StyleSheet.create({
   // Video Info
   videoInfo: {
     gap: spacing.xs,
-  },
-  clipTitle: {
-    color: colors.white,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.sm,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
   },
   clipNote: {
     color: colors.textSecondary,

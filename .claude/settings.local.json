@@ -53,7 +53,9 @@
       "Bash(npm run android:*)",
       "Bash(adb logcat:*)",
       "Bash(tasklist:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(find:*)",
+      "Bash(Select-String -Pattern \"error\" -Context 0,2)"
     ]
   }
 }

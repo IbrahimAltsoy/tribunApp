@@ -25,7 +25,8 @@ import type { NewsDto, NewsCategoryDto } from "../types/news";
 const ALL_CATEGORY_CODE = "__all__";
 
 const FeedScreen: React.FC = () => {
-  const navigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
+  const navigation =
+    useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const route = useRoute<RouteProp<BottomTabParamList, "Feed">>();
   const { t } = useTranslation();
 
@@ -34,7 +35,7 @@ const FeedScreen: React.FC = () => {
   const [news, setNews] = useState<NewsDto[]>([]);
   const [activeNews, setActiveNews] = useState<NewsDto | null>(null);
 
-  // Load categories from backend
+  // Load categories from backen
   useEffect(() => {
     const loadCategories = async () => {
       const response = await newsService.getCategories();
@@ -63,13 +64,29 @@ const FeedScreen: React.FC = () => {
     loadNews();
   }, [selected]);
 
-  const categoryOptions = useMemo(
-    () => [
-      { id: ALL_CATEGORY_CODE, slug: ALL_CATEGORY_CODE, name: t("feed.category_all"), sortOrder: 0 },
-      ...categories,
-    ],
-    [t, categories]
-  );
+  const categoryOptions = useMemo(() => {
+    // Remove duplicates by slug (in case database has duplicates)
+    const uniqueCategories = categories.reduce((acc, current) => {
+      const exists = acc.find(item => item.slug === current.slug);
+      if (!exists) {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as NewsCategoryDto[]);
+
+    // Sort by sortOrder
+    const sorted = uniqueCategories.sort((a, b) => a.sortOrder - b.sortOrder);
+
+    return [
+      {
+        id: ALL_CATEGORY_CODE,
+        slug: ALL_CATEGORY_CODE,
+        name: t("feed.category_all"),
+        sortOrder: 0,
+      },
+      ...sorted,
+    ];
+  }, [t, categories]);
 
   // Load news detail when newsId changes
   useEffect(() => {
@@ -122,7 +139,10 @@ const FeedScreen: React.FC = () => {
               style={[
                 styles.chip,
                 selected === cat.slug && styles.chipActive,
-                { borderColor: selected === cat.slug ? colors.primary : colors.border },
+                {
+                  borderColor:
+                    selected === cat.slug ? colors.primary : colors.border,
+                },
               ]}
               onPress={() => setSelected(cat.slug)}
             >
@@ -141,7 +161,11 @@ const FeedScreen: React.FC = () => {
         <View style={styles.list}>
           {news.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="newspaper-outline" size={48} color={colors.mutedText} />
+              <Ionicons
+                name="newspaper-outline"
+                size={48}
+                color={colors.mutedText}
+              />
               <Text style={styles.emptyStateText}>
                 {selected === ALL_CATEGORY_CODE
                   ? t("feed.no_news")
@@ -152,7 +176,9 @@ const FeedScreen: React.FC = () => {
             news.map((newsItem) => {
               // Calculate time ago
               const getTimeAgo = () => {
-                const date = new Date(newsItem.publishedAt || newsItem.createdAt);
+                const date = new Date(
+                  newsItem.publishedAt || newsItem.createdAt
+                );
                 const now = new Date();
                 const diffMs = now.getTime() - date.getTime();
                 const diffMins = Math.floor(diffMs / 60000);
@@ -172,9 +198,14 @@ const FeedScreen: React.FC = () => {
                 >
                   {(newsItem.imageUrl || newsItem.thumbnailUrl) && (
                     <ImageBackground
-                      source={{ uri: newsItem.thumbnailUrl || newsItem.imageUrl }}
+                      source={{
+                        uri: newsItem.thumbnailUrl || newsItem.imageUrl,
+                      }}
                       style={styles.cardImage}
-                      imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                      imageStyle={{
+                        borderTopLeftRadius: 16,
+                        borderTopRightRadius: 16,
+                      }}
                     >
                       <LinearGradient
                         colors={["rgba(0,0,0,0.65)", "rgba(0,0,0,0.35)"]}
@@ -249,7 +280,9 @@ const FeedScreen: React.FC = () => {
 
               {(activeNews.imageUrl || activeNews.thumbnailUrl) && (
                 <ImageBackground
-                  source={{ uri: activeNews.imageUrl || activeNews.thumbnailUrl }}
+                  source={{
+                    uri: activeNews.imageUrl || activeNews.thumbnailUrl,
+                  }}
                   style={styles.detailHero}
                   imageStyle={{ borderRadius: 20 }}
                 >
@@ -265,7 +298,11 @@ const FeedScreen: React.FC = () => {
                   <View style={styles.detailHeroText}>
                     <Text style={styles.detailTitle}>{activeNews.title}</Text>
                     <View style={styles.detailMetaRow}>
-                      <Ionicons name="time-outline" size={16} color={colors.text} />
+                      <Ionicons
+                        name="time-outline"
+                        size={16}
+                        color={colors.text}
+                      />
                       <Text style={styles.detailMeta}>
                         {t("feed.time_ago", {
                           time: (() => {
@@ -298,7 +335,11 @@ const FeedScreen: React.FC = () => {
                   </View>
                   <Text style={styles.detailTitle}>{activeNews.title}</Text>
                   <View style={styles.detailMetaRow}>
-                    <Ionicons name="time-outline" size={16} color={colors.mutedText} />
+                    <Ionicons
+                      name="time-outline"
+                      size={16}
+                      color={colors.mutedText}
+                    />
                     <Text style={styles.detailMeta}>
                       {t("feed.time_ago", {
                         time: (() => {

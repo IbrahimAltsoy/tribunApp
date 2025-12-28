@@ -123,3 +123,18 @@ export interface LiveEventDto {
   rescinded: boolean | null; // Was the event cancelled?
   sortOrder: number | null;
 }
+
+// Backend'den gelen ClipContentDto - exactly matches C# ClipContentDto
+export interface ClipContentDto {
+  id: string;
+  videoUrl: string | null; // Our hosted video or embeddable URL
+  externalUrl: string | null; // External link (TRT, beIN, etc.)
+  thumbnailUrl: string | null; // Preview image
+  platform: string; // "x", "instagram", "youtube", "bein", "trt"
+  provider: string | null; // "beIN SPORTS TR", "TRT Spor", etc.
+  sortOrder: number;
+  isPublished: boolean;
+  title: string; // Localized title
+  description: string | null; // Localized description
+  createdAt: string; // ISO date string
+}

@@ -1,4 +1,4 @@
-import type { StandingTableDto, TeamScheduleResponse, LiveScoreDto } from '../types/football';
+import type { StandingTableDto, TeamScheduleResponse, LiveScoreDto, ClipContentDto } from '../types/football';
 
 // Get API URL from environment or use default
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
@@ -109,8 +109,47 @@ const getLiveScores = async (): Promise<{ success: boolean; data?: LiveScoreDto[
   }
 };
 
+/**
+ * Get published clip contents (videos/highlights)
+ */
+const getClipContents = async (): Promise<{
+  success: boolean;
+  data?: ClipContentDto[];
+  error?: string;
+}> => {
+  try {
+    const url = `${API_BASE_URL}/api/clipcontents/published`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept-Language': 'tr', // Can be made dynamic later
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    return {
+      success: true,
+      data: json.data,
+    };
+  } catch (error) {
+    // Silent error - app continues working
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
+
 export const footballService = {
   getStandingsTable,
   getTeamSchedule,
   getLiveScores,
+  getClipContents,
 };
