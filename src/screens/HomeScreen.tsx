@@ -37,7 +37,6 @@ import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
 import AllVideosModal from "../components/home/AllVideosModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
-import { fanMoments, fixtureData, newsData, polls } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -330,7 +329,12 @@ const HomeScreen: React.FC = () => {
           title={t("home.poll.title")}
           subtitle={t("home.poll.weekMatch")}
         />
-        {activePoll && <PollCard poll={activePoll} />}
+        {activePoll && (
+          <PollCard
+            poll={activePoll}
+            onVoteSuccess={(updatedPoll) => setActivePoll(updatedPoll)}
+          />
+        )}
 
         <SectionHeader
           title={t("home.supportTitle")}

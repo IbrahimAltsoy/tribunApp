@@ -23,8 +23,8 @@ const getSessionId = async (): Promise<string> => {
 
     return sessionId;
   } catch (error) {
-    console.error('❌ Error managing session ID:', error);
-    throw error;
+    // Silent error - generate fallback session ID
+    return 'fallback-session-' + Date.now();
   }
 };
 
@@ -38,10 +38,6 @@ const uploadImageAnonymous = async (
   try {
     const sessionId = await getSessionId();
 
-    console.log('📤 Uploading image via multipart...', {
-      uri: imageUri,
-      sessionId: sessionId.substring(0, 8) + '...',
-    });
 
     // Create FormData for multipart upload
     const formData = new FormData();
@@ -76,12 +72,8 @@ const uploadImageAnonymous = async (
 
     const json = await response.json();
 
-    console.log('✅ Image uploaded successfully');
-    console.log('📊 Response JSON:', JSON.stringify(json, null, 2));
-
     // Backend returns camelCase: { success: true, data: { publicUrl, objectName, ... } }
     const publicUrl = json.data?.publicUrl || json.publicUrl;
-    console.log('📊 Public URL:', publicUrl);
 
     return {
       success: true,
@@ -91,7 +83,7 @@ const uploadImageAnonymous = async (
       },
     };
   } catch (error) {
-    console.error('❌ Error uploading image:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -140,7 +132,7 @@ const uploadImage = async (
       data: json,
     };
   } catch (error) {
-    console.error('❌ Error uploading image:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

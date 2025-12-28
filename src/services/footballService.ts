@@ -33,7 +33,7 @@ const getStandingsTable = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching standings table:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -68,7 +68,7 @@ const getTeamSchedule = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching team schedule:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -101,7 +101,7 @@ const getLiveScores = async (): Promise<{ success: boolean; data?: LiveScoreDto[
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching live scores:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

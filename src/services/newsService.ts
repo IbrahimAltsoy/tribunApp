@@ -33,7 +33,7 @@ const getNews = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching news:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -66,7 +66,7 @@ const getLatestNews = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching latest news:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -99,7 +99,7 @@ const getNewsById = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching news by ID:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -137,7 +137,7 @@ const getNewsByCategory = async (
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching news by category:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -172,7 +172,7 @@ const getCategories = async (): Promise<{
       data: json.data,
     };
   } catch (error) {
-    console.error('❌ Error fetching categories:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

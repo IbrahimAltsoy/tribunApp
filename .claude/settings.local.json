@@ -48,7 +48,8 @@
       "Bash(python -m json.tool:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef migrations remove:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(dotnet ef:*)"
     ]
   }
 }

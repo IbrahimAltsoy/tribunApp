@@ -25,13 +25,12 @@ const getSessionId = async (): Promise<string> => {
       });
 
       await SecureStore.setItemAsync('userSessionId', sessionId);
-      console.log('📱 New session ID created (SecureStore):', sessionId);
     }
 
     return sessionId;
   } catch (error) {
-    console.error('❌ Error managing session ID:', error);
-    throw error;
+    // Silent error - generate fallback session ID
+    return 'fallback-session-' + Date.now();
   }
 };
 
@@ -40,7 +39,6 @@ const getSessionId = async (): Promise<string> => {
  */
 const setLanguage = (language: string): void => {
   currentLanguage = language;
-  console.log('🌐 Poll service language set to:', language);
 };
 
 /**
@@ -65,14 +63,12 @@ const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; erro
     // Backend returns {success: true, data: PollDto}
     const poll: PollDto = json.data || json;
 
-    console.log('✅ Fetched active poll:', poll?.question);
-
     return {
       success: true,
       data: poll,
     };
   } catch (error) {
-    console.error('❌ Error fetching active poll:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -102,14 +98,12 @@ const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; e
     // Backend returns {success: true, data: PollDto} for single poll or array
     const polls: PollDto[] = Array.isArray(json.data) ? json.data : (json.data ? [json.data] : (Array.isArray(json) ? json : []));
 
-    console.log('✅ Fetched active polls:', polls.length);
-
     return {
       success: true,
       data: polls,
     };
   } catch (error) {
-    console.error('❌ Error fetching active polls:', error);
+    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -148,14 +142,12 @@ const votePoll = async (
     // Backend returns {success: true, data: PollDto}
     const poll: PollDto = json.data || json;
 
-    console.log('✅ Vote submitted successfully');
-
     return {
       success: true,
       data: poll,
     };
   } catch (error) {
-    console.error('❌ Error submitting vote:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

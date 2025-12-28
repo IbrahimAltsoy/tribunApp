@@ -27,16 +27,12 @@ const getSessionId = async (): Promise<string> => {
       });
 
       await SecureStore.setItemAsync('userSessionId', sessionId);
-      console.log('📱 ⚠️ NEW SESSION ID CREATED (this should only happen ONCE!):', sessionId);
-      console.log('📱 ℹ️ Using SecureStore for persistent storage');
-    } else {
-      console.log('📱 ✅ Existing session ID loaded from SecureStore:', sessionId);
     }
 
     return sessionId;
   } catch (error) {
-    console.error('❌ Error managing session ID:', error);
-    throw error;
+    // Silent error - generate fallback session ID
+    return 'fallback-session-' + Date.now();
   }
 };
 
@@ -78,14 +74,12 @@ const getFanMoments = async (
     // Backend returns paginated response with items array
     const data: FanMomentDto[] = json.data?.items || json.items || json;
 
-    console.log('✅ Fetched fan moments with ownership flags:', data.length);
-
     return {
       success: true,
       data: data,
     };
   } catch (error) {
-    console.error('❌ Error fetching fan moments:', error);
+    // Silent error - app continues working with empty data
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -132,14 +126,12 @@ const createFanMoment = async (
     // Backend returns {success: true, data: FanMomentDto}
     const moment: FanMomentDto = json.data || json;
 
-    console.log('✅ Fan moment created successfully with session ID');
-
     return {
       success: true,
       data: moment,
     };
   } catch (error) {
-    console.error('❌ Error creating fan moment:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -182,14 +174,12 @@ const updateOwnFanMoment = async (
     // Backend returns {success: true, data: FanMomentDto}
     const moment: FanMomentDto = json.data || json;
 
-    console.log('✅ Fan moment updated successfully');
-
     return {
       success: true,
       data: moment,
     };
   } catch (error) {
-    console.error('❌ Error updating fan moment:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -223,13 +213,11 @@ const deleteOwnFanMoment = async (id: string): Promise<{ success: boolean; error
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    console.log('✅ Fan moment deleted successfully');
-
     return {
       success: true,
     };
   } catch (error) {
-    console.error('❌ Error deleting fan moment:', error);
+    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

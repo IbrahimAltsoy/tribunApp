@@ -59,13 +59,13 @@ const FixtureScreen = () => {
   // Live match state
   const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
 
-  // Helper function to extract week number from round name
+  // Helper function to extract week number from round nam
   const extractWeekNumber = (roundName: string): number => {
     const match = roundName.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   };
 
-  // Helper function to map backend match to MatchResult
+  // Helper function to map backend match to MatchResul
   const mapToMatchResult = (match: MatchDetailDto): MatchResult => {
     const weekNumber = extractWeekNumber(match.roundName);
     const matchDate = new Date(match.matchDate);
