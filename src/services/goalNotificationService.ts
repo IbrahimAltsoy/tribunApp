@@ -11,6 +11,15 @@ let Notifications: typeof import('expo-notifications') | null = null;
 const initNotifications = async () => {
   if (Notifications) return;
 
+  // Skip notifications in Expo Go Android (development mode)
+  // Android Expo Go doesn't support expo-notifications since SDK 53
+  // This works fine on real Android devices and in production builds
+  if (__DEV__ && Platform.OS === 'android') {
+    console.log('📱 Notifications disabled in Expo Go Android emulator');
+    console.log('💡 Will work on real Android devices and production builds');
+    return;
+  }
+
   try {
     Notifications = await import('expo-notifications');
 

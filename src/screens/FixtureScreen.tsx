@@ -333,14 +333,17 @@ const FixtureScreen = () => {
 
     const loadLiveScores = async () => {
       const response = await footballService.getLiveScores();
-      console.log("🏟️ Live scores response:", response);
+
       if (response.success && response.data) {
-        console.log("✅ Live scores data:", response.data);
         // Filter for Amedspor men's team only (Team ID: 3570)
         const amedMatch = response.data.find(
           (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
         );
-        console.log("⚽ Amed match:", amedMatch);
+
+        // Only log when there's a live match
+        if (amedMatch) {
+          console.log("🔴 CANLI MAÇ:", amedMatch);
+        }
 
         // Detect new goals and match state changes
         if (amedMatch) {
