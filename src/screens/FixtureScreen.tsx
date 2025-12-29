@@ -21,6 +21,7 @@ import type {
   StandingTableDto,
   MatchDetailDto,
   LiveScoreDto,
+  TopScorerDataDto,
 } from "../types/football";
 import {
   mensStandings,
@@ -37,14 +38,14 @@ import {
 } from "../data/mockData";
 
 type GenderTeam = "mens" | "womens";
-type StandingsView = "general" | "home" | "away";
+type StandingsView = "general" | "home" | "away" | "scorers";
 
 const FixtureScreen = () => {
   const { t } = useTranslation();
   const [selectedGender, setSelectedGender] = useState<GenderTeam>("mens");
   const [standingsView, setStandingsView] = useState<StandingsView>("general");
 
-  // Week selection states
+  // Week selection state
   const [selectedPastWeek, setSelectedPastWeek] = useState<number>(14);
   const [selectedUpcomingWeek, setSelectedUpcomingWeek] = useState<number>(15);
 
@@ -61,6 +62,9 @@ const FixtureScreen = () => {
   const [backendUpcomingMatches, setBackendUpcomingMatches] = useState<
     UpcomingMatch[]
   >([]);
+
+  // Top scorers state
+  const [topScorers, setTopScorers] = useState<TopScorerDataDto[]>([]);
 
   // Live match state
   const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
@@ -148,6 +152,34 @@ const FixtureScreen = () => {
     };
     loadStandings();
   }, [selectedGender]);
+
+  // Load top scorers from backend - ONLY when scorers tab is active
+  useEffect(() => {
+    // Only load if user is on scorers tab
+    if (standingsView !== "scorers") {
+      return;
+    }
+
+    const loadTopScorers = async () => {
+      // Season IDs: Mens = 25749, Womens = 26532
+      const seasonId = selectedGender === "mens" ? 25749 : 26532;
+
+      console.log("🔥 Loading top scorers for season:", seasonId);
+      const response = await footballService.getTopScorers(seasonId);
+      if (response.success && response.data) {
+        console.log(
+          "✅ Top scorers loaded:",
+          response.data.data.length,
+          "players"
+        );
+        setTopScorers(response.data.data);
+      } else {
+        console.log("❌ Top scorers failed to load");
+        setTopScorers([]);
+      }
+    };
+    loadTopScorers();
+  }, [selectedGender, standingsView]); // Dependency: both gender AND tab view
 
   // Load team schedule from backend
   useEffect(() => {
@@ -744,81 +776,230 @@ const FixtureScreen = () => {
             {t("fixture.standings.tabAway")}
           </Text>
         </Pressable>
+        <Pressable
+          style={[
+            styles.viewTab,
+            standingsView === "scorers" && styles.viewTabActive,
+          ]}
+          onPress={() => setStandingsView("scorers")}
+        >
+          <Text
+            style={[
+              styles.viewTabText,
+              standingsView === "scorers" && styles.viewTabTextActive,
+            ]}
+          >
+            Gol Krallığı
+          </Text>
+        </Pressable>
       </View>
 
-      {/* Standings Table */}
-      <View style={styles.standingsCard}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.standingsTable}>
+      {/* Standings Table - Only show when NOT on scorers tab */}
+      {standingsView !== "scorers" && (
+        <View style={styles.standingsCard}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.standingsTable}>
+              {/* Table Header */}
+              <View style={styles.standingsHeader}>
+                <View style={styles.rankCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.rank")}
+                  </Text>
+                </View>
+                <View style={styles.teamCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.team")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.played")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.won")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.drawn")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.lost")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.goalsFor")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.goalsAgainst")}
+                  </Text>
+                </View>
+                <View style={styles.statCell}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.goalDifference")}
+                  </Text>
+                </View>
+                <View style={[styles.statCell, styles.statCellPoints]}>
+                  <Text style={styles.headerText}>
+                    {t("fixture.standings.points")}
+                  </Text>
+                </View>
+                <View style={styles.formCell}>
+                  <Text style={styles.headerText}>Form</Text>
+                </View>
+              </View>
+
+              {/* Table Rows */}
+              <FlatList
+                data={currentStandings}
+                renderItem={renderStandingRow}
+                keyExtractor={(item) => `${selectedGender}-${item.team}`}
+                scrollEnabled={false}
+                removeClippedSubviews={true}
+                initialNumToRender={20}
+              />
+            </View>
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Top Scorers Section - Only show when scorers tab is active */}
+      {standingsView === "scorers" && (
+        <View style={styles.standingsCard}>
+          <View style={styles.topScorersTable}>
             {/* Table Header */}
-            <View style={styles.standingsHeader}>
-              <View style={styles.rankCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.rank")}
-                </Text>
+            <View style={styles.topScorersHeader}>
+              <View style={styles.scorerRankCell}>
+                <Text style={styles.headerText}>Sıra</Text>
               </View>
-              <View style={styles.teamCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.team")}
-                </Text>
+              <View style={styles.scorerPlayerCell}>
+                <Text style={styles.headerText}>Oyuncu</Text>
               </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.played")}
-                </Text>
+              <View style={styles.scorerTeamCell}>
+                <Text style={styles.headerText}>Takım</Text>
               </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.won")}
-                </Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.drawn")}
-                </Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.lost")}
-                </Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.goalsFor")}
-                </Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.goalsAgainst")}
-                </Text>
-              </View>
-              <View style={styles.statCell}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.goalDifference")}
-                </Text>
-              </View>
-              <View style={[styles.statCell, styles.statCellPoints]}>
-                <Text style={styles.headerText}>
-                  {t("fixture.standings.points")}
-                </Text>
-              </View>
-              <View style={styles.formCell}>
-                <Text style={styles.headerText}>Form</Text>
+              <View style={styles.scorerGoalsCell}>
+                <Text style={styles.headerText}>Gol</Text>
               </View>
             </View>
 
-            {/* Table Rows */}
-            <FlatList
-              data={currentStandings}
-              renderItem={renderStandingRow}
-              keyExtractor={(item) => `${selectedGender}-${item.team}`}
-              scrollEnabled={false}
-              removeClippedSubviews={true}
-              initialNumToRender={20}
-            />
+            {/* Top Scorers List */}
+            {topScorers.length > 0 ? (
+              topScorers.slice(0, 20).map((scorer, index) => {
+                const playerName =
+                  scorer.player?.displayName || scorer.player?.name || "Oyuncu";
+                const teamName = scorer.participant?.name || "";
+                const teamLogo = scorer.participant?.image_path || null;
+                const goals = scorer.total || 0;
+                const position = scorer.position || index + 1;
+
+                // Check if this is our team (Amedspor or Amed SK)
+                const isOurTeam =
+                  teamName === "Amedspor" || teamName === "Amed SK";
+
+                // Medal emoji for top 3
+                const rankDisplay =
+                  position === 1
+                    ? "🥇"
+                    : position === 2
+                      ? "🥈"
+                      : position === 3
+                        ? "🥉"
+                        : position.toString();
+
+                return (
+                  <View
+                    key={`${scorer.playerId}-${index}`}
+                    style={[
+                      styles.topScorerRow,
+                      isOurTeam && styles.topScorerRowHighlight,
+                      index === topScorers.slice(0, 20).length - 1 &&
+                        styles.topScorerRowLast,
+                    ]}
+                  >
+                    {/* Rank */}
+                    <View style={styles.scorerRankCell}>
+                      <Text
+                        style={[
+                          styles.scorerRankText,
+                          position <= 3 && styles.scorerRankTopThree,
+                        ]}
+                      >
+                        {rankDisplay}
+                      </Text>
+                    </View>
+
+                    {/* Player */}
+                    <View style={styles.scorerPlayerCell}>
+                      <Text
+                        style={[
+                          styles.scorerPlayerName,
+                          isOurTeam && styles.scorerPlayerNameHighlight,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {playerName}
+                      </Text>
+                    </View>
+
+                    {/* Team */}
+                    <View style={styles.scorerTeamCell}>
+                      {teamLogo ? (
+                        <Image
+                          source={{ uri: teamLogo }}
+                          style={styles.scorerTeamLogo}
+                        />
+                      ) : (
+                        <View style={styles.scorerTeamLogoPlaceholder}>
+                          <Ionicons
+                            name="shield"
+                            size={14}
+                            color={colors.mutedText}
+                          />
+                        </View>
+                      )}
+                      <Text
+                        style={[
+                          styles.scorerTeamName,
+                          isOurTeam && styles.scorerTeamNameHighlight,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {teamName}
+                      </Text>
+                    </View>
+
+                    {/* Goals */}
+                    <View style={styles.scorerGoalsCell}>
+                      <Text
+                        style={[
+                          styles.scorerGoalsText,
+                          isOurTeam && styles.scorerGoalsTextHighlight,
+                        ]}
+                      >
+                        {goals}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateText}>
+                  Gol krallığı verileri yüklenemedi
+                </Text>
+              </View>
+            )}
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      )}
     </View>
   );
 
@@ -2011,5 +2192,103 @@ const styles = StyleSheet.create({
   },
   playerIn: {
     color: "#51cf66",
+  },
+
+  // Top Scorers Styles
+  topScorersTable: {
+    minWidth: "100%",
+  },
+  topScorersHeader: {
+    flexDirection: "row",
+    backgroundColor: colors.background,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+  },
+  topScorerRow: {
+    flexDirection: "row",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    alignItems: "center",
+  },
+  topScorerRowHighlight: {
+    backgroundColor: "rgba(15,169,88,0.08)",
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+  },
+  topScorerRowLast: {
+    borderBottomWidth: 0,
+  },
+  scorerRankCell: {
+    width: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scorerRankText: {
+    fontSize: fontSizes.md,
+    fontFamily: typography.bold,
+    color: colors.text,
+  },
+  scorerRankTopThree: {
+    fontSize: fontSizes.lg,
+  },
+  scorerPlayerCell: {
+    flex: 2,
+    paddingRight: spacing.sm,
+  },
+  scorerPlayerName: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.medium,
+    color: colors.text,
+  },
+  scorerPlayerNameHighlight: {
+    fontFamily: typography.bold,
+    color: colors.primary,
+  },
+  scorerTeamCell: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingRight: spacing.sm,
+  },
+  scorerTeamLogo: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+  },
+  scorerTeamLogoPlaceholder: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scorerTeamName: {
+    flex: 1,
+    fontSize: fontSizes.xs,
+    fontFamily: typography.medium,
+    color: colors.text,
+  },
+  scorerTeamNameHighlight: {
+    fontFamily: typography.semiBold,
+    color: colors.primary,
+  },
+  scorerGoalsCell: {
+    width: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scorerGoalsText: {
+    fontSize: fontSizes.lg,
+    fontFamily: typography.bold,
+    color: colors.text,
+  },
+  scorerGoalsTextHighlight: {
+    color: colors.primary,
   },
 });

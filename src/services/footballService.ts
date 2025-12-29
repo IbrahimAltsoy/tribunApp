@@ -1,4 +1,10 @@
-import type { StandingTableDto, TeamScheduleResponse, LiveScoreDto, ClipContentDto } from '../types/football';
+import type {
+  StandingTableDto,
+  TeamScheduleResponse,
+  LiveScoreDto,
+  ClipContentDto,
+  TopScorerResponseDto
+} from '../types/football';
 
 // Get API URL from environment or use default
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
@@ -147,9 +153,45 @@ const getClipContents = async (): Promise<{
   }
 };
 
+/**
+ * Get top scorers for a season
+ */
+const getTopScorers = async (
+  seasonId: number
+): Promise<{ success: boolean; data?: TopScorerResponseDto; error?: string }> => {
+  try {
+    const url = `${API_URL}/topscorers/seasons/${seasonId}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    return {
+      success: true,
+      data: json.data,
+    };
+  } catch (error) {
+    // Silent error - app continues working
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
+
 export const footballService = {
   getStandingsTable,
   getTeamSchedule,
   getLiveScores,
   getClipContents,
+  getTopScorers,
 };

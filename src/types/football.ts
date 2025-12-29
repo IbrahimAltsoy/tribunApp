@@ -138,3 +138,70 @@ export interface ClipContentDto {
   description: string | null; // Localized description
   createdAt: string; // ISO date string
 }
+
+// Backend'den gelen TopScorerResponseDto - exactly matches C# TopScorerResponseDto
+export interface TopScorerResponseDto {
+  data: TopScorerDataDto[];
+}
+
+// Backend'den gelen TopScorerDataDto - exactly matches C# TopScorerDataDto
+export interface TopScorerDataDto {
+  id: number | null;
+  seasonId: number | null;
+  playerId: number | null;
+  typeId: number | null;
+  position: number | null;
+  total: number | null; // Total goals
+  participantId: number | null;
+  player: TopScorerPlayerDto | null;
+  participant: TopScorerParticipantDto | null;
+  type: TopScorerTypeDto | null;
+}
+
+// Backend'den gelen TopScorerPlayerDto - exactly matches C# TopScorerPlayerDto
+export interface TopScorerPlayerDto {
+  id: number | null;
+  sportId: number | null;
+  countryId: number | null;
+  nationalityId: number | null;
+  cityId: number | null;
+  positionId: number | null;
+  detailedPositionId: number | null;
+  typeId: number | null;
+  commonName: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  name: string | null;
+  displayName: string | null;
+  imagePath: string | null;
+  height: number | null;
+  weight: number | null;
+  dateOfBirth: string | null;
+  gender: string | null;
+}
+
+// Backend'den gelen TopScorerParticipantDto - exactly matches C# TopScorerParticipantDto
+export interface TopScorerParticipantDto {
+  id: number | null;
+  sportId: number | null;
+  countryId: number | null;
+  venueId: number | null;
+  gender: string | null;
+  name: string | null; // Team name
+  shortCode: string | null;
+  image_path: string | null; // Team logo
+  founded: number | null;
+  type: string | null;
+  placeholder: boolean | null;
+  lastPlayedAt: string | null;
+}
+
+// Backend'den gelen TopScorerTypeDto - exactly matches C# TopScorerTypeDto
+export interface TopScorerTypeDto {
+  id: number | null;
+  name: string | null;
+  code: string | null;
+  developerName: string | null;
+  modelType: string | null;
+  statGroup: string | null;
+}

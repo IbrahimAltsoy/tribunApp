@@ -63,6 +63,17 @@ const MarsScreen: React.FC = () => {
     Array(6).fill(0).map(() => new Animated.Value(0))
   );
 
+  // Scale animations for interactive cards
+  const [statScaleAnims] = useState(() =>
+    Array(4).fill(0).map(() => new Animated.Value(1))
+  );
+  const [momentScaleAnims] = useState(() =>
+    Array(6).fill(0).map(() => new Animated.Value(1))
+  );
+  const [announcementScaleAnims] = useState(() =>
+    announcementList.map(() => new Animated.Value(1))
+  );
+
   // Animations
 
   // Backend'den FanMoments yükle
@@ -389,7 +400,7 @@ const MarsScreen: React.FC = () => {
             <View style={styles.statRow}>
               {quickStats.map((item, index) => {
                 const cardAnim = statCardsAnim[index];
-                const scaleAnim = useRef(new Animated.Value(1)).current;
+                const scaleAnim = statScaleAnims[index];
 
                 return (
                   <Animated.View
@@ -473,7 +484,7 @@ const MarsScreen: React.FC = () => {
         >
           {moments.slice(0, 6).map((moment, index) => {
             const cardAnim = momentCardsAnim[index] || new Animated.Value(1);
-            const scaleAnim = useRef(new Animated.Value(1)).current;
+            const scaleAnim = momentScaleAnims[index];
 
             return (
               <Animated.View
@@ -576,7 +587,7 @@ const MarsScreen: React.FC = () => {
         <View style={styles.announcementList}>
           {announcementList.map((item, index) => {
             const cardAnim = announcementCardsAnim[index] || new Animated.Value(1);
-            const scaleAnim = useRef(new Animated.Value(1)).current;
+            const scaleAnim = announcementScaleAnims[index] || new Animated.Value(1);
 
             return (
               <Animated.View
