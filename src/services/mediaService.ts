@@ -140,7 +140,43 @@ const uploadImage = async (
   }
 };
 
+/**
+ * Get signed URL for an object name
+ * Converts objectName (e.g., "uploads/2024.12/abc.jpg") to a signed URL
+ */
+const getSignedUrl = async (
+  objectName: string
+): Promise<{ success: boolean; url?: string; error?: string }> => {
+  try {
+    const encodedObjectName = encodeURIComponent(objectName);
+    const response = await fetch(`${API_URL}/signed-url/${encodedObjectName}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    return {
+      success: true,
+      url: json.url,
+    };
+  } catch (error) {
+    // Silent error - return placeholder
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+};
+
 export const mediaService = {
   uploadImage,
   uploadImageAnonymous,
+  getSignedUrl,
 };
