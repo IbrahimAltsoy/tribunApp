@@ -27,20 +27,15 @@ import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { MarsStackParamList } from "../navigation/types";
-import type { FanMomentDto } from "../types/fanMoment";
-import { radii } from "../theme/spacing";
-import { fanMomentService } from "../services/fanMomentService";
 
 const IS_IOS = Platform.OS === "ios";
 
 const MarsScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp<MarsStackParamList>>();
-  const [momentOpen, setMomentOpen] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [announcementList, setAnnouncementList] = useState(announcementData);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -58,17 +53,9 @@ const MarsScreen: React.FC = () => {
     announcementList.map(() => new Animated.Value(0))
   );
 
-  // Fan moments animations
-  const [momentCardsAnim] = useState(() =>
-    Array(6).fill(0).map(() => new Animated.Value(0))
-  );
-
   // Scale animations for interactive cards
   const [statScaleAnims] = useState(() =>
     Array(4).fill(0).map(() => new Animated.Value(1))
-  );
-  const [momentScaleAnims] = useState(() =>
-    Array(6).fill(0).map(() => new Animated.Value(1))
   );
   const [announcementScaleAnims] = useState(() =>
     announcementList.map(() => new Animated.Value(1))
@@ -76,19 +63,6 @@ const MarsScreen: React.FC = () => {
 
   // Animations
 
-  // Backend'den FanMoments yükle
-  useEffect(() => {
-    const loadMoments = async () => {
-      const response = await fanMomentService.getFanMoments(1, 20, 'Approved');
-      if (response.success && response.data) {
-        console.log('✅ MarsScreen - Backend verisi:', response.data.length);
-        setMoments(response.data);
-      } else {
-        console.log('❌ MarsScreen - Backend hatası:', response.error);
-      }
-    };
-    loadMoments();
-  }, []);
   const badgeAnim = useRef(new Animated.Value(0)).current;
   const heroTitleAnim = useRef(new Animated.Value(0)).current;
   const [statCardsAnim] = useState(() => [
@@ -97,8 +71,6 @@ const MarsScreen: React.FC = () => {
     new Animated.Value(0),
     new Animated.Value(0),
   ]);
-
-  const momentCardWidth = 260;
 
   // Animate hero and stats on mount
   useEffect(() => {
@@ -132,21 +104,6 @@ const MarsScreen: React.FC = () => {
       ),
     ]).start();
 
-    // Animate moment cards
-    setTimeout(() => {
-      Animated.stagger(
-        70,
-        momentCardsAnim.map((anim: Animated.Value) =>
-          Animated.spring(anim, {
-            toValue: 1,
-            tension: 50,
-            friction: 7,
-            useNativeDriver: true,
-          })
-        )
-      ).start();
-    }, 300);
-
     // Animate announcement cards
     setTimeout(() => {
       Animated.stagger(
@@ -161,7 +118,7 @@ const MarsScreen: React.FC = () => {
         )
       ).start();
     }, 500);
-  }, [badgeAnim, heroTitleAnim, statCardsAnim, momentCardsAnim, announcementCardsAnim]);
+  }, [badgeAnim, heroTitleAnim, statCardsAnim, announcementCardsAnim]);
 
   const updateSubmission = (key: keyof typeof submission) => (value: string) => {
     setFormError(null);
@@ -469,117 +426,6 @@ const MarsScreen: React.FC = () => {
         </LinearGradient>
 
         <SectionHeading
-          title={t("archive.sectionMoments")}
-          subtitle={t("archive.sectionMomentsSubtitle")}
-          icon="camera-outline"
-          onPress={() => setMomentOpen(true)}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          decelerationRate="fast"
-          snapToInterval={momentCardWidth + spacing.sm}
-          snapToAlignment="start"
-          contentContainerStyle={styles.momentRow}
-        >
-          {moments.slice(0, 6).map((moment, index) => {
-            const cardAnim = momentCardsAnim[index] || new Animated.Value(1);
-            const scaleAnim = momentScaleAnims[index];
-
-            return (
-              <Animated.View
-                key={moment.id}
-                style={[
-                  {
-                    opacity: cardAnim,
-                    transform: [
-                      {
-                        translateY: cardAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [40, 0],
-                        }),
-                      },
-                      {
-                        scale: Animated.multiply(
-                          cardAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.9, 1],
-                          }),
-                          scaleAnim
-                        ),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                <Pressable
-                  onPressIn={() => {
-                    Animated.spring(scaleAnim, {
-                      toValue: 0.95,
-                      tension: 300,
-                      friction: 20,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
-                  onPressOut={() => {
-                    Animated.spring(scaleAnim, {
-                      toValue: 1,
-                      tension: 300,
-                      friction: 20,
-                      useNativeDriver: true,
-                    }).start();
-                  }}
-                >
-                  <LinearGradient
-                    colors={[
-                      "rgba(0, 191, 71, 0.15)",
-                      "rgba(0, 191, 71, 0.08)",
-                      "rgba(11, 17, 28, 0.9)",
-                      colors.card,
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.momentCard}
-                  >
-                    <BlurView
-                      intensity={IS_IOS ? 10 : 8}
-                      tint="dark"
-                      style={styles.momentCardBlur}
-                    >
-                      <View style={styles.momentTopBar}>
-                        <View style={styles.momentAvatarWrapper}>
-                          <Ionicons
-                            name="person"
-                            size={16}
-                            color={colors.primary}
-                          />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.momentUser}>{moment.username}</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.momentCaption}>{moment.description || ''}</Text>
-                      <View style={styles.momentFooter}>
-                        <View style={styles.momentMetaItem}>
-                          <Ionicons
-                            name="time-outline"
-                            size={12}
-                            color={colors.mutedText}
-                          />
-                          <Text style={styles.momentMeta}>
-                            {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
-                          </Text>
-                        </View>
-                      </View>
-                    </BlurView>
-                  </LinearGradient>
-                </Pressable>
-              </Animated.View>
-            );
-          })}
-        </ScrollView>
-
-        <SectionHeading
           title={t("archive.sectionAnnouncements")}
           subtitle={t("archive.sectionAnnouncementsSubtitle")}
           icon="megaphone-outline"
@@ -790,67 +636,6 @@ const MarsScreen: React.FC = () => {
           </BlurView>
         </LinearGradient>
       </ScrollView>
-
-      <Modal
-        visible={momentOpen}
-        animationType="slide"
-        onRequestClose={() => setMomentOpen(false)}
-      >
-        <SafeAreaView style={styles.modalSafe}>
-          <ModalHeader
-            title={t("archive.modalMomentsTitle")}
-            onClose={() => setMomentOpen(false)}
-          />
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            {moments.map((moment) => (
-              <LinearGradient
-                key={moment.id}
-                colors={[
-                  "rgba(0, 191, 71, 0.15)",
-                  "rgba(0, 191, 71, 0.08)",
-                  "rgba(11, 17, 28, 0.9)",
-                  colors.card,
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.modalCard}
-              >
-                <BlurView
-                  intensity={IS_IOS ? 8 : 6}
-                  tint="dark"
-                  style={styles.modalCardBlur}
-                >
-                  <View style={styles.momentTopBar}>
-                    <View style={styles.momentAvatarWrapper}>
-                      <Ionicons
-                        name="person"
-                        size={16}
-                        color={colors.primary}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.momentUser}>{moment.username}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.momentCaption}>{moment.description || ''}</Text>
-                  <View style={styles.momentFooter}>
-                    <View style={styles.momentMetaItem}>
-                      <Ionicons
-                        name="time-outline"
-                        size={12}
-                        color={colors.mutedText}
-                      />
-                      <Text style={styles.momentMeta}>
-                        {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
-                      </Text>
-                    </View>
-                  </View>
-                </BlurView>
-              </LinearGradient>
-            ))}
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
 
       <Modal
         visible={submitOpen}
@@ -1240,96 +1025,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
     fontSize: fontSizes.sm,
     marginTop: 2,
-  },
-  momentRow: {
-    gap: spacing.sm,
-    marginBottom: spacing.xl,
-    paddingLeft: spacing.lg,
-  },
-  momentCard: {
-    width: 260,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.28,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
-  },
-  momentCardBlur: {
-    padding: spacing.lg,
-    backgroundColor: "rgba(11, 17, 28, 0.35)",
-    gap: spacing.sm,
-  },
-  momentTopBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  momentAvatarWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "rgba(0, 191, 71, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 191, 71, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  momentUser: {
-    color: colors.text,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.md,
-    marginBottom: 2,
-  },
-  momentSourceBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs / 2,
-  },
-  momentSourceText: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-  },
-  momentCaption: {
-    color: colors.text,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.md,
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  momentFooter: {
-    gap: spacing.xs / 2,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255, 255, 255, 0.05)",
-  },
-  momentMetaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs / 2,
-  },
-  momentMeta: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-    flex: 1,
-  },
-  momentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.xs / 2,
   },
   announcementList: {
     gap: spacing.sm,

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+import { staffService, type StaffDto } from "../services/staffService";
 import {
   mensManagement,
   womensManagement,
@@ -25,32 +26,186 @@ import {
   womensSquad,
   type ManagementMember,
   type CoachingStaffMember,
+  type SocialMedia,
   type SquadPlayer,
 } from "../data/mockData";
 
 type GenderTeam = "mens" | "womens";
 type TabType = "management" | "coaching" | "squad";
 
+const MANAGEMENT_KEYWORDS = [
+  "baskan",
+  "yonetim",
+  "sekreter",
+  "asbaskan",
+  "chairman",
+  "president",
+  "director",
+  "board",
+];
+
+const COACHING_KEYWORDS = [
+  "teknik",
+  "antrenor",
+  "coach",
+  "trainer",
+  "kondisyoner",
+  "kaleci",
+  "analist",
+  "fizyoterapist",
+  "fitness",
+  "goalkeeper",
+  "assistant",
+];
+
+const normalizeText = (value: string) =>
+  value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ü/g, "u")
+    .replace(/ş/g, "s")
+    .replace(/ö/g, "o")
+    .replace(/ç/g, "c");
+
+const extractHandle = (value?: string | null) => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  if (!/^https?:\/\//i.test(trimmed) && !trimmed.includes("/")) {
+    return trimmed.replace(/^@/, "");
+  }
+
+  const withoutProtocol = trimmed.replace(/^https?:\/\//i, "");
+  const withoutWww = withoutProtocol.replace(/^www\./i, "");
+  const parts = withoutWww.split("/").filter(Boolean);
+  if (parts.length === 0) return undefined;
+
+  const host = parts[0];
+  const handleCandidate =
+    host.includes("instagram.com") ||
+    host.includes("twitter.com") ||
+    host.includes("x.com")
+      ? parts[1]
+      : parts[0];
+
+  if (!handleCandidate) return undefined;
+  return handleCandidate.replace(/^@/, "").split("?")[0];
+};
+
+const getStaffRoleText = (member: StaffDto) =>
+  normalizeText(
+    [member.title, member.profession].filter(Boolean).join(" ").trim()
+  );
+
+const buildSocialMedia = (member: StaffDto): SocialMedia | undefined => {
+  const instagram = extractHandle(member.instagramUrl);
+  const twitter = extractHandle(member.twitterUrl);
+  if (!instagram && !twitter) return undefined;
+  return { instagram, twitter };
+};
+
+const mapStaffMember = (
+  member: StaffDto
+): ManagementMember | CoachingStaffMember => ({
+  id: member.id,
+  name: member.name,
+  role: member.title || member.profession || "",
+  bio: member.biography || "",
+  photoUrl: member.imageUrl || undefined,
+  socialMedia: buildSocialMedia(member),
+});
+
+const splitStaffMembers = (staff: StaffDto[]) => {
+  const sortedStaff = [...staff].sort(
+    (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+  );
+  const management: ManagementMember[] = [];
+  const coaching: CoachingStaffMember[] = [];
+
+  sortedStaff.forEach((member) => {
+    const roleText = getStaffRoleText(member);
+    const isManagement = MANAGEMENT_KEYWORDS.some((keyword) =>
+      roleText.includes(keyword)
+    );
+    const isCoaching = COACHING_KEYWORDS.some((keyword) =>
+      roleText.includes(keyword)
+    );
+    const mapped = mapStaffMember(member);
+
+    if (isCoaching && !isManagement) {
+      coaching.push(mapped);
+      return;
+    }
+
+    if (isManagement) {
+      management.push(mapped);
+      return;
+    }
+
+    management.push(mapped);
+  });
+
+  return { management, coaching };
+};
+
 const TeamScreen = () => {
   const { t } = useTranslation();
   const [selectedGender, setSelectedGender] = useState<GenderTeam>("mens");
   const [selectedTab, setSelectedTab] = useState<TabType>("management");
+  const [staffByGender, setStaffByGender] = useState<
+    Record<
+      GenderTeam,
+      { management: ManagementMember[]; coaching: CoachingStaffMember[] }
+    >
+  >({
+    mens: { management: mensManagement, coaching: mensCoachingStaff },
+    womens: { management: womensManagement, coaching: womensCoachingStaff },
+  });
 
   // Get current data based on gender
   const currentManagement = useMemo(
-    () => (selectedGender === "mens" ? mensManagement : womensManagement),
-    [selectedGender]
+    () => staffByGender[selectedGender].management,
+    [selectedGender, staffByGender]
   );
 
   const currentCoachingStaff = useMemo(
-    () => (selectedGender === "mens" ? mensCoachingStaff : womensCoachingStaff),
-    [selectedGender]
+    () => staffByGender[selectedGender].coaching,
+    [selectedGender, staffByGender]
   );
 
   const currentSquad = useMemo(
     () => (selectedGender === "mens" ? mensSquad : womensSquad),
     [selectedGender]
   );
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadStaff = async () => {
+      const teamType = selectedGender === "mens" ? "Mens" : "Womens";
+      const response = await staffService.getStaff(teamType);
+
+      if (!isActive) {
+        return;
+      }
+
+      if (response.success && response.data) {
+        const { management, coaching } = splitStaffMembers(response.data);
+        setStaffByGender((prev) => ({
+          ...prev,
+          [selectedGender]: { management, coaching },
+        }));
+      }
+    };
+
+    loadStaff();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedGender]);
 
   // Group squad players by position
   const squadSections = useMemo(() => {
@@ -61,11 +216,19 @@ const TeamScreen = () => {
     }));
   }, [currentSquad]);
 
-  const handleSocialMediaPress = (platform: "instagram" | "twitter", handle?: string) => {
-    if (!handle) return;
-    const url = platform === "instagram"
-      ? `https://instagram.com/${handle}`
-      : `https://twitter.com/${handle}`;
+  const handleSocialMediaPress = (
+    platform: "instagram" | "twitter",
+    handleOrUrl?: string
+  ) => {
+    if (!handleOrUrl) return;
+    const trimmed = handleOrUrl.trim();
+    if (!trimmed) return;
+    const handle = trimmed.replace(/^@/, "");
+    const url = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : platform === "instagram"
+        ? `https://instagram.com/${handle}`
+        : `https://twitter.com/${handle}`;
     Linking.openURL(url);
   };
 
