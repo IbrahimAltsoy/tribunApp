@@ -1,8 +1,9 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -13,15 +14,53 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
-import { kits } from "../data/mockData";
+import { kitService, type KitItem } from "../services/kitService";
 import { colors, shadows } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 
+type GenderTeam = "mens" | "womens";
+
 const KitsScreen: React.FC = () => {
   const { t } = useTranslation();
+  const [selectedGender, setSelectedGender] = useState<GenderTeam>("mens");
+  const [kits, setKits] = useState<KitItem[]>([]);
 
-  const renderKitCard: ListRenderItem<typeof kits[0]> = useCallback(({ item: kit }) => (
+  useEffect(() => {
+    let isActive = true;
+
+    const loadKits = async () => {
+      const teamType = selectedGender === "mens" ? "Mens" : "Womens";
+      const response = await kitService.getKits(teamType);
+
+      if (!isActive) {
+        return;
+      }
+
+      if (response.success && response.data) {
+        setKits(response.data);
+      } else {
+        setKits([]);
+      }
+    };
+
+    loadKits();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedGender]);
+
+  const handleShare = useCallback(async (kit: KitItem) => {
+    const message = `${kit.title} • ${kit.season}`;
+    try {
+      await Share.share({ message });
+    } catch {
+      // Ignore share errors to keep UX smooth.
+    }
+  }, []);
+
+  const renderKitCard: ListRenderItem<KitItem> = useCallback(({ item: kit }) => (
     <LinearGradient
       colors={["rgba(15,169,88,0.20)", "rgba(0,0,0,0.30)", "rgba(209,14,14,0.15)"]}
       start={{ x: 0, y: 0 }}
@@ -53,22 +92,62 @@ const KitsScreen: React.FC = () => {
 
       <Text style={styles.note}>{kit.note}</Text>
 
-      <View style={styles.actionRow}>
-        <Action icon="heart-outline" label={t("like")} />
-        <Action icon="share-social-outline" label={t("share")} />
-        <Action icon="ellipsis-horizontal" label={t("details")} />
-      </View>
+      <Pressable
+        style={styles.shareButton}
+        onPress={() => handleShare(kit)}
+      >
+        <Ionicons name="share-social-outline" size={16} color={colors.text} />
+        <Text style={styles.shareButtonText}>{t("share")}</Text>
+      </Pressable>
     </LinearGradient>
-  ), [t]);
+  ), [handleShare, t]);
 
-  const keyExtractor = useCallback((item: typeof kits[0]) => item.id, []);
+  const keyExtractor = useCallback((item: KitItem) => item.id, []);
+
+  const genderSelector = useMemo(() => (
+    <View style={styles.genderSelector}>
+      <Pressable
+        style={[
+          styles.genderButton,
+          selectedGender === "mens" && styles.genderButtonActive,
+        ]}
+        onPress={() => setSelectedGender("mens")}
+      >
+        <Text
+          style={[
+            styles.genderButtonText,
+            selectedGender === "mens" && styles.genderButtonTextActive,
+          ]}
+        >
+          {t("team.genderSelector.mens")}
+        </Text>
+      </Pressable>
+      <Pressable
+        style={[
+          styles.genderButton,
+          selectedGender === "womens" && styles.genderButtonActive,
+        ]}
+        onPress={() => setSelectedGender("womens")}
+      >
+        <Text
+          style={[
+            styles.genderButtonText,
+            selectedGender === "womens" && styles.genderButtonTextActive,
+          ]}
+        >
+          {t("team.genderSelector.womens")}
+        </Text>
+      </Pressable>
+    </View>
+  ), [selectedGender, t]);
 
   const ListHeaderComponent = useCallback(() => (
     <>
       <Text style={styles.title}>{t("archive.sectionKits")}</Text>
       <Text style={styles.subtitle}>{t("archive.sectionKitsSubtitle")}</Text>
+      {genderSelector}
     </>
-  ), [t]);
+  ), [genderSelector, t]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -109,13 +188,6 @@ const KitArt = ({
   );
 };
 
-const Action = ({ icon, label }: { icon: keyof typeof Ionicons.glyphMap; label: string }) => (
-  <Pressable style={styles.actionBtn}>
-    <Ionicons name={icon} size={16} color={colors.text} />
-    <Text style={styles.actionText}>{label}</Text>
-  </Pressable>
-);
-
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   container: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl * 1.5 },
@@ -127,6 +199,32 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   subtitle: { color: colors.mutedText, fontFamily: typography.medium, lineHeight: 22, marginBottom: spacing.sm },
+
+  genderSelector: {
+    flexDirection: "row",
+    marginBottom: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: spacing.xs,
+  },
+  genderButton: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  genderButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  genderButtonText: {
+    fontSize: fontSizes.sm,
+    fontFamily: typography.medium,
+    color: colors.mutedText,
+  },
+  genderButtonTextActive: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
+  },
 
   card: {
     borderRadius: 20,
@@ -157,13 +255,13 @@ const styles = StyleSheet.create({
 
   kitImage: {
     width: "100%",
-    height: 230,
+    height: 190,
     borderRadius: 14,
     backgroundColor: "#111",
   },
   kitPlaceholder: {
     width: "100%",
-    height: 230,
+    height: 190,
     borderRadius: 14,
     overflow: "hidden",
     flexDirection: "row",
@@ -185,19 +283,18 @@ const styles = StyleSheet.create({
 
   note: { color: colors.mutedText, fontFamily: typography.medium, lineHeight: 20, textAlign: "center" },
 
-  actionRow: { flexDirection: "row", justifyContent: "space-around", marginTop: spacing.sm },
-
-  actionBtn: {
+  shareButton: {
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  actionText: { color: colors.text, fontSize: fontSizes.sm },
+  shareButtonText: { color: colors.text, fontSize: fontSizes.sm },
 });
 
 export default KitsScreen;

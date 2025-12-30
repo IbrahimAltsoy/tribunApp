@@ -152,6 +152,7 @@ const MarsScreen: React.FC = () => {
     value: string | number;
     meta: string;
     route?: keyof MarsStackParamList;
+    hideValue?: boolean;
   }[] = [
     {
       label: t("archive.sectionArchive"),
@@ -164,12 +165,14 @@ const MarsScreen: React.FC = () => {
       value: players.length,
       meta: t("team.subtitle"),
       route: "Team",
+      hideValue: true,
     },
     {
       label: t("archive.sectionKits"),
       value: kits.length,
       meta: t("archive.formaPeriod"),
       route: "Kits",
+      hideValue: true,
     },
     {
       label: t("archive.sectionAnnouncements"),
@@ -404,7 +407,9 @@ const MarsScreen: React.FC = () => {
                         style={styles.statCardBlur}
                       >
                         <View style={styles.statCardLeft}>
-                          <Text style={styles.statValue}>{item.value}</Text>
+                          {!item.hideValue ? (
+                            <Text style={styles.statValue}>{item.value}</Text>
+                          ) : null}
                           <Text style={styles.statLabel}>{item.label}</Text>
                           <Text style={styles.statMeta}>{item.meta}</Text>
                         </View>

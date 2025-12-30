@@ -17,13 +17,12 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { staffService, type StaffDto } from "../services/staffService";
+import { playerService, type PlayerDto } from "../services/playerService";
 import {
   mensManagement,
   womensManagement,
   mensCoachingStaff,
   womensCoachingStaff,
-  mensSquad,
-  womensSquad,
   type ManagementMember,
   type CoachingStaffMember,
   type SocialMedia,
@@ -99,7 +98,10 @@ const getStaffRoleText = (member: StaffDto) =>
     [member.title, member.profession].filter(Boolean).join(" ").trim()
   );
 
-const buildSocialMedia = (member: StaffDto): SocialMedia | undefined => {
+const buildSocialMedia = (member: {
+  instagramUrl?: string | null;
+  twitterUrl?: string | null;
+}): SocialMedia | undefined => {
   const instagram = extractHandle(member.instagramUrl);
   const twitter = extractHandle(member.twitterUrl);
   if (!instagram && !twitter) return undefined;
@@ -150,6 +152,107 @@ const splitStaffMembers = (staff: StaffDto[]) => {
   return { management, coaching };
 };
 
+const formatDateWithAge = (value?: string | null) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const formatHeight = (value?: number | null) => {
+  if (!value) return "-";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "-";
+  if (numeric >= 100) {
+    return `${(numeric / 100).toFixed(2)} m`;
+  }
+  if (numeric >= 3) {
+    return `${numeric.toFixed(2)} m`;
+  }
+  return `${numeric} m`;
+};
+
+const formatWeight = (value?: number | null) => {
+  if (!value) return "-";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "-";
+  return `${numeric} kg`;
+};
+
+const mapPositionGroup = (position?: string | null, detailed?: string | null) => {
+  const combined = normalizeText(
+    [position || "", detailed || ""].join(" ").trim()
+  );
+  if (!combined) return "Diğer";
+  if (combined.includes("kaleci") || combined.includes("goalkeeper")) {
+    return "Kaleci";
+  }
+  if (
+    combined.includes("defans") ||
+    combined.includes("defender") ||
+    combined.includes("bek")
+  ) {
+    return "Defans";
+  }
+  if (combined.includes("orta") || combined.includes("midfield")) {
+    return "Orta Saha";
+  }
+  if (
+    combined.includes("forvet") ||
+    combined.includes("forward") ||
+    combined.includes("attacker")
+  ) {
+    return "Forvet";
+  }
+  return "Diğer";
+};
+
+const mapPreferredFoot = (
+  value?: string | null
+): SquadPlayer["preferredFoot"] => {
+  if (!value) return "Sağ";
+  const normalized = normalizeText(value);
+  if (normalized.includes("sol") || normalized.includes("left")) {
+    return "Sol";
+  }
+  if (
+    normalized.includes("cift") ||
+    normalized.includes("both") ||
+    normalized.includes("iki")
+  ) {
+    return "Çift Ayak";
+  }
+  return "Sağ";
+};
+
+const mapPlayerToSquad = (player: PlayerDto): SquadPlayer => ({
+  id: player.id,
+  name: player.name,
+  jerseyNumber: player.jerseyNumber,
+  position: mapPositionGroup(player.position, player.detailedPosition),
+  detailedPosition: player.detailedPosition || player.position || "-",
+  age: player.age ?? 0,
+  birthDate: formatDateWithAge(player.birthDate),
+  birthPlace: "-",
+  nationality: player.nationality || "-",
+  height: formatHeight(player.height),
+  weight: formatWeight(player.weight),
+  preferredFoot: mapPreferredFoot(player.preferredFoot),
+  marketValue: player.marketValue || "-",
+  currentClub: "-",
+  previousClubs: [],
+  bio: player.biography || "",
+  photoUrl: player.imageUrl || undefined,
+  socialMedia: buildSocialMedia({
+    instagramUrl: player.instagramUrl,
+    twitterUrl: player.twitterUrl,
+  }),
+});
+
 const TeamScreen = () => {
   const { t } = useTranslation();
   const [selectedGender, setSelectedGender] = useState<GenderTeam>("mens");
@@ -162,6 +265,12 @@ const TeamScreen = () => {
   >({
     mens: { management: mensManagement, coaching: mensCoachingStaff },
     womens: { management: womensManagement, coaching: womensCoachingStaff },
+  });
+  const [squadByGender, setSquadByGender] = useState<
+    Record<GenderTeam, SquadPlayer[]>
+  >({
+    mens: [],
+    womens: [],
   });
 
   // Get current data based on gender
@@ -176,8 +285,8 @@ const TeamScreen = () => {
   );
 
   const currentSquad = useMemo(
-    () => (selectedGender === "mens" ? mensSquad : womensSquad),
-    [selectedGender]
+    () => squadByGender[selectedGender],
+    [selectedGender, squadByGender]
   );
 
   useEffect(() => {
@@ -207,9 +316,41 @@ const TeamScreen = () => {
     };
   }, [selectedGender]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadPlayers = async () => {
+      const teamType = selectedGender === "mens" ? "Mens" : "Womens";
+      const response = await playerService.getPlayers(teamType);
+
+      if (!isActive) {
+        return;
+      }
+
+      if (response.success && response.data) {
+        const mappedPlayers = response.data.map(mapPlayerToSquad);
+        setSquadByGender((prev) => ({
+          ...prev,
+          [selectedGender]: mappedPlayers,
+        }));
+      } else {
+        setSquadByGender((prev) => ({
+          ...prev,
+          [selectedGender]: [],
+        }));
+      }
+    };
+
+    loadPlayers();
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedGender]);
+
   // Group squad players by position
   const squadSections = useMemo(() => {
-    const positions = ["Kaleci", "Defans", "Orta Saha", "Forvet"];
+    const positions = ["Kaleci", "Defans", "Orta Saha", "Forvet", "Diğer"];
     return positions.map((position) => ({
       title: position,
       data: currentSquad.filter((p) => p.position === position),
@@ -442,14 +583,6 @@ const TeamScreen = () => {
         <View style={styles.infoColumn}>
           <View style={styles.infoRowEnhanced}>
             <View style={styles.infoIconLabel}>
-              <Ionicons name="flag" size={12} color={colors.primary} />
-              <Text style={styles.infoLabelEnhanced}>{t("team.player.nationality")}</Text>
-            </View>
-            <Text style={styles.infoValueEnhanced}>{player.nationality}</Text>
-          </View>
-
-          <View style={styles.infoRowEnhanced}>
-            <View style={styles.infoIconLabel}>
               <Ionicons name="calendar" size={12} color={colors.primary} />
               <Text style={styles.infoLabelEnhanced}>{t("team.player.birthDate")}</Text>
             </View>
@@ -460,6 +593,17 @@ const TeamScreen = () => {
 
           <View style={styles.infoRowEnhanced}>
             <View style={styles.infoIconLabel}>
+              <Ionicons name="flag" size={12} color={colors.primary} />
+              <Text style={styles.infoLabelEnhanced}>{t("team.player.nationality")}</Text>
+            </View>
+            <Text style={styles.infoValueEnhanced}>{player.nationality}</Text>
+          </View>
+        </View>
+
+        {/* Right Column */}
+        <View style={styles.infoColumn}>
+          <View style={styles.infoRowEnhanced}>
+            <View style={styles.infoIconLabel}>
               <Ionicons name="resize" size={12} color={colors.primary} />
               <Text style={styles.infoLabelEnhanced}>{t("team.player.height")}</Text>
             </View>
@@ -468,49 +612,10 @@ const TeamScreen = () => {
 
           <View style={styles.infoRowEnhanced}>
             <View style={styles.infoIconLabel}>
-              <Ionicons name="footsteps" size={12} color={colors.primary} />
-              <Text style={styles.infoLabelEnhanced}>{t("team.player.preferredFoot")}</Text>
-            </View>
-            <Text style={styles.infoValueEnhanced}>{player.preferredFoot}</Text>
-          </View>
-        </View>
-
-        {/* Right Column */}
-        <View style={styles.infoColumn}>
-          <View style={styles.infoRowEnhanced}>
-            <View style={styles.infoIconLabel}>
-              <Ionicons name="location" size={12} color={colors.primary} />
-              <Text style={styles.infoLabelEnhanced}>{t("team.player.birthPlace")}</Text>
-            </View>
-            <Text style={styles.infoValueEnhanced}>{player.birthPlace}</Text>
-          </View>
-
-          <View style={styles.infoRowEnhanced}>
-            <View style={styles.infoIconLabel}>
-              <Ionicons name="shield" size={12} color={colors.primary} />
-              <Text style={styles.infoLabelEnhanced}>{t("team.player.currentClub")}</Text>
-            </View>
-            <Text style={[styles.infoValueEnhanced, styles.clubHighlight]}>
-              {player.currentClub}
-            </Text>
-          </View>
-
-          <View style={styles.infoRowEnhanced}>
-            <View style={styles.infoIconLabel}>
               <Ionicons name="barbell" size={12} color={colors.primary} />
               <Text style={styles.infoLabelEnhanced}>{t("team.player.weight")}</Text>
             </View>
             <Text style={styles.infoValueEnhanced}>{player.weight}</Text>
-          </View>
-
-          <View style={styles.infoRowEnhanced}>
-            <View style={styles.infoIconLabel}>
-              <Ionicons name="trending-up" size={12} color={colors.primary} />
-              <Text style={styles.infoLabelEnhanced}>{t("team.player.marketValue")}</Text>
-            </View>
-            <Text style={[styles.infoValueEnhanced, styles.marketValueText]}>
-              {player.marketValue}
-            </Text>
           </View>
         </View>
       </View>
@@ -962,14 +1067,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.regular,
     color: colors.text,
     paddingLeft: 18,
-  },
-  clubHighlight: {
-    color: colors.primary,
-    fontFamily: typography.semiBold,
-  },
-  marketValueText: {
-    color: colors.accent,
-    fontFamily: typography.bold,
   },
   previousClubsSection: {
     marginTop: spacing.sm,
