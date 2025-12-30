@@ -1,148 +1,189 @@
-/**
- * Chat Service - Backend Communication
- *
- * This file contains placeholder functions for backend integration.
- * Replace these with actual WebSocket or REST API calls.
- */
+export type ChatRoomDto = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  maxUsers?: number | null;
+  currentUserCount: number;
+  createdAt: string;
+  imageUrl?: string | null;
+};
 
-export interface SendMessagePayload {
-  sessionId: string;      // Unique anonymous session ID
-  nickname: string;       // Amedspor-themed nickname
-  message: string;        // Message content
-  roomId: string;         // Chat room/match ID
-  timestamp: number;      // Client timestamp
-}
-
-export interface ReceivedMessage {
-  messageId: string;
-  nickname: string;
+export type ChatMessageDto = {
+  id: string;
+  roomId: string;
+  username: string;
   message: string;
-  timestamp: number;
-  serverTimestamp: number;
-}
-
-/**
- * Send message to backend
- *
- * TODO: Replace with actual WebSocket emit or REST API call
- *
- * Example WebSocket implementation:
- * ```typescript
- * import io from 'socket.io-client';
- * const socket = io('https://your-backend-url');
- *
- * socket.emit('sendMessage', payload);
- * ```
- *
- * Example REST API implementation:
- * ```typescript
- * await fetch('https://your-backend-url/api/chat/messages', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify(payload)
- * });
- * ```
- */
-export const sendMessageToBackend = async (
-  payload: SendMessagePayload
-): Promise<void> => {
-  // For now, just log what would be sent
-  console.log('📤 [CHAT] Sending message to backend:', {
-    sessionId: payload.sessionId,
-    nickname: payload.nickname,
-    message: payload.message,
-    roomId: payload.roomId,
-    timestamp: new Date(payload.timestamp).toISOString(),
-  });
-
-  // TODO: Implement actual backend call
-  // Example WebSocket:
-  // socket.emit('sendMessage', payload);
-
-  // Example REST:
-  // const response = await fetch(API_URL + '/messages', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(payload)
-  // });
-  //
-  // if (!response.ok) {
-  //   throw new Error('Failed to send message');
-  // }
+  createdAt: string;
 };
 
-/**
- * Subscribe to new messages from backend
- *
- * TODO: Replace with actual WebSocket listener or polling
- *
- * Example WebSocket implementation:
- * ```typescript
- * socket.on('newMessage', (message: ReceivedMessage) => {
- *   callback(message);
- * });
- * ```
- */
-export const subscribeToMessages = (
+export type ChatScheduleDto = {
+  isOpen: boolean;
+  startUtc?: string | null;
+  endUtc?: string | null;
+  note?: string | null;
+};
+
+type PagedResult<T> = {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+};
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = `${API_BASE_URL}/api/chat`;
+
+const getRooms = async (): Promise<{
+  success: boolean;
+  data?: ChatRoomDto[];
+  error?: string;
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/rooms`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    const data = Array.isArray(json.data) ? json.data : [];
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const getRoomMessages = async (
   roomId: string,
-  callback: (message: ReceivedMessage) => void
-): (() => void) => {
-  console.log('👂 [CHAT] Subscribing to messages in room:', roomId);
+  pageNumber: number = 1,
+  pageSize: number = 50
+): Promise<{
+  success: boolean;
+  data?: PagedResult<ChatMessageDto>;
+  error?: string;
+}> => {
+  try {
+    const response = await fetch(
+      `${API_URL}/rooms/${roomId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
-  // TODO: Implement actual backend subscription
-  // Example WebSocket:
-  // socket.on('newMessage', callback);
-  //
-  // Return cleanup function
-  // return () => socket.off('newMessage', callback);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  // Placeholder cleanup
-  return () => {
-    console.log('🔇 [CHAT] Unsubscribed from room:', roomId);
-  };
+    const json = await response.json();
+
+    return { success: true, data: json.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 };
 
-/**
- * Report a message for moderation
- */
-export const reportMessage = async (
+const sendMessage = async (
+  roomId: string,
+  payload: { username: string; message: string }
+): Promise<{
+  success: boolean;
+  data?: ChatMessageDto;
+  error?: string;
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null);
+      const errorMessage =
+        errorBody?.message || `HTTP error! status: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+
+    const json = await response.json();
+
+    return { success: true, data: json.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const getChatStatus = async (): Promise<{
+  success: boolean;
+  data?: ChatScheduleDto;
+  error?: string;
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/status`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+
+    return { success: true, data: json.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+};
+
+const reportMessage = async (
   messageId: string,
-  reportedBySessionId: string,
-  reason: 'spam' | 'offensive' | 'harassment' | 'other'
-): Promise<void> => {
-  console.log('🚨 [CHAT] Reporting message:', {
-    messageId,
-    reportedBy: reportedBySessionId,
-    reason,
-  });
+  payload: { reason: string; reportedBy: string }
+): Promise<{
+  success: boolean;
+  error?: string;
+}> => {
+  try {
+    const response = await fetch(`${API_URL}/messages/${messageId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  // TODO: Implement actual backend call
-  // await fetch(API_URL + '/report', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ messageId, reportedBy: reportedBySessionId, reason })
-  // });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 };
 
-/**
- * Fetch message history for a room
- */
-export const fetchMessageHistory = async (
-  roomId: string,
-  limit: number = 50,
-  beforeMessageId?: string
-): Promise<ReceivedMessage[]> => {
-  console.log('📜 [CHAT] Fetching message history:', {
-    roomId,
-    limit,
-    beforeMessageId,
-  });
-
-  // TODO: Implement actual backend call
-  // const response = await fetch(
-  //   `${API_URL}/rooms/${roomId}/messages?limit=${limit}${beforeMessageId ? `&before=${beforeMessageId}` : ''}`
-  // );
-  // return await response.json();
-
-  return [];
+export const chatService = {
+  getRooms,
+  getRoomMessages,
+  sendMessage,
+  getChatStatus,
+  reportMessage,
 };

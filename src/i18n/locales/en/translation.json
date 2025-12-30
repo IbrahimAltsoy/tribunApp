@@ -121,6 +121,7 @@
     "subtitle": "Share the match hype, cheer together, ask quick questions.",
     "placeholder": "Write a message...",
     "nicknamePlaceholder": "Nickname",
+    "closedTitle": "Chat is currently closed",
     "emptyState": "Be the first to drop a message and warm up the tribune."
   },
   "like": "Like",

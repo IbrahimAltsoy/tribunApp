@@ -21,30 +21,45 @@ import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { generateAmedNickname } from "../utils/amedNameGenerator";
 import { initializeSession, updateNickname, UserSession } from "../utils/sessionManager";
-import { sendMessageToBackend } from "../services/chatService";
-import { matchRooms } from "../data/mockData";
+import { chatService, type ChatMessageDto, type ChatRoomDto, type ChatScheduleDto } from "../services/chatService";
+import { chatHubService } from "../services/chatHubService";
 import { useTranslation } from "react-i18next";
 
 const IS_IOS = Platform.OS === "ios";
 const quickReactions = ["⚽", "🔥", "💪", "👏", "🎯"];
-const tribuneRoom = matchRooms[0];
+const MESSAGE_PAGE_SIZE = 50;
+
+const formatTimestamp = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+};
+
+const isScheduleOpen = (schedule: ChatScheduleDto | null) => {
+  if (!schedule) return true;
+  const now = new Date();
+  const startOk = !schedule.startUtc || new Date(schedule.startUtc) <= now;
+  const endOk = !schedule.endUtc || now <= new Date(schedule.endUtc);
+  return schedule.isOpen && startOk && endOk;
+};
 
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
   const [session, setSession] = useState<UserSession | null>(null);
   const [nickname, setNickname] = useState("");
   const [inputText, setInputText] = useState("");
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (!tribuneRoom) return [];
-    return tribuneRoom.messages.map((m) => ({
-      ...m,
-      isMine: m.sender === nickname,
-    }));
-  });
+  const [selectedRoom, setSelectedRoom] = useState<ChatRoomDto | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatSchedule, setChatSchedule] = useState<ChatScheduleDto | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState(0);
 
   const flatListRef = useRef<FlatList<Message>>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
   const onlineUsersAnim = useRef(new Animated.Value(0)).current;
+  const nicknameRef = useRef("");
+  const selectedRoomRef = useRef<string | null>(null);
 
   // Initialize session on mount
   useEffect(() => {
@@ -56,6 +71,14 @@ const ChatScreen: React.FC = () => {
     loadSession();
   }, []);
 
+  useEffect(() => {
+    nicknameRef.current = nickname;
+  }, [nickname]);
+
+  useEffect(() => {
+    selectedRoomRef.current = selectedRoom?.id ?? null;
+  }, [selectedRoom]);
+
   // Animate online users badge on mount
   useEffect(() => {
     Animated.spring(onlineUsersAnim, {
@@ -64,6 +87,43 @@ const ChatScreen: React.FC = () => {
       friction: 7,
       useNativeDriver: true,
     }).start();
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadRooms = async () => {
+      const response = await chatService.getRooms();
+      if (!isActive) return;
+
+      if (response.success && response.data) {
+        const firstActive =
+          response.data.find((room) => room.isActive) ||
+          response.data[0] ||
+          null;
+        setSelectedRoom(firstActive);
+        if (firstActive?.currentUserCount) {
+          setOnlineUsers(firstActive.currentUserCount);
+        }
+      }
+    };
+
+    const loadSchedule = async () => {
+      const response = await chatService.getChatStatus();
+      if (!isActive) return;
+
+      if (response.success && response.data) {
+        setChatSchedule(response.data);
+        setIsChatOpen(isScheduleOpen(response.data));
+      }
+    };
+
+    loadRooms();
+    loadSchedule();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -79,9 +139,87 @@ const ChatScreen: React.FC = () => {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, []);
 
-  const handleSendText = useCallback(() => {
+  useEffect(() => {
+    chatHubService.onMessage((incoming) => {
+      if (incoming.roomId !== selectedRoomRef.current) {
+        return;
+      }
+      const message: Message = {
+        id: incoming.id,
+        text: incoming.message,
+        sender: incoming.username || "Anonymous",
+        timestamp: formatTimestamp(incoming.createdAt),
+        isMine: incoming.username === nicknameRef.current,
+      };
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === message.id);
+        if (exists) return prev;
+        return [...prev, message];
+      });
+      setTimeout(scrollToBottom, 80);
+    });
+
+    chatHubService.onUserCount((count) => {
+      setOnlineUsers(count);
+    });
+
+    chatHubService.onStatus((status) => {
+      setChatSchedule(status);
+      setIsChatOpen(isScheduleOpen(status));
+    });
+
+    chatHubService.start();
+
+    return () => {
+      chatHubService.stop();
+    };
+  }, [scrollToBottom]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadMessages = async () => {
+      if (!selectedRoom) return;
+      const response = await chatService.getRoomMessages(
+        selectedRoom.id,
+        1,
+        MESSAGE_PAGE_SIZE
+      );
+
+      if (!isActive) return;
+
+      if (response.success && response.data?.items) {
+        const mapped = response.data.items.map((msg: ChatMessageDto) => ({
+          id: msg.id,
+          text: msg.message,
+          sender: msg.username || "Anonymous",
+          timestamp: formatTimestamp(msg.createdAt),
+          isMine: msg.username === nicknameRef.current,
+        }));
+        setMessages(mapped);
+        setTimeout(scrollToBottom, 80);
+      } else {
+        setMessages([]);
+      }
+    };
+
+    const joinRoom = async () => {
+      if (!selectedRoom) return;
+      await chatHubService.joinRoom(selectedRoom.id);
+    };
+
+    loadMessages();
+    joinRoom();
+
+    return () => {
+      isActive = false;
+      chatHubService.leaveRoom();
+    };
+  }, [selectedRoom, scrollToBottom]);
+
+  const handleSendText = useCallback(async () => {
     const trimmed = inputText.trim();
-    if (!trimmed || !session) return;
+    if (!trimmed || !session || !selectedRoom || !isChatOpen) return;
 
     Animated.sequence([
       Animated.spring(sendButtonScale, {
@@ -98,48 +236,62 @@ const ChatScreen: React.FC = () => {
       }),
     ]).start();
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: trimmed,
-      sender: nickname,
-      timestamp: new Date().toLocaleTimeString("tr-TR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isMine: true,
-    };
+    try {
+      await chatHubService.sendMessage(selectedRoom.id, trimmed, nickname);
+    } catch {
+      const response = await chatService.sendMessage(selectedRoom.id, {
+        username: nickname,
+        message: trimmed,
+      });
+      if (response.success && response.data) {
+        const message: Message = {
+          id: response.data.id,
+          text: response.data.message,
+          sender: response.data.username || nickname,
+          timestamp: formatTimestamp(response.data.createdAt),
+          isMine: response.data.username === nickname,
+        };
+        setMessages((prev) => [...prev, message]);
+      }
+    }
 
-    // Send to backend with sessionId
-    sendMessageToBackend({
-      sessionId: session.sessionId,
-      nickname: nickname,
-      message: trimmed,
-      roomId: tribuneRoom.id,
-      timestamp: Date.now()
-    }).catch((error) => {
-      console.error('Failed to send message to backend:', error);
-      // Message still appears locally even if backend fails
-    });
-
-    setMessages((prev) => [...prev, newMessage]);
     setInputText("");
     Keyboard.dismiss(); // Close keyboard after sending
     setTimeout(scrollToBottom, 80);
-  }, [inputText, nickname, session, sendButtonScale, scrollToBottom]);
+  }, [
+    inputText,
+    nickname,
+    session,
+    selectedRoom,
+    isChatOpen,
+    sendButtonScale,
+    scrollToBottom,
+  ]);
 
   const handleQuickReaction = useCallback(
-    (emoji: string) => {
-      const newMessage: Message = {
-        id: `${Date.now()}-${emoji}`,
-        text: emoji,
-        sender: nickname,
-        timestamp: "",
-        isMine: true,
-      };
-      setMessages((prev) => [...prev, newMessage]);
+    async (emoji: string) => {
+      if (!session || !selectedRoom || !isChatOpen) return;
+      try {
+        await chatHubService.sendMessage(selectedRoom.id, emoji, nickname);
+      } catch {
+        const response = await chatService.sendMessage(selectedRoom.id, {
+          username: nickname,
+          message: emoji,
+        });
+        if (response.success && response.data) {
+          const message: Message = {
+            id: response.data.id,
+            text: response.data.message,
+            sender: response.data.username || nickname,
+            timestamp: formatTimestamp(response.data.createdAt),
+            isMine: response.data.username === nickname,
+          };
+          setMessages((prev) => [...prev, message]);
+        }
+      }
       setTimeout(scrollToBottom, 80);
     },
-    [nickname, scrollToBottom]
+    [isChatOpen, nickname, scrollToBottom, selectedRoom, session]
   );
 
   const renderMessage = useCallback(
@@ -149,8 +301,7 @@ const ChatScreen: React.FC = () => {
 
   const keyExtractor = useCallback((item: Message) => item.id, []);
 
-  // Mock online users count
-  const onlineUsers = 247;
+  const closedNote = chatSchedule?.note || t("chat.closedTitle");
 
   return (
     <KeyboardAvoidingView
@@ -318,12 +469,13 @@ const ChatScreen: React.FC = () => {
           >
             <View style={styles.inputBox}>
               <TextInput
-                placeholder={t("chat.placeholder")}
+                placeholder={isChatOpen ? t("chat.placeholder") : closedNote}
                 placeholderTextColor={colors.textSecondary}
                 style={styles.input}
                 value={inputText}
                 onChangeText={setInputText}
                 multiline
+                editable={isChatOpen && !!selectedRoom}
               />
               <Animated.View
                 style={{ transform: [{ scale: sendButtonScale }] }}
@@ -331,10 +483,13 @@ const ChatScreen: React.FC = () => {
                 <Pressable
                   style={[
                     styles.sendBtnWrapper,
-                    inputText.trim().length === 0 && styles.sendBtnDisabled,
+                    (inputText.trim().length === 0 || !isChatOpen || !selectedRoom) &&
+                      styles.sendBtnDisabled,
                   ]}
                   onPress={handleSendText}
-                  disabled={inputText.trim().length === 0}
+                  disabled={
+                    inputText.trim().length === 0 || !isChatOpen || !selectedRoom
+                  }
                 >
                   <LinearGradient
                     colors={
