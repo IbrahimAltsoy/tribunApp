@@ -339,7 +339,7 @@ const ChatScreen: React.FC = () => {
                 </LinearGradient>
               </View>
               <View>
-                <Text style={styles.heroTitle}>{t("chat.title")}</Text>
+                <Text style={styles.heroTitle}>Tribün</Text>
                 <Text style={styles.heroSub}>{t("chat.subtitle")}</Text>
               </View>
             </View>
@@ -444,9 +444,11 @@ const ChatScreen: React.FC = () => {
             <Pressable
               key={emoji}
               onPress={() => handleQuickReaction(emoji)}
+              disabled={!isChatOpen || !selectedRoom}
               style={({ pressed }) => [
                 styles.reactionBtnWrapper,
                 pressed && { opacity: 0.7 },
+                (!isChatOpen || !selectedRoom) && { opacity: 0.4 },
               ]}
             >
               <BlurView
