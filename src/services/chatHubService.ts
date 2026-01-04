@@ -54,10 +54,7 @@ class ChatHubService {
     this.notifyStatus(ConnectionStatus.Connecting);
 
     this.connection = new SignalR.HubConnectionBuilder()
-      .withUrl(HUB_URL, {
-        skipNegotiation: true,
-        transport: SignalR.HttpTransportType.WebSockets,
-      })
+      .withUrl(HUB_URL)
       .withAutomaticReconnect({
         nextRetryDelayInMilliseconds: (retryContext) => {
           const delays = [0, 2000, 5000, 10000, 20000, 30000, 60000];
