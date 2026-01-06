@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from "react";
 import {
   ImageBackground,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -10,7 +9,6 @@ import {
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
@@ -27,6 +25,7 @@ type Props = {
   onSelectMoment: (moment: FanMomentDto) => void;
   onEditMoment?: (moment: FanMomentDto) => void;
   onDeleteMoment?: (moment: FanMomentDto) => void;
+  slot?: React.ReactNode;
 };
 
 const AnimatedMomentCard: React.FC<{
@@ -71,12 +70,6 @@ const AnimatedMomentCard: React.FC<{
             style={styles.momentImage}
             imageStyle={styles.momentImageStyle}
           >
-            {/* Dark gradient overlay for text readability */}
-            <LinearGradient
-              colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.85)"]}
-              style={StyleSheet.absoluteFillObject}
-            />
-
             {/* Owner Actions - Top Right Corner */}
             {moment.isOwnMoment && (onEdit || onDelete) && (
               <View style={styles.ownerActions}>
@@ -116,37 +109,16 @@ const AnimatedMomentCard: React.FC<{
                       tint="dark"
                       style={styles.actionButtonBlur}
                     >
-                      <Ionicons name="trash-outline" size={16} color={colors.error} />
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.error}
+                      />
                     </BlurView>
                   </Pressable>
                 )}
               </View>
             )}
-
-            {/* Glassmorphism Content Container */}
-            <View style={styles.momentContent}>
-              {/* Caption with better hierarchy */}
-              <Text style={styles.momentCaption} numberOfLines={2}>
-                {moment.description || ''}
-              </Text>
-
-              {/* Username & Time Row */}
-              <View style={styles.momentFooter}>
-                <View style={styles.momentLocationRow}>
-                  <Ionicons
-                    name="person"
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.momentLocation} numberOfLines={1}>
-                    {moment.username}
-                  </Text>
-                </View>
-                <Text style={styles.momentTime}>
-                  {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
-                </Text>
-              </View>
-            </View>
           </ImageBackground>
         ) : (
           <View style={[styles.momentImage, styles.momentFallback]}>
@@ -189,20 +161,39 @@ const AnimatedMomentCard: React.FC<{
                       tint="dark"
                       style={styles.actionButtonBlur}
                     >
-                      <Ionicons name="trash-outline" size={16} color={colors.error} />
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.error}
+                      />
                     </BlurView>
                   </Pressable>
                 )}
               </View>
             )}
-
-            <Text style={styles.momentCaption}>{moment.description || ''}</Text>
-            <Text style={styles.momentLocation}>{moment.username}</Text>
-            <Text style={styles.momentTime}>
-              {new Date(moment.createdAt).toLocaleDateString('tr-TR')}
-            </Text>
           </View>
         )}
+
+        <View style={styles.momentBody}>
+          <View style={styles.momentMetaRow}>
+            <View style={styles.momentUserRow}>
+              <View style={styles.momentAvatar}>
+                <Ionicons name="person" size={14} color={colors.text} />
+              </View>
+              <Text style={styles.momentLocation} numberOfLines={1}>
+                {moment.username}
+              </Text>
+            </View>
+            <Text style={styles.momentTime}>
+              {new Date(moment.createdAt).toLocaleDateString("tr-TR")}
+            </Text>
+          </View>
+          {!!moment.description && (
+            <Text style={styles.momentCaption} numberOfLines={3}>
+              {moment.description}
+            </Text>
+          )}
+        </View>
       </Animated.View>
     </Pressable>
   );
@@ -215,9 +206,10 @@ const FanMomentsSection: React.FC<Props> = ({
   onSelectMoment,
   onEditMoment,
   onDeleteMoment,
+  slot,
 }) => {
   const { t } = useTranslation();
-  const visibleMoments = (moments || []).slice(0, 5);
+  const visibleMoments = (moments || []).slice(0, 10);
 
   const addCardScale = useRef(new Animated.Value(1)).current;
   const moreCardScale = useRef(new Animated.Value(1)).current;
@@ -280,14 +272,8 @@ const FanMomentsSection: React.FC<Props> = ({
   };
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.momentsRow}
-      decelerationRate="fast"
-      snapToInterval={236}
-    >
-      {/* Add Moment Card - Premium Design */}
+    <View style={styles.momentsColumn}>
+      {/* Composer - Instagram-like */}
       <Pressable
         onPress={onPressAdd}
         onPressIn={handleAddPressIn}
@@ -295,73 +281,55 @@ const FanMomentsSection: React.FC<Props> = ({
       >
         <Animated.View
           style={[
-            styles.momentAddCard,
+            styles.momentComposer,
             { transform: [{ scale: addCardScale }] },
           ]}
         >
-          {/* Gradient Background */}
-          <LinearGradient
-            colors={[
-              "rgba(0, 191, 71, 0.15)",
-              "rgba(0, 191, 71, 0.08)",
-              "rgba(0, 191, 71, 0.05)",
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-
-          {/* Content */}
-          <View style={styles.momentAddContent}>
-            {/* Animated Icon with Glow */}
-            <Animated.View
-              style={[
-                styles.momentAddIconWrapper,
-                { transform: [{ scale: pulseAnim }] },
-              ]}
-            >
-              <View style={styles.momentAddIconGlow} />
-              <BlurView
-                intensity={IS_IOS ? 20 : 15}
-                tint="dark"
-                style={styles.momentAddIcon}
-              >
-                <Ionicons name="camera" size={26} color={colors.primary} />
-              </BlurView>
-            </Animated.View>
-
-            <Text style={styles.momentAddTitle}>
-              {t("home.shareMomentTitle")}
-            </Text>
-            <Text style={styles.momentAddSub}>
-              {t("home.shareMomentSubtitle")}
-            </Text>
-
-            {/* CTA Arrow */}
-            <View style={styles.momentAddArrow}>
-              <Ionicons
-                name="arrow-forward-circle"
-                size={24}
-                color={colors.primary}
-              />
+          <View style={styles.composerLeft}>
+            <View style={styles.composerAvatar}>
+              <Ionicons name="person" size={18} color={colors.text} />
+            </View>
+            <View style={styles.composerTextBlock}>
+              <Text style={styles.composerTitle}>
+                {t("home.shareMomentTitle")}
+              </Text>
+              <Text style={styles.composerSub}>
+                {t("home.shareMomentSubtitle")}
+              </Text>
             </View>
           </View>
+          <Animated.View
+            style={[
+              styles.composerAction,
+              { transform: [{ scale: pulseAnim }] },
+            ]}
+          >
+            <Ionicons name="camera" size={18} color={colors.primary} />
+          </Animated.View>
         </Animated.View>
       </Pressable>
 
+      {slot && visibleMoments.length < 3 && (
+        <View style={styles.slotContainer}>{slot}</View>
+      )}
+
       {/* Fan Moments */}
-      {visibleMoments.map((moment) => (
-        <AnimatedMomentCard
-          key={moment.id}
-          moment={moment}
-          onPress={() => onSelectMoment(moment)}
-          onEdit={onEditMoment ? () => onEditMoment(moment) : undefined}
-          onDelete={onDeleteMoment ? () => onDeleteMoment(moment) : undefined}
-        />
+      {visibleMoments.map((moment, index) => (
+        <React.Fragment key={moment.id}>
+          <AnimatedMomentCard
+            moment={moment}
+            onPress={() => onSelectMoment(moment)}
+            onEdit={onEditMoment ? () => onEditMoment(moment) : undefined}
+            onDelete={onDeleteMoment ? () => onDeleteMoment(moment) : undefined}
+          />
+          {slot && index === 2 && (
+            <View style={styles.slotContainer}>{slot}</View>
+          )}
+        </React.Fragment>
       ))}
 
       {/* More Moments Card */}
-      {moments.length > 5 && (
+      {moments.length > 10 && (
         <Pressable
           onPress={onPressMore}
           onPressIn={handleMorePressIn}
@@ -389,27 +357,30 @@ const FanMomentsSection: React.FC<Props> = ({
                 {t("home.moreMomentsTitle")}
               </Text>
               <Text style={styles.momentMoreCount}>
-                +{moments.length - 5} {t("home.more")}
+                +{moments.length - 10} {t("home.more")}
               </Text>
             </BlurView>
           </Animated.View>
         </Pressable>
       )}
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  momentsRow: {
+  momentsColumn: {
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
     marginTop: spacing.md,
     paddingVertical: spacing.xs,
   },
+  slotContainer: {
+    gap: spacing.md,
+  },
 
   // Moment Card Styles
   momentCard: {
-    width: 220,
+    width: "100%",
     borderRadius: radii.xl,
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -428,55 +399,37 @@ const styles = StyleSheet.create({
     }),
   },
   momentImage: {
-    height: 240,
+    height: 320,
   },
   momentImageStyle: {
-    borderRadius: radii.xl,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
   },
-  momentContent: {
-    flex: 1,
+  momentBody: {
     padding: spacing.md,
-    justifyContent: "flex-end",
     gap: spacing.sm,
   },
-  momentSourcePill: {
-    alignSelf: "flex-start",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    overflow: "hidden",
+  momentMetaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  momentSourcePillTribun: {
-    borderColor: colors.accent,
-  },
-  momentSourceText: {
-    color: colors.white,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.xs,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
-  },
-  momentCaption: {
-    color: colors.white,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.md,
-    lineHeight: 20,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  momentFooter: {
-    gap: spacing.xs,
-  },
-  momentLocationRow: {
+  momentUserRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+    flex: 1,
+  },
+  momentAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
   },
   momentLocation: {
-    color: colors.white,
+    color: colors.text,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.sm,
     flex: 1,
@@ -486,12 +439,16 @@ const styles = StyleSheet.create({
     fontFamily: typography.medium,
     fontSize: fontSizes.xs,
   },
+  momentCaption: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    lineHeight: 20,
+  },
   momentFallback: {
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: spacing.md,
-    gap: spacing.xs,
   },
 
   // Owner Action Buttons
@@ -535,80 +492,71 @@ const styles = StyleSheet.create({
   },
 
   // Add Card Styles
-  momentAddCard: {
-    width: 200,
-    height: 240,
+  momentComposer: {
+    width: "100%",
+    padding: spacing.md,
     borderRadius: radii.xl,
-    borderWidth: 2,
-    borderColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: colors.card,
-    overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
+        shadowColor: colors.shadowSoft,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
       },
       android: {
-        elevation: 8,
+        elevation: 6,
       },
     }),
   },
-  momentAddContent: {
-    flex: 1,
-    padding: spacing.lg,
-    justifyContent: "center",
+  composerLeft: {
+    flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    flex: 1,
   },
-  momentAddIconWrapper: {
-    position: "relative",
-    marginBottom: spacing.xs,
-  },
-  momentAddIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: radii.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
+  composerAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 191, 71, 0.1)",
-    overflow: "hidden",
   },
-  momentAddIconGlow: {
-    position: "absolute",
-    width: 60,
-    height: 60,
-    borderRadius: radii.lg,
-    backgroundColor: colors.primary,
-    opacity: 0.2,
-    top: 0,
-    left: 0,
+  composerTextBlock: {
+    flex: 1,
+    gap: 2,
   },
-  momentAddTitle: {
-    color: colors.white,
-    fontFamily: typography.bold,
+  composerTitle: {
+    color: colors.text,
+    fontFamily: typography.semiBold,
     fontSize: fontSizes.md,
-    textAlign: "center",
-    letterSpacing: 0.3,
   },
-  momentAddSub: {
-    color: colors.textSecondary,
+  composerSub: {
+    color: colors.textTertiary,
     fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-    textAlign: "center",
-    lineHeight: 18,
+    fontSize: fontSizes.xs,
   },
-  momentAddArrow: {
-    marginTop: spacing.xs,
+  composerAction: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "rgba(0, 191, 71, 0.1)",
   },
 
   // More Card Styles
   momentMoreCard: {
-    width: 180,
-    height: 240,
+    width: "100%",
+    height: 140,
     borderRadius: radii.xl,
     overflow: "hidden",
     borderWidth: 1,

@@ -15,8 +15,6 @@ import {
   Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNavigation } from "@react-navigation/native";
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,23 +22,17 @@ import { useTranslation } from "react-i18next";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
 import { mediaService } from "../services/mediaService";
-import { newsService } from "../services/newsService";
 import Header from "../components/Header";
 import SectionHeader from "../components/home/SectionHeader";
-import NewsCard from "../components/home/NewsCard";
-import FixtureList from "../components/home/FixtureList";
-import LiveTicker from "../components/home/LiveTicker";
 import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
-import AllVideosModal from "../components/home/AllVideosModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { BottomTabParamList } from "../navigation/BottomTabs";
 import { useShareMomentForm } from "../hooks/useShareMomentForm";
 import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
@@ -48,21 +40,16 @@ import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
-import type { NewsDto } from "../types/news";
 
 const storeImage = require("../assets/footboll/1.jpg");
 
 const HomeScreen: React.FC = () => {
-  const navigation =
-    useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const { t, i18n } = useTranslation();
 
-  const [news, setNews] = useState<NewsDto[]>([]);
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
-  const [allVideosVisible, setAllVideosVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<
     FanMomentDto | undefined
@@ -86,18 +73,6 @@ const HomeScreen: React.FC = () => {
   } = useShareMomentForm();
 
   // Backend'den News yükle
-  useEffect(() => {
-    const loadNews = async () => {
-      const response = await newsService.getLatestNews(5);
-      if (response.success && response.data) {
-        setNews(response.data);
-      } else {
-        setNews([]);
-      }
-    };
-    loadNews();
-  }, []);
-
   // Backend'den FanMoments yüklee
   useEffect(() => {
     const loadMoments = async () => {
@@ -129,6 +104,55 @@ const HomeScreen: React.FC = () => {
 
   const momentList = useMemo(() => moments, [moments]);
 
+  const smartSlot = (
+    <View style={styles.smartSlot}>
+      {activePoll && (
+        <>
+          <PollCard
+            poll={activePoll}
+            onVoteSuccess={(updatedPoll) => setActivePoll(updatedPoll)}
+          />
+        </>
+      )}
+      <Pressable
+        onPress={handleStorePress}
+        style={({ pressed }) => [
+          styles.supportCard,
+          pressed && styles.supportCardPressed,
+        ]}
+        accessibilityRole="button"
+      >
+        <ImageBackground
+          source={storeImage}
+          style={styles.supportImage}
+          imageStyle={styles.supportImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
+            style={StyleSheet.absoluteFill}
+          />
+          <BlurView
+            intensity={Platform.OS === "ios" ? 30 : 22}
+            tint="dark"
+            style={styles.supportContent}
+          >
+            <View style={styles.supportPillWrapper}>
+              <Ionicons name="storefront" size={14} color={colors.primary} />
+              <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+            </View>
+            <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
+            <Text style={styles.supportSubtitle}>
+              {t("home.supportSubtitle")}
+            </Text>
+            <View style={styles.supportArrowCircle}>
+              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+            </View>
+          </BlurView>
+        </ImageBackground>
+      </Pressable>
+    </View>
+  );
+
   const handleOpenDetail = useCallback((moment: FanMomentDto) => {
     setSelectedMoment(moment);
     setDetailModalVisible(true);
@@ -148,13 +172,6 @@ const HomeScreen: React.FC = () => {
       setMoments((prev) => [momentWithFlag, ...prev]);
     },
     [submit]
-  );
-
-  const handleNewsPress = useCallback(
-    (id: string) => {
-      navigation.navigate("Feed", { newsId: id, origin: "Home" });
-    },
-    [navigation]
   );
 
   const handleLanguagePress = useCallback(() => {
@@ -292,7 +309,6 @@ const HomeScreen: React.FC = () => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Header onPressLanguage={handleLanguagePress} />
 
-        <SectionHeader title={t("home.momentsTitle")} />
         <FanMomentsSection
           moments={momentList}
           onPressAdd={openShareModal}
@@ -300,82 +316,8 @@ const HomeScreen: React.FC = () => {
           onSelectMoment={handleOpenDetail}
           onEditMoment={handleEditMoment}
           onDeleteMoment={handleDeleteMoment}
+          slot={smartSlot}
         />
-
-        <SectionHeader
-          title={t("home.newsTitle")}
-          subtitle={t("home.newsSubtitle")}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.newsRow}
-        >
-          {news.map((newsItem) => (
-            <NewsCard
-              key={newsItem.id}
-              item={newsItem}
-              onPress={handleNewsPress}
-            />
-          ))}
-        </ScrollView>
-
-        <SectionHeader
-          title={t("fixture.liveTickerTitle")}
-          subtitle={t("fixture.liveTickerSubtitle")}
-        />
-        <LiveTicker onPressMore={() => setAllVideosVisible(true)} />
-        <SectionHeader
-          title={t("home.poll.title")}
-          subtitle={t("home.poll.weekMatch")}
-        />
-        {activePoll && (
-          <PollCard
-            poll={activePoll}
-            onVoteSuccess={(updatedPoll) => setActivePoll(updatedPoll)}
-          />
-        )}
-
-        <SectionHeader
-          title={t("home.supportTitle")}
-          subtitle={t("home.supportSubtitle")}
-        />
-        <Pressable
-          onPress={handleStorePress}
-          style={({ pressed }) => [
-            styles.supportCard,
-            pressed && styles.supportCardPressed,
-          ]}
-          accessibilityRole="button"
-        >
-          <ImageBackground
-            source={storeImage}
-            style={styles.supportImage}
-            imageStyle={styles.supportImageStyle}
-          >
-            <LinearGradient
-              colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
-              style={StyleSheet.absoluteFill}
-            />
-            <BlurView
-              intensity={Platform.OS === "ios" ? 30 : 22}
-              tint="dark"
-              style={styles.supportContent}
-            >
-              <View style={styles.supportPillWrapper}>
-                <Ionicons name="storefront" size={14} color={colors.primary} />
-                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
-              </View>
-              <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
-              <Text style={styles.supportSubtitle}>
-                {t("home.supportSubtitle")}
-              </Text>
-              <View style={styles.supportArrowCircle}>
-                <Ionicons name="arrow-forward" size={20} color={colors.white} />
-              </View>
-            </BlurView>
-          </ImageBackground>
-        </Pressable>
       </ScrollView>
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
@@ -404,11 +346,6 @@ const HomeScreen: React.FC = () => {
           setAllMomentsVisible(false);
           setDetailModalVisible(true);
         }}
-      />
-
-      <AllVideosModal
-        visible={allVideosVisible}
-        onClose={() => setAllVideosVisible(false)}
       />
 
       <Modal
@@ -665,8 +602,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xxl,
   },
-  newsRow: {
-    paddingHorizontal: spacing.lg,
+  smartSlot: {
     gap: spacing.md,
   },
   supportCard: {
