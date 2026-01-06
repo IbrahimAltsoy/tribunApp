@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 const API_URL = `${API_BASE_URL}/api/news`;
 
 /**
- * Get paginated news list
+ * Get paginated news list ştems
  */
 const getNews = async (
   pageNumber: number = 1,
