@@ -3,13 +3,13 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { View, StyleSheet, Platform } from "react-native";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import HomeScreen from "../screens/HomeScreen";
 import FixtureScreen from "../screens/FixtureScreen";
 import FeedScreen from "../screens/FeedScreen";
 import ChatScreen from "../screens/ChatScreen";
 import MarsStack from "./MarsStack";
 import { colors } from "../theme/colors";
-import { useTranslation } from "react-i18next";
 
 export type BottomTabParamList = {
   Home: undefined;
@@ -30,15 +30,84 @@ const iconMap: Record<keyof BottomTabParamList, keyof typeof Feather.glyphMap> =
     Mars: "archive",
   };
 
-const BottomTabs: React.FC = () => {
-  const { t } = useTranslation();
+type AmedIconProps = {
+  color: string;
+  size: number;
+};
 
+const AmedWallsIcon: React.FC<AmedIconProps> = ({ color, size }) => {
+  const width = size + 8;
+  const height = size + 2;
+  const wallHeight = Math.max(3, Math.round(size * 0.18));
+  const towerHeight = Math.max(8, Math.round(size * 0.45));
+  const towerWidth = Math.max(7, Math.round(size * 0.36));
+  const crenelHeight = Math.max(4, Math.round(size * 0.22));
+  const crenelWidth = Math.max(5, Math.round(size * 0.24));
+  const gap = Math.max(2, Math.round(size * 0.1));
+  const gradient = [colors.primary, colors.accent] as const;
+
+  return (
+    <View style={{ width, height, justifyContent: "flex-end" }}>
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          height: wallHeight,
+          borderRadius: 2,
+        }}
+      />
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          position: "absolute",
+          bottom: wallHeight,
+          left: Math.round((width - towerWidth) / 2),
+          width: towerWidth,
+          height: towerHeight,
+          borderRadius: 2,
+        }}
+      />
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          position: "absolute",
+          bottom: wallHeight,
+          right: gap,
+          width: crenelWidth,
+          height: crenelHeight,
+          borderRadius: 2,
+        }}
+      />
+      <LinearGradient
+        colors={gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{
+          position: "absolute",
+          bottom: wallHeight,
+          left: gap,
+          width: crenelWidth,
+          height: crenelHeight,
+          borderRadius: 2,
+        }}
+      />
+    </View>
+  );
+};
+
+const BottomTabs: React.FC = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabInactive,
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
@@ -52,12 +121,16 @@ const BottomTabs: React.FC = () => {
           shadowOpacity: 0.3,
           shadowRadius: 12,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600",
-          marginTop: 4,
-        },
         tabBarIcon: ({ color, size, focused }) => {
+          if (route.name === "Mars") {
+            const amedSize = focused ? size + 2 : size;
+            return (
+              <View style={styles.iconContainer}>
+                {focused && <View style={styles.activeIndicator} />}
+                <AmedWallsIcon color={color} size={amedSize} />
+              </View>
+            );
+          }
           const iconName = iconMap[route.name as keyof BottomTabParamList];
           return (
             <View style={styles.iconContainer}>
@@ -80,31 +153,11 @@ const BottomTabs: React.FC = () => {
           ) : undefined,
       })}
     >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ tabBarLabel: t("nav.home") }}
-      />
-      <Tab.Screen
-        name="Fixture"
-        component={FixtureScreen}
-        options={{ tabBarLabel: t("nav.matches") }}
-      />
-      <Tab.Screen
-        name="Feed"
-        component={FeedScreen}
-        options={{ tabBarLabel: t("feed_latest_news") }}
-      />
-      <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
-        options={{ tabBarLabel: t("nav.chat") }}
-      />
-      <Tab.Screen
-        name="Mars"
-        component={MarsStack}
-        options={{ tabBarLabel: t("tabs.mars") }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Fixture" component={FixtureScreen} />
+      <Tab.Screen name="Feed" component={FeedScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Mars" component={MarsStack} />
     </Tab.Navigator>
   );
 };

@@ -104,6 +104,37 @@ const HomeScreen: React.FC = () => {
 
   const momentList = useMemo(() => moments, [moments]);
 
+  const handleOpenDetail = useCallback((moment: FanMomentDto) => {
+    setSelectedMoment(moment);
+    setDetailModalVisible(true);
+  }, []);
+
+  const handleAddMoment = useCallback(
+    async (imageUri?: string) => {
+      const newMoment = await submit(imageUri);
+      if (!newMoment) return;
+
+      // Ensure new moment has isOwnMoment flag set to true
+      const momentWithFlag: FanMomentDto = {
+        ...newMoment,
+        isOwnMoment: true,
+      };
+
+      setMoments((prev) => [momentWithFlag, ...prev]);
+    },
+    [submit]
+  );
+
+  const handleLanguagePress = useCallback(() => {
+    setLanguageModalVisible(true);
+  }, []);
+
+  const handleStorePress = useCallback(() => {
+    openURLSafely(EXTERNAL_LINKS.STORE, {
+      errorTitle: t("error"),
+    });
+  }, [t]);
+
   const smartSlot = (
     <View style={styles.smartSlot}>
       {activePoll && (
@@ -152,37 +183,6 @@ const HomeScreen: React.FC = () => {
       </Pressable>
     </View>
   );
-
-  const handleOpenDetail = useCallback((moment: FanMomentDto) => {
-    setSelectedMoment(moment);
-    setDetailModalVisible(true);
-  }, []);
-
-  const handleAddMoment = useCallback(
-    async (imageUri?: string) => {
-      const newMoment = await submit(imageUri);
-      if (!newMoment) return;
-
-      // Ensure new moment has isOwnMoment flag set to true
-      const momentWithFlag: FanMomentDto = {
-        ...newMoment,
-        isOwnMoment: true,
-      };
-
-      setMoments((prev) => [momentWithFlag, ...prev]);
-    },
-    [submit]
-  );
-
-  const handleLanguagePress = useCallback(() => {
-    setLanguageModalVisible(true);
-  }, []);
-
-  const handleStorePress = useCallback(() => {
-    openURLSafely(EXTERNAL_LINKS.STORE, {
-      errorTitle: t("error"),
-    });
-  }, [t]);
 
   const handleEditMoment = useCallback((moment: FanMomentDto) => {
     setMomentToEdit(moment);
@@ -592,7 +592,7 @@ const HomeScreen: React.FC = () => {
       </Modal>
     </SafeAreaView>
   );
-};;;;;;;;;;;;;;;;;;;;;;;;;;
+};
 
 const styles = StyleSheet.create({
   safeArea: {
