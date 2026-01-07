@@ -1,4 +1,5 @@
-import { Audio } from 'expo-av';
+import { setAudioModeAsync, createAudioPlayer } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import { logger } from '../utils/logger';
@@ -48,7 +49,7 @@ const initNotifications = async () => {
 /**
  * Sound instance for goal notification
  */
-let goalSound: Audio.Sound | null = null;
+let goalSound: AudioPlayer | null = null;
 
 /**
  * Initialize audio and notifications
@@ -56,9 +57,8 @@ let goalSound: Audio.Sound | null = null;
 const initializeAudio = async (): Promise<void> => {
   try {
     // Set audio mode to allow sound to play even when device is in silent mode
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
     });
   } catch (error) {
     // Silent error - audio may not work but app continues
@@ -89,17 +89,13 @@ const initializeAudio = async (): Promise<void> => {
 const loadGoalSound = async (): Promise<void> => {
   try {
     if (goalSound) {
-      await goalSound.unloadAsync();
+      goalSound.remove();
     }
 
     // Try to load goal.mp3 from assets/sounds/
     // If file doesn't exist, this will fail gracefully
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/sounds/goal.mp3'),
-        { shouldPlay: false }
-      );
-      goalSound = sound;
+      goalSound = createAudioPlayer(require('../../assets/sounds/goal.mp3'));
     } catch {
       // Goal sound file not found - use system beep as fallback
       // You can add a goal.mp3 file to assets/sounds/ directory
@@ -121,7 +117,8 @@ const playGoalSound = async (): Promise<void> => {
     }
 
     if (goalSound) {
-      await goalSound.replayAsync();
+      goalSound.seekTo(0); // Reset to start
+      goalSound.play();
     }
   } catch (error) {
     // Silent error - app continues without sound
@@ -233,7 +230,7 @@ const celebrateGoal = async (
 const cleanup = async (): Promise<void> => {
   try {
     if (goalSound) {
-      await goalSound.unloadAsync();
+      goalSound.remove();
       goalSound = null;
     }
   } catch (error) {

@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { useTranslation } from "react-i18next";
-import { Video, ResizeMode, AVPlaybackStatus } from "expo-av";
+import { VideoView, useVideoPlayer, VideoSource } from "expo-video";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
@@ -327,8 +327,6 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   visible,
   onClose,
 }) => {
-  const videoRef = useRef<Video>(null);
-  const [status, setStatus] = useState<AVPlaybackStatus | null>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -350,26 +348,11 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
   }, [clip.videoUrl, visible]);
 
-  useEffect(() => {
-    return () => {
-      // Cleanup: unload video when component unmounts
-      if (videoRef.current) {
-        videoRef.current.unloadAsync();
-      }
-    };
-  }, []);
-
-  const handlePlayPause = async () => {
-    if (!videoRef.current) return;
-
-    if (status?.isLoaded) {
-      if (status.isPlaying) {
-        await videoRef.current.pauseAsync();
-      } else {
-        await videoRef.current.playAsync();
-      }
-    }
-  };
+  // Create video player instance
+  const player = useVideoPlayer(videoUri ? { uri: videoUri } : null, (player) => {
+    player.loop = false;
+    player.play();
+  });
 
   return (
     <Modal
@@ -400,16 +383,14 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <View style={styles.videoWrapper}>
             {loading ? (
               <ActivityIndicator size="large" color={colors.primary} />
-            ) : videoUri ? (
-              <Video
-                ref={videoRef}
-                source={{ uri: videoUri }}
+            ) : videoUri && player ? (
+              <VideoView
+                player={player}
                 style={styles.video}
-                useNativeControls
-                resizeMode={ResizeMode.CONTAIN}
-                isLooping={false}
-                shouldPlay
-                onPlaybackStatusUpdate={(status) => setStatus(status)}
+                allowsFullscreen
+                allowsPictureInPicture
+                nativeControls
+                contentFit="contain"
               />
             ) : (
               <Text style={{ color: colors.white, textAlign: "center" }}>
