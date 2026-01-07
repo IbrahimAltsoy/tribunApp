@@ -30,6 +30,8 @@ const initNotifications = async () => {
         Notifications.setNotificationHandler({
           handleNotification: async () => ({
             shouldShowAlert: true,
+            shouldShowBanner: true,
+            shouldShowList: true,
             shouldPlaySound: true,
             shouldSetBadge: false,
           }),
@@ -192,24 +194,16 @@ const showGoalNotification = async (
       return;
     }
 
-    // Use presentNotificationAsync for Expo Go compatibility
-    // This works in both Expo Go and standalone builds
-    await Notifications.presentNotificationAsync({
-      title: '⚽ GOL!',
-      body: `${teamName} - ${playerName} (${minute}')`,
-      data: { type: 'goal', teamName, playerName, minute },
-      ...(Platform.OS === 'android' && {
-        android: {
-          channelId: 'default',
-          priority: 'high',
-          sound: true,
-        },
-      }),
-      ...(Platform.OS === 'ios' && {
-        ios: {
-          sound: true,
-        },
-      }),
+    // Use scheduleNotificationAsync to deliver notification immediately
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '⚽ GOL!',
+        body: `${teamName} - ${playerName} (${minute}')`,
+        data: { type: 'goal', teamName, playerName, minute },
+        sound: true,
+        priority: 'high',
+      },
+      trigger: null, // null trigger means immediate delivery
     });
   } catch (error) {
     logger.log('Notification error:', error);
