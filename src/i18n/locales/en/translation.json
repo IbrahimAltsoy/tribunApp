@@ -308,5 +308,72 @@
       "forward": "Forwards"
     },
     "emptyState": "No people in this category yet"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "welcome": {
+      "title": "Welcome to Amedspor Tribun",
+      "description": "Stay connected with your team, share moments, and join the fan community"
+    },
+    "features": {
+      "title": "All in One Place",
+      "description": "Live match scores, fan chat, news, and more"
+    },
+    "community": {
+      "title": "Global Tribune",
+      "description": "Connect with fans from around the world and share your moments"
+    },
+    "privacy": {
+      "title": "Your Privacy Matters",
+      "description": "Your data is safe. You're in full control."
+    }
+  },
+  "consent": {
+    "title": "Privacy & Permissions",
+    "subtitle": "Please review the following permissions to continue",
+    "required": "Required Permissions",
+    "optional": "Optional Permissions",
+    "optionalDescription": "These permissions help us improve your experience",
+    "accept": "Accept and Continue",
+    "termsAcceptance": "I have read and accept the",
+    "termsLink": "Terms of Service",
+    "privacyAcceptance": "I have read and accept the",
+    "privacyLink": "Privacy Policy",
+    "kvkkNotice": "Under GDPR/KVKK, your personal data is protected and used only for specified purposes.",
+    "categories": {
+      "required": {
+        "name": "Essential Functions",
+        "description": "Required for the app to work"
+      },
+      "analytics": {
+        "name": "Analytics & Improvements",
+        "description": "Helps us improve the app"
+      },
+      "marketing": {
+        "name": "Marketing Communications",
+        "description": "For campaigns and announcements"
+      },
+      "adTracking": {
+        "name": "Personalized Ads",
+        "description": "Customized content for you (iOS)"
+      }
+    },
+    "error": {
+      "title": "Error",
+      "requiredConsents": "You must accept the Terms of Service and Privacy Policy to continue.",
+      "saveFailed": "Failed to save permissions. Please try again."
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last Updated: {{date}}",
+    "accept": "I Accept"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last Updated: {{date}}",
+    "accept": "I Accept"
   }
 }

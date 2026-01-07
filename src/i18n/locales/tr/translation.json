@@ -330,5 +330,72 @@
       "forward": "Forvet"
     },
     "emptyState": "Bu kategoride henüz kişi bulunmuyor"
+  },
+  "onboarding": {
+    "skip": "Atla",
+    "next": "İleri",
+    "getStarted": "Başla",
+    "welcome": {
+      "title": "Amedspor Tribün'e Hoş Geldiniz",
+      "description": "Takımınızla bağlantıda kalın, anları paylaşın ve taraftar topluluğuna katılın"
+    },
+    "features": {
+      "title": "Her Şey Bir Arada",
+      "description": "Canlı maç skorları, taraftar sohbeti, haberler ve daha fazlası"
+    },
+    "community": {
+      "title": "Küresel Tribün",
+      "description": "Dünyanın her yerinden taraftarlarla bağlantı kurun ve anılarınızı paylaşın"
+    },
+    "privacy": {
+      "title": "Gizliliğiniz Önemli",
+      "description": "Verileriniz güvende. Tam kontrol sizde."
+    }
+  },
+  "consent": {
+    "title": "Gizlilik ve İzinler",
+    "subtitle": "Devam etmek için lütfen aşağıdaki izinleri gözden geçirin",
+    "required": "Zorunlu İzinler",
+    "optional": "Opsiyonel İzinler",
+    "optionalDescription": "Bu izinler deneyiminizi iyileştirmemize yardımcı olur",
+    "accept": "Kabul Et ve Devam Et",
+    "termsAcceptance": "Okudum ve kabul ediyorum",
+    "termsLink": "Kullanım Koşulları",
+    "privacyAcceptance": "Okudum ve kabul ediyorum",
+    "privacyLink": "Gizlilik Politikası",
+    "kvkkNotice": "KVKK kapsamında kişisel verileriniz korunur ve yalnızca belirtilen amaçlar için kullanılır.",
+    "categories": {
+      "required": {
+        "name": "Temel İşlevler",
+        "description": "Uygulamanın çalışması için gerekli"
+      },
+      "analytics": {
+        "name": "Analitik ve İyileştirmeler",
+        "description": "Uygulamayı geliştirmemize yardımcı olur"
+      },
+      "marketing": {
+        "name": "Pazarlama İletişimi",
+        "description": "Kampanya ve duyurular için"
+      },
+      "adTracking": {
+        "name": "Kişiselleştirilmiş Reklamlar",
+        "description": "Sizin için özelleştirilmiş içerikler (iOS)"
+      }
+    },
+    "error": {
+      "title": "Hata",
+      "requiredConsents": "Devam etmek için Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmelisiniz.",
+      "saveFailed": "İzinler kaydedilemedi. Lütfen tekrar deneyin."
+    }
+  },
+  "terms": {
+    "title": "Kullanım Koşulları",
+    "lastUpdated": "Son Güncellenme: {{date}}",
+    "accept": "Kabul Ediyorum"
+  },
+  "privacy": {
+    "title": "Gizlilik Politikası",
+    "lastUpdated": "Son Güncellenme: {{date}}",
+    "accept": "Kabul Ediyorum"
   }
 }
