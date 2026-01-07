@@ -109,7 +109,7 @@ class ErrorBoundary extends React.Component<Props, State> {
           </Pressable>
 
           <Text style={styles.hint}>
-            Sorun devam ederse lütfen uygulamayı kapatıp yeniden açın
+            {i18next.t('errorBoundary.hint')}
           </Text>
         </View>
       );

@@ -55,7 +55,9 @@
       "Bash(tasklist:*)",
       "Bash(netstat:*)",
       "Bash(find:*)",
-      "Bash(Select-String -Pattern \"error\" -Context 0,2)"
+      "Bash(Select-String -Pattern \"error\" -Context 0,2)",
+      "Bash(npm run type-check:*)",
+      "Bash(del NUL)"
     ]
   }
 }

@@ -33,7 +33,7 @@ const AnimatedMomentCard: React.FC<{
   onPress: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-}> = ({ moment, onPress, onEdit, onDelete }) => {
+}> = React.memo(({ moment, onPress, onEdit, onDelete }) => {
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -197,9 +197,9 @@ const AnimatedMomentCard: React.FC<{
       </Animated.View>
     </Pressable>
   );
-};
+});
 
-const FanMomentsSection: React.FC<Props> = ({
+const FanMomentsSection: React.FC<Props> = React.memo(({
   moments,
   onPressAdd,
   onPressMore,
@@ -365,7 +365,7 @@ const FanMomentsSection: React.FC<Props> = ({
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   momentsColumn: {

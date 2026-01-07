@@ -38,6 +38,7 @@ import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
 import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
+import { logger } from "../utils/logger";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
 
@@ -259,15 +260,15 @@ const HomeScreen: React.FC = () => {
         editImage !== momentToEdit.imageUrl &&
         editImage.startsWith("file://")
       ) {
-        console.log("📤 Uploading new image for edit...");
+        logger.log("📤 Uploading new image for edit...");
         const uploadResponse =
           await mediaService.uploadImageAnonymous(editImage);
 
         if (uploadResponse.success && uploadResponse.data?.url) {
           uploadedImageUrl = uploadResponse.data.url;
-          console.log("✅ New image uploaded:", uploadedImageUrl);
+          logger.log("✅ New image uploaded:", uploadedImageUrl);
         } else {
-          console.warn("⚠️ Image upload failed:", uploadResponse.error);
+          logger.warn("⚠️ Image upload failed:", uploadResponse.error);
           alert(t("home.imageUploadFailed") || "Image upload failed");
           return;
         }

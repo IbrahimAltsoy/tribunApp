@@ -181,7 +181,8 @@
     "title": "Bir Şeyler Yanlış Gitti",
     "message": "Üzgünüz, beklenmeyen bir hata oluştu.\nLütfen uygulamayı yeniden başlatmayı deneyin.",
     "errorDetailsTitle": "Hata Detayları:",
-    "retry": "Tekrar Dene"
+    "retry": "Tekrar Dene",
+    "hint": "Sorun devam ederse lütfen uygulamayı kapatıp yeniden açın"
   },
   "validation": {
     "required": "Bu alan zorunludur",

@@ -9,6 +9,7 @@ import { fontSizes, typography } from "../../theme/typography";
 import { pollService } from "../../services/pollService";
 import { pollSignalRService, ConnectionStatus } from "../../services/pollSignalRService";
 import type { PollDto } from "../../types/poll";
+import { logger } from "../../utils/logger";
 
 const IS_IOS = Platform.OS === "ios";
 
@@ -155,7 +156,7 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
           setVotedOptionId(json.data);
         }
       } catch (error) {
-        console.error('Error checking vote status:', error);
+        logger.error('Error checking vote status:', error);
       }
     };
 
@@ -243,16 +244,16 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
           onVoteSuccess(response.data);
         }
 
-        console.log('✅ Vote successful');
+        logger.log('✅ Vote successful');
       } else {
         // Revert optimistic update on failure
         setVotedOptionId(null);
-        console.error('❌ Vote failed:', response.error);
+        logger.error('❌ Vote failed:', response.error);
       }
     } catch (error) {
       // Revert optimistic update on error
       setVotedOptionId(null);
-      console.error('❌ Error voting:', error);
+      logger.error('❌ Error voting:', error);
     } finally {
       setIsVoting(false);
     }

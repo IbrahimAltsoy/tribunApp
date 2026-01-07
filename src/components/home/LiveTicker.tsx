@@ -25,6 +25,7 @@ import { fontSizes, typography } from "../../theme/typography";
 import { footballService } from "../../services/footballService";
 import { mediaService } from "../../services/mediaService";
 import type { ClipContentDto } from "../../types/football";
+import { logger } from "../../utils/logger";
 
 const IS_IOS = Platform.OS === "ios";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -52,7 +53,7 @@ const LiveTicker: React.FC<LiveTickerProps> = ({ onPressMore }) => {
         setClips(response.data);
       }
     } catch (error) {
-      console.log("Error loading clips:", error);
+      logger.log("Error loading clips:", error);
     } finally {
       setLoading(false);
     }

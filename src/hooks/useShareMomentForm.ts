@@ -4,6 +4,7 @@ import type { FanMomentDto } from "../types/fanMoment";
 import { fanMomentService } from "../services/fanMomentService";
 import { mediaService } from "../services/mediaService";
 import { getSession } from "../utils/sessionManager";
+import { logger } from "../utils/logger";
 
 type ShareMomentFormState = {
   city: string;
@@ -75,14 +76,14 @@ export const useShareMomentForm = () => {
       // Upload image first if provided
       let uploadedImageUrl: string | undefined = undefined;
       if (imageUri) {
-        console.log("📤 Uploading image before creating moment...");
+        logger.log("📤 Uploading image before creating moment...");
         const uploadResponse = await mediaService.uploadImageAnonymous(imageUri);
 
         if (uploadResponse.success && uploadResponse.data?.url) {
           uploadedImageUrl = uploadResponse.data.url;
-          console.log("✅ Image uploaded:", uploadedImageUrl);
+          logger.log("✅ Image uploaded:", uploadedImageUrl);
         } else {
-          console.warn("⚠️ Image upload failed, creating moment without image:", uploadResponse.error);
+          logger.warn("⚠️ Image upload failed, creating moment without image:", uploadResponse.error);
         }
       }
 
@@ -96,7 +97,7 @@ export const useShareMomentForm = () => {
       });
 
       if (response.success && response.data) {
-        console.log("✅ Moment created successfully:", response.data);
+        logger.log("✅ Moment created successfully:", response.data);
         reset();
         setVisible(false);
         // Ensure the moment has isOwnMoment flag set
@@ -105,7 +106,7 @@ export const useShareMomentForm = () => {
           isOwnMoment: true,
         };
       } else {
-        console.error("❌ Failed to create moment:", response.error);
+        logger.error("❌ Failed to create moment:", response.error);
         // Fallback to local moment on error
         const localMoment = buildMoment(imageUri);
         reset();
@@ -113,7 +114,7 @@ export const useShareMomentForm = () => {
         return localMoment;
       }
     } catch (error) {
-      console.error("❌ Error creating moment:", error);
+      logger.error("❌ Error creating moment:", error);
       // Fallback to local moment on error
       const localMoment = buildMoment(imageUri);
       reset();

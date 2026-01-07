@@ -17,6 +17,7 @@ import { fontSizes, typography } from "../theme/typography";
 import { footballService } from "../services/footballService";
 import { goalNotificationService } from "../services/goalNotificationService";
 import { GoalCelebration } from "../components/GoalCelebration";
+import { logger } from "../utils/logger";
 import type {
   StandingTableDto,
   MatchDetailDto,
@@ -164,17 +165,17 @@ const FixtureScreen = () => {
       // Season IDs: Mens = 25749, Womens = 26532
       const seasonId = selectedGender === "mens" ? 25749 : 26532;
 
-      console.log("🔥 Loading top scorers for season:", seasonId);
+      logger.log("🔥 Loading top scorers for season:", seasonId);
       const response = await footballService.getTopScorers(seasonId);
       if (response.success && response.data) {
-        console.log(
+        logger.log(
           "✅ Top scorers loaded:",
           response.data.data.length,
           "players"
         );
         setTopScorers(response.data.data);
       } else {
-        console.log("❌ Top scorers failed to load");
+        logger.log("❌ Top scorers failed to load");
         setTopScorers([]);
       }
     };
@@ -374,7 +375,7 @@ const FixtureScreen = () => {
 
         // Only log when there's a live match
         if (amedMatch) {
-          console.log("🔴 CANLI MAÇ:", amedMatch);
+          logger.log("🔴 CANLI MAÇ:", amedMatch);
         }
 
         // Detect new goals and match state changes
@@ -453,7 +454,7 @@ const FixtureScreen = () => {
           setLiveMatch(null);
         }
       } else {
-        console.log("❌ Live scores error:", response.error);
+        logger.log("❌ Live scores error:", response.error);
         setLiveMatch(null);
       }
     };
@@ -466,7 +467,7 @@ const FixtureScreen = () => {
       // Check if match is finished before polling
       if (previousMatchState === 5) {
         clearInterval(interval);
-        console.log("⏹️ Match finished, stopping polling");
+        logger.log("⏹️ Match finished, stopping polling");
         return;
       }
       loadLiveScores();

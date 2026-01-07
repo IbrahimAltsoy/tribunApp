@@ -9,6 +9,7 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { generateAmedNickname } from "./amedNameGenerator";
+import { logger } from "./logger";
 
 const STORAGE_KEYS = {
   SESSION_ID: "@tribun_session_id",
@@ -74,7 +75,7 @@ export const initializeSession = async (): Promise<UserSession> => {
       createdAt: timestamp,
     };
   } catch (error) {
-    console.error("Error initializing session:", error);
+    logger.error("Error initializing session:", error);
     // Fallback: generate session without storage
     return {
       sessionId: generateSessionId(),
@@ -91,7 +92,7 @@ export const updateNickname = async (newNickname: string): Promise<void> => {
   try {
     await AsyncStorage.setItem(STORAGE_KEYS.NICKNAME, newNickname);
   } catch (error) {
-    console.error("Error updating nickname:", error);
+    logger.error("Error updating nickname:", error);
   }
 };
 
@@ -116,7 +117,7 @@ export const getSession = async (): Promise<UserSession | null> => {
 
     return null;
   } catch (error) {
-    console.error("Error getting session:", error);
+    logger.error("Error getting session:", error);
     return null;
   }
 };
@@ -132,6 +133,6 @@ export const clearSession = async (): Promise<void> => {
       AsyncStorage.removeItem(STORAGE_KEYS.CREATED_AT),
     ]);
   } catch (error) {
-    console.error("Error clearing session:", error);
+    logger.error("Error clearing session:", error);
   }
 };

@@ -1,6 +1,7 @@
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { logger } from '../utils/logger';
 
 // Lazy load notifications to avoid Expo Go errors on import
 let Notifications: typeof import('expo-notifications') | null = null;
@@ -15,8 +16,8 @@ const initNotifications = async () => {
   // Android Expo Go doesn't support expo-notifications since SDK 53
   // This works fine on real Android devices and in production builds
   if (__DEV__ && Platform.OS === 'android') {
-    console.log('📱 Notifications disabled in Expo Go Android emulator');
-    console.log('💡 Will work on real Android devices and production builds');
+    logger.log('📱 Notifications disabled in Expo Go Android emulator');
+    logger.log('💡 Will work on real Android devices and production builds');
     return;
   }
 
@@ -38,7 +39,7 @@ const initNotifications = async () => {
       }
     }
   } catch (error) {
-    console.log('Notifications not available in this environment');
+    logger.log('Notifications not available in this environment');
   }
 };
 
@@ -180,14 +181,14 @@ const showGoalNotification = async (
   try {
     await initNotifications();
     if (!Notifications) {
-      console.log('Notifications not available');
+      logger.log('Notifications not available');
       return;
     }
 
     const hasPermission = await requestNotificationPermissions();
 
     if (!hasPermission) {
-      console.log('Notification permission not granted');
+      logger.log('Notification permission not granted');
       return;
     }
 
@@ -211,7 +212,7 @@ const showGoalNotification = async (
       }),
     });
   } catch (error) {
-    console.log('Notification error:', error);
+    logger.log('Notification error:', error);
     // Silent error - notification won't show but app continues
   }
 };

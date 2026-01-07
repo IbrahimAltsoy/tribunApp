@@ -114,7 +114,17 @@
     "poll": {
       "title": "Poll",
       "weekMatch": "Match of the week: who wins?"
-    }
+    },
+    "editMoment": "Edit Moment",
+    "editMomentSubtitle": "Update your moment",
+    "caption": "Caption",
+    "enterCaption": "Enter caption",
+    "save": "Save",
+    "cancel": "Cancel",
+    "deleteFailed": "Failed to delete",
+    "updateFailed": "Update failed",
+    "imageUploadFailed": "Image upload failed",
+    "more": "More"
   },
   "chat": {
     "title": "Amedspor Tribun",
@@ -136,7 +146,8 @@
     "title": "Something Went Wrong",
     "message": "Sorry, an unexpected error occurred.\nPlease try restarting the application.",
     "errorDetailsTitle": "Error Details:",
-    "retry": "Retry"
+    "retry": "Retry",
+    "hint": "If the problem persists, please close and reopen the application"
   },
   "validation": {
     "required": "This field is required",
@@ -155,6 +166,16 @@
     "cityPlaceholder": "City / Location",
     "captionPlaceholder": "Short description",
     "imageUrlPlaceholder": "Image URL (optional)",
+    "addPhoto": "Add Photo",
+    "optional": "optional",
+    "selectPhoto": "Select Photo",
+    "changePhoto": "Change Photo",
+    "selectImageSource": "Select Image Source",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "permissionDenied": "Permission Denied",
+    "cameraPermissionMessage": "Camera permission is required to take photos",
+    "galleryPermissionMessage": "Gallery permission is required to select photos",
     "submit": "Share",
     "cancel": "Cancel",
     "cityRequired": "City must be specified",
