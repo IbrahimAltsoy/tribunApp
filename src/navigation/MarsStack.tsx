@@ -10,7 +10,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 import TermsOfServiceScreen from "../screens/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import ConsentScreen from "../screens/ConsentScreen";
-import NotificationPreferences from "../components/NotificationPreferences";
+import NotificationPreferencesScreen from "../components/NotificationPreferences";
 import NotificationTestScreen from "../screens/NotificationTestScreen";
 import { MarsStackParamList } from "./types";
 import { colors } from "../theme/colors";
@@ -108,7 +108,7 @@ const MarsStack: React.FC = () => {
           presentationStyle="pageSheet"
           onRequestClose={() => setModalView('none')}
         >
-          <NotificationPreferences onClose={() => setModalView('none')} />
+          <NotificationPreferencesScreen onClose={() => setModalView('none')} />
         </Modal>
       )}
     </>
