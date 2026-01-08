@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import React, { useEffect } from "react";
 import {
   useFonts,
   Montserrat_400Regular,
@@ -12,6 +13,7 @@ import RootNavigator from "./navigation/RootNavigator";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { colors } from "./theme/colors";
 import { initSentry } from "./utils/sentry";
+import { notificationService } from "./services/notificationService";
 import "./i18n";
 
 // Initialize error tracking
@@ -24,6 +26,11 @@ const App: React.FC = () => {
     Montserrat_600SemiBold,
     Montserrat_700Bold,
   });
+
+  // Initialize push notifications
+  useEffect(() => {
+    notificationService.initialize();
+  }, []);
 
   if (!fontsLoaded) {
     return null;
