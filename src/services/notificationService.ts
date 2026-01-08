@@ -214,14 +214,25 @@ const getExpoPushToken = async (): Promise<string | null> => {
     if (!initialized || !Notifications) return null;
 
     // Get the Expo push token
+    // Note: Requires EAS project setup. For development, local notifications work without this.
+    const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
+
+    if (!projectId) {
+      logger.log('⚠️ EAS Project ID not configured');
+      logger.log('📱 Local notifications will work, but push notifications from server require EAS setup');
+      logger.log('To enable: Run "eas init" and update app.json with projectId');
+      return null;
+    }
+
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID || 'YOUR_EAS_PROJECT_ID',
+      projectId: projectId,
     });
 
-    logger.log('Expo Push Token:', tokenData.data);
+    logger.log('✅ Expo Push Token:', tokenData.data);
     return tokenData.data;
   } catch (error) {
-    logger.error('Failed to get push token:', error);
+    logger.error('❌ Failed to get push token:', error);
+    logger.log('💡 Local notifications will still work');
     return null;
   }
 };

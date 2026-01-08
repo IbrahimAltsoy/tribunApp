@@ -5,5 +5,6 @@ export type MarsStackParamList = {
   Kits: undefined;
   Team: undefined;
   Settings: undefined;
+  NotificationTest: undefined;
 };
 

@@ -22,6 +22,7 @@ type Props = {
   onViewPrivacy: () => void;
   onManageConsent: () => void;
   onManageNotifications: () => void;
+  onOpenNotificationTest?: () => void;
 };
 
 const SettingsScreen: React.FC<Props> = ({
@@ -29,6 +30,7 @@ const SettingsScreen: React.FC<Props> = ({
   onViewPrivacy,
   onManageConsent,
   onManageNotifications,
+  onOpenNotificationTest,
 }) => {
   const { t } = useTranslation();
 
@@ -195,6 +197,29 @@ const SettingsScreen: React.FC<Props> = ({
         {/* Developer Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.developer.title')}</Text>
+
+          {onOpenNotificationTest && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.settingItem,
+                pressed && styles.settingItemPressed,
+              ]}
+              onPress={onOpenNotificationTest}
+            >
+              <View style={styles.settingIcon}>
+                <Ionicons name="notifications-outline" size={22} color={colors.primary} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>
+                  Test Notifications
+                </Text>
+                <Text style={styles.settingDescription}>
+                  Test push notification features
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+            </Pressable>
+          )}
 
           <Pressable
             style={({ pressed }) => [

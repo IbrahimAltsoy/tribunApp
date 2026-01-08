@@ -11,6 +11,7 @@ import TermsOfServiceScreen from "../screens/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import ConsentScreen from "../screens/ConsentScreen";
 import NotificationPreferences from "../components/NotificationPreferences";
+import NotificationTestScreen from "../screens/NotificationTestScreen";
 import { MarsStackParamList } from "./types";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
@@ -63,15 +64,21 @@ const MarsStack: React.FC = () => {
           options={{ title: "" }}
         />
         <Stack.Screen name="Settings" options={{ title: "" }}>
-          {() => (
+          {({ navigation }) => (
             <SettingsScreen
               onViewTerms={() => setModalView('terms')}
               onViewPrivacy={() => setModalView('privacy')}
               onManageConsent={() => setModalView('consent')}
               onManageNotifications={() => setModalView('notifications')}
+              onOpenNotificationTest={() => navigation.navigate('NotificationTest')}
             />
           )}
         </Stack.Screen>
+        <Stack.Screen
+          name="NotificationTest"
+          component={NotificationTestScreen}
+          options={{ title: "Notification Test" }}
+        />
       </Stack.Navigator>
 
       {/* Modals */}
