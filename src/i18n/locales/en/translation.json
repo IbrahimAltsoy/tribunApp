@@ -90,6 +90,9 @@
     "supportSubtitle": "Click for jerseys, scarves and licensed products.",
     "supportPill": "Store",
     "supportStore": "AmedStore.com",
+    "supportClubTitle": "Support Your Club",
+    "supportClubSubtitle": "Get official merchandise and jerseys from the store",
+    "goToStore": "GO TO STORE →",
     "announcementTitle": "Organization Announcement",
     "announcementSubtitle": "Find meeting points and communication channels",
     "shareMomentTitle": "Share a Moment",
@@ -244,6 +247,7 @@
       "tabGeneral": "Overall",
       "tabHome": "Home",
       "tabAway": "Away",
+      "tabScorers": "Top Scorers",
       "rank": "Rank",
       "team": "Team",
       "played": "P",
@@ -253,7 +257,23 @@
       "goalsFor": "GF",
       "goalsAgainst": "GA",
       "goalDifference": "GD",
-      "points": "Pts"
+      "points": "Pts",
+      "form": "Form"
+    },
+    "scorers": {
+      "rank": "Rank",
+      "player": "Player",
+      "team": "Team",
+      "goals": "Goals",
+      "emptyState": "Top scorers data unavailable",
+      "defaultPlayer": "Player",
+      "defaultTeam": "Team"
+    },
+    "notifications": {
+      "matchFinished": "Match Finished"
+    },
+    "liveTicker": {
+      "videoLoadError": "Failed to load video"
     }
   },
   "feed": {
@@ -375,5 +395,43 @@
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated: {{date}}",
     "accept": "I Accept"
-  }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Privacy and legal information",
+    "legal": {
+      "title": "Legal",
+      "termsOfService": "Terms of Service",
+      "termsDescription": "View service terms and conditions",
+      "privacyPolicy": "Privacy Policy",
+      "privacyDescription": "View our data protection policy"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "manageConsent": "Manage Permissions",
+      "consentDescription": "Change your data processing preferences"
+    },
+    "developer": {
+      "title": "Developer",
+      "resetOnboarding": "Reset Onboarding",
+      "resetDescription": "Show first-time screens again"
+    },
+    "footer": {
+      "version": "Version {{version}}",
+      "copyright": "© 2026 Amedspor Tribün. All rights reserved."
+    },
+    "resetOnboarding": {
+      "title": "Reset Onboarding",
+      "message": "First-time screens and permissions will be reset. The app will restart. Do you want to continue?",
+      "confirm": "Reset",
+      "success": "Onboarding reset",
+      "error": "Reset failed",
+      "restartTitle": "Restart Application",
+      "restartMessage": "Please close and reopen the app for changes to take effect."
+    }
+  },
+  "ok": "OK",
+  "cancel": "Cancel",
+  "success": "Success",
+  "error": "Error"
 }

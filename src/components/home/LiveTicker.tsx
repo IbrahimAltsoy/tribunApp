@@ -327,6 +327,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   visible,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -394,7 +395,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
               />
             ) : (
               <Text style={{ color: colors.white, textAlign: "center" }}>
-                Video yüklenemedi
+                {t("fixture.liveTicker.videoLoadError")}
               </Text>
             )}
           </View>

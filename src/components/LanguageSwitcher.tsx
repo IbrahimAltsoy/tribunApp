@@ -5,12 +5,15 @@ import {
   StyleSheet,
   Text,
   View,
+  Platform,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import i18n, { availableLanguages } from "../i18n";
 import type { LanguageCode } from "../i18n";
 import { colors } from "../theme/colors";
-import { spacing } from "../theme/spacing";
+import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 
 type LanguageSwitcherProps = {
@@ -29,24 +32,40 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ onClose }) => {
     onClose?.();
   };
 
+  const languageFlags: Record<LanguageCode, string> = {
+    tr: "🇹🇷",
+    en: "🇺🇸",
+    ku: "🟥🟢🟡",
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={[styles.title, isRTL && styles.rtlText]}>
-          {t("change_language")}
-        </Text>
-        <Text style={[styles.subtitle, isRTL && styles.rtlText]}>
-          {t("current_language")}{" "}
-          <Text style={styles.code}>{current}</Text>
-        </Text>
+      {/* Premium Header */}
+      <View style={styles.premiumHeader}>
+        <LinearGradient
+          colors={["rgba(15, 169, 88, 0.15)", "rgba(15, 169, 88, 0.05)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
+        >
+          <View style={styles.iconWrapper}>
+            <Ionicons name="globe" size={24} color={colors.primary} />
+          </View>
+          <View style={styles.headerTextContainer}>
+            <Text style={[styles.headerTitle, isRTL && styles.rtlText]}>
+              {t("change_language")}
+            </Text>
+            <Text style={[styles.headerSubtitle, isRTL && styles.rtlText]}>
+              {t("current_language")}{" "}
+              <Text style={styles.currentLangBadge}>
+                {languageFlags[current]} {current.toUpperCase()}
+              </Text>
+            </Text>
+          </View>
+        </LinearGradient>
       </View>
 
-      <View style={styles.greetingCard}>
-        <Text style={[styles.greeting, isRTL && styles.rtlText]}>
-          {t("greeting")}
-        </Text>
-      </View>
-
+      {/* Language Grid */}
       <View style={styles.grid}>
         {availableLanguages.map((lng) => {
           const active = lng.code === current;
@@ -54,137 +73,251 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ onClose }) => {
             <Pressable
               key={lng.code}
               onPress={() => handleChange(lng.code)}
-              style={[
-                styles.langButton,
-                active && styles.langButtonActive,
-                isRTL && styles.langButtonRTL,
+              style={({ pressed }) => [
+                styles.langCard,
+                active && styles.langCardActive,
+                pressed && styles.langCardPressed,
               ]}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
             >
-              <Text
-                style={[
-                  styles.langLabel,
-                  active && styles.langLabelActive,
-                  isRTL && styles.rtlText,
-                ]}
-              >
-                {lng.label}
-              </Text>
-              <Text
-                style={[
-                  styles.langCode,
-                  active && styles.langLabelActive,
-                  isRTL && styles.rtlText,
-                ]}
-              >
-                {lng.code.toUpperCase()}
-              </Text>
+              {active && (
+                <LinearGradient
+                  colors={["rgba(15, 169, 88, 0.2)", "rgba(15, 169, 88, 0.05)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              )}
+              <View style={styles.langCardContent}>
+                <Text style={styles.flagEmoji}>{languageFlags[lng.code]}</Text>
+                <View style={styles.langTextContainer}>
+                  <Text
+                    style={[
+                      styles.langLabel,
+                      active && styles.langLabelActive,
+                      isRTL && styles.rtlText,
+                    ]}
+                  >
+                    {lng.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.langCode,
+                      active && styles.langCodeActive,
+                      isRTL && styles.rtlText,
+                    ]}
+                  >
+                    {lng.code.toUpperCase()}
+                  </Text>
+                </View>
+                {active && (
+                  <View style={styles.checkmarkContainer}>
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  </View>
+                )}
+              </View>
             </Pressable>
           );
         })}
       </View>
 
-      {onClose ? (
+      {/* Close Button */}
+      {onClose && (
         <Pressable
           onPress={onClose}
-          style={styles.closeButton}
+          style={({ pressed }) => [
+            styles.closeButton,
+            pressed && styles.closeButtonPressed,
+          ]}
           accessibilityRole="button"
         >
-          <Text style={styles.closeText}>{t("actions.close")}</Text>
+          <LinearGradient
+            colors={[colors.primary, "#0FA958"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.closeGradient}
+          >
+            <Text style={styles.closeText}>{t("actions.close")}</Text>
+            <Ionicons name="checkmark" size={20} color={colors.white} />
+          </LinearGradient>
         </Pressable>
-      ) : null}
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: 18,
+    gap: spacing.lg,
+  },
+  // Premium Header Styles
+  premiumHeader: {
+    borderRadius: radii.lg,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassStroke,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  headerGradient: {
     padding: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
   },
-  headerRow: {
-    gap: spacing.xs,
+  iconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(15, 169, 88, 0.15)",
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
-    color: colors.text,
+  headerTextContainer: {
+    flex: 1,
+    gap: spacing.xs / 2,
+  },
+  headerTitle: {
+    color: colors.white,
     fontFamily: typography.bold,
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.xl,
+    letterSpacing: 0.3,
   },
-  subtitle: {
-    color: colors.mutedText,
+  headerSubtitle: {
+    color: colors.textSecondary,
     fontFamily: typography.medium,
     fontSize: fontSizes.sm,
   },
-  code: {
+  currentLangBadge: {
     color: colors.primary,
-    fontFamily: typography.semiBold,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.sm,
   },
-  greetingCard: {
-    padding: spacing.md,
-    borderRadius: 14,
-    backgroundColor: colors.glass,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  greeting: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
-    lineHeight: 22,
-  },
+  // Language Grid Styles
   grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: spacing.sm,
+    gap: spacing.md,
   },
-  langButton: {
-    width: "47%",
-    borderRadius: 14,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.glass,
-    borderWidth: 1,
+  langCard: {
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    backgroundColor: colors.card,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  langCardActive: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  langCardPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  langCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  flagEmoji: {
+    fontSize: 32,
+    lineHeight: 36,
+  },
+  langTextContainer: {
+    flex: 1,
     gap: spacing.xs / 2,
   },
-  langButtonActive: {
-    borderColor: colors.primary,
-    backgroundColor: "rgba(15,169,88,0.08)",
-  },
-  langButtonRTL: {
-    flexDirection: "row-reverse",
-  },
   langLabel: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
+    color: colors.white,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.lg,
+    letterSpacing: 0.2,
   },
   langLabelActive: {
     color: colors.primary,
   },
   langCode: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
+    color: colors.textSecondary,
+    fontFamily: typography.semiBold,
     fontSize: fontSizes.xs,
+    letterSpacing: 1,
   },
+  langCodeActive: {
+    color: colors.primary,
+  },
+  checkmarkContainer: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  // Close Button Styles
   closeButton: {
+    borderRadius: radii.lg,
+    overflow: "hidden",
     marginTop: spacing.xs,
-    alignSelf: "flex-end",
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+  closeButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  closeGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md + 2,
+    paddingHorizontal: spacing.xl,
+    gap: spacing.xs,
   },
   closeText: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
+    color: colors.white,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.md,
+    letterSpacing: 0.5,
   },
   rtlText: {
     textAlign: "right",

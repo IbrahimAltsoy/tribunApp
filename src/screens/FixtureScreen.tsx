@@ -399,8 +399,8 @@ const FixtureScreen = () => {
                   (p) => p.id === goal.participantId
                 );
 
-                const teamName = scoringTeam?.name || "Takım";
-                const playerName = goal.playerName || "Oyuncu";
+                const teamName = scoringTeam?.name || t("fixture.scorers.defaultTeam");
+                const playerName = goal.playerName || t("fixture.scorers.defaultPlayer");
                 const minute = goal.minute || 0;
 
                 // Trigger all celebration effects
@@ -431,7 +431,7 @@ const FixtureScreen = () => {
               );
 
               goalNotificationService.showGoalNotification(
-                "Maç Bitti",
+                t("fixture.notifications.matchFinished"),
                 `${homeTeam?.name || ""} vs ${awayTeam?.name || ""}`,
                 90
               );
@@ -790,7 +790,7 @@ const FixtureScreen = () => {
               standingsView === "scorers" && styles.viewTabTextActive,
             ]}
           >
-            Gol Krallığı
+            {t("fixture.standings.tabScorers")}
           </Text>
         </Pressable>
       </View>
@@ -878,16 +878,16 @@ const FixtureScreen = () => {
             {/* Table Header */}
             <View style={styles.topScorersHeader}>
               <View style={styles.scorerRankCell}>
-                <Text style={styles.headerText}>Sıra</Text>
+                <Text style={styles.headerText}>{t("fixture.scorers.rank")}</Text>
               </View>
               <View style={styles.scorerPlayerCell}>
-                <Text style={styles.headerText}>Oyuncu</Text>
+                <Text style={styles.headerText}>{t("fixture.scorers.player")}</Text>
               </View>
               <View style={styles.scorerTeamCell}>
-                <Text style={styles.headerText}>Takım</Text>
+                <Text style={styles.headerText}>{t("fixture.scorers.team")}</Text>
               </View>
               <View style={styles.scorerGoalsCell}>
-                <Text style={styles.headerText}>Gol</Text>
+                <Text style={styles.headerText}>{t("fixture.scorers.goals")}</Text>
               </View>
             </View>
 
@@ -895,7 +895,7 @@ const FixtureScreen = () => {
             {topScorers.length > 0 ? (
               topScorers.slice(0, 20).map((scorer, index) => {
                 const playerName =
-                  scorer.player?.displayName || scorer.player?.name || "Oyuncu";
+                  scorer.player?.displayName || scorer.player?.name || t("fixture.scorers.defaultPlayer");
                 const teamName = scorer.participant?.name || "";
                 const teamLogo = scorer.participant?.image_path || null;
                 const goals = scorer.total || 0;
@@ -994,7 +994,7 @@ const FixtureScreen = () => {
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateText}>
-                  Gol krallığı verileri yüklenemedi
+                  {t("fixture.scorers.emptyState")}
                 </Text>
               </View>
             )}

@@ -590,6 +590,7 @@ const PollOption: React.FC<{
 // SECTION 7: SUPPORT CTA
 // ============================================================================
 const SupportCTA: React.FC<{ onPress: () => void }> = ({ onPress }) => {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -624,13 +625,13 @@ const SupportCTA: React.FC<{ onPress: () => void }> = ({ onPress }) => {
 
           <BlurView intensity={40} tint="dark" style={styles.supportCTAContent}>
             <Ionicons name="bag-handle-outline" size={48} color={colors.primary} />
-            <Text style={styles.supportCTATitle}>Kulübünü Destekle</Text>
+            <Text style={styles.supportCTATitle}>{t("home.supportClubTitle")}</Text>
             <Text style={styles.supportCTASubtitle}>
-              Resmi mağazadan destek ol, forma al
+              {t("home.supportClubSubtitle")}
             </Text>
 
             <View style={styles.supportCTAButton}>
-              <Text style={styles.supportCTAButtonText}>MAĞAZAYA GİT →</Text>
+              <Text style={styles.supportCTAButtonText}>{t("home.goToStore")}</Text>
             </View>
           </BlurView>
         </Animated.View>

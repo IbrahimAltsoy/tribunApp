@@ -4,5 +4,6 @@ export type MarsStackParamList = {
   Players: undefined;
   Kits: undefined;
   Team: undefined;
+  Settings: undefined;
 };
 

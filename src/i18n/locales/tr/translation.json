@@ -127,6 +127,9 @@
     "supportSubtitle": "Formalar, atkılar ve lisanslı ürünler için tıkla.",
     "supportPill": "Mağaza",
     "supportStore": "AmedStore.com",
+    "supportClubTitle": "Kulübünü Destekle",
+    "supportClubSubtitle": "Resmi mağazadan destek ol, forma al",
+    "goToStore": "MAĞAZAYA GİT →",
     "announcementTitle": "Organizasyon Duyurusu",
     "announcementSubtitle": "Toplanma noktalarını ve iletişim kanallarını yakala",
     "shareMomentTitle": "Anı Paylaş",
@@ -266,6 +269,7 @@
       "tabGeneral": "Genel",
       "tabHome": "İç Saha",
       "tabAway": "Deplasman",
+      "tabScorers": "Gol Krallığı",
       "rank": "Sıra",
       "team": "Takım",
       "played": "O",
@@ -275,7 +279,23 @@
       "goalsFor": "A",
       "goalsAgainst": "Y",
       "goalDifference": "Av",
-      "points": "P"
+      "points": "P",
+      "form": "Form"
+    },
+    "scorers": {
+      "rank": "Sıra",
+      "player": "Oyuncu",
+      "team": "Takım",
+      "goals": "Gol",
+      "emptyState": "Gol krallığı verileri yüklenemedi",
+      "defaultPlayer": "Oyuncu",
+      "defaultTeam": "Takım"
+    },
+    "notifications": {
+      "matchFinished": "Maç Bitti"
+    },
+    "liveTicker": {
+      "videoLoadError": "Video yüklenemedi"
     }
   },
   "feed": {
@@ -397,5 +417,43 @@
     "title": "Gizlilik Politikası",
     "lastUpdated": "Son Güncellenme: {{date}}",
     "accept": "Kabul Ediyorum"
-  }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "subtitle": "Gizlilik ve yasal bilgiler",
+    "legal": {
+      "title": "Yasal",
+      "termsOfService": "Kullanım Koşulları",
+      "termsDescription": "Hizmet kullanım şartlarını görüntüle",
+      "privacyPolicy": "Gizlilik Politikası",
+      "privacyDescription": "Veri koruma politikamızı görüntüle"
+    },
+    "privacy": {
+      "title": "Gizlilik",
+      "manageConsent": "İzinleri Yönet",
+      "consentDescription": "Veri işleme izinlerinizi değiştirin"
+    },
+    "developer": {
+      "title": "Geliştirici",
+      "resetOnboarding": "Onboarding'i Sıfırla",
+      "resetDescription": "İlk açılış ekranlarını tekrar göster"
+    },
+    "footer": {
+      "version": "Sürüm {{version}}",
+      "copyright": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
+    },
+    "resetOnboarding": {
+      "title": "Onboarding Sıfırla",
+      "message": "İlk açılış ekranları ve izinler sıfırlanacak. Uygulama yeniden başlatılacak. Devam etmek istiyor musunuz?",
+      "confirm": "Sıfırla",
+      "success": "Onboarding sıfırlandı",
+      "error": "Sıfırlama başarısız",
+      "restartTitle": "Uygulamayı Yeniden Başlat",
+      "restartMessage": "Değişikliklerin geçerli olması için uygulamayı kapatıp yeniden açın."
+    }
+  },
+  "ok": "Tamam",
+  "cancel": "İptal",
+  "success": "Başarılı",
+  "error": "Hata"
 }

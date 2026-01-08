@@ -352,21 +352,11 @@ const HomeScreen: React.FC = () => {
       <Modal
         visible={languageModalVisible}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setLanguageModalVisible(false)}
       >
-        <BlurView intensity={65} tint="dark" style={styles.modalOverlay}>
+        <BlurView intensity={80} tint="dark" style={styles.modalOverlay}>
           <View style={styles.languageModal}>
-            <View style={styles.languageHeaderRow}>
-              <View style={styles.languageIconCircle}>
-                <Ionicons name="globe-outline" size={20} color={colors.text} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.languageTitle}>{t("change_language")}</Text>
-                <Text style={styles.languageSubtitle}>{t("greeting")}</Text>
-              </View>
-            </View>
-
             <LanguageSwitcher onClose={() => setLanguageModalVisible(false)} />
           </View>
         </BlurView>
@@ -699,10 +689,10 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // -------- Dil Modalı (yeni tasarım) --------
+  // -------- Dil Modalı (premium tasarım) --------
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(0,0,0,0.7)",
     justifyContent: "flex-end",
   },
   keyboardAvoidingView: {
@@ -710,38 +700,25 @@ const styles = StyleSheet.create({
   },
   languageModal: {
     width: "100%",
-    borderRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "rgba(10,10,10,0.96)",
-    padding: spacing.lg,
+    borderColor: colors.glassStroke,
+    backgroundColor: "rgba(15, 20, 25, 0.98)",
+    padding: spacing.xl,
+    paddingBottom: Platform.OS === "ios" ? spacing.xxl + spacing.lg : spacing.xl,
     gap: spacing.lg,
-  },
-  languageHeaderRow: {
-    flexDirection: "row",
-    gap: spacing.md,
-    alignItems: "center",
-  },
-  languageIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  languageTitle: {
-    color: colors.text,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.lg,
-    marginBottom: spacing.xs / 2,
-  },
-  languageSubtitle: {
-    color: colors.mutedText,
-    fontFamily: typography.medium,
-    fontSize: fontSizes.xs,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 20,
+      },
+    }),
   },
 
   // -------- Edit Modal Styles --------
