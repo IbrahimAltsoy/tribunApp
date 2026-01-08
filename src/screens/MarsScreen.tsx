@@ -285,6 +285,17 @@ const MarsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Settings Button - Top Right */}
+      <Pressable
+        style={({ pressed }) => [
+          styles.settingsButton,
+          pressed && { opacity: 0.6, transform: [{ scale: 0.95 }] },
+        ]}
+        onPress={() => navigation.navigate('Settings')}
+      >
+        <Ionicons name="settings-outline" size={24} color={colors.text} />
+      </Pressable>
+
       <ScrollView contentContainerStyle={styles.container}>
         <LinearGradient
           colors={[
@@ -898,6 +909,31 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.lg,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   container: {
     paddingHorizontal: spacing.lg,
