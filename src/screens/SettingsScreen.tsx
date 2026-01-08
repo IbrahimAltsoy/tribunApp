@@ -21,12 +21,14 @@ type Props = {
   onViewTerms: () => void;
   onViewPrivacy: () => void;
   onManageConsent: () => void;
+  onManageNotifications: () => void;
 };
 
 const SettingsScreen: React.FC<Props> = ({
   onViewTerms,
   onViewPrivacy,
   onManageConsent,
+  onManageNotifications,
 }) => {
   const { t } = useTranslation();
 
@@ -158,6 +160,32 @@ const SettingsScreen: React.FC<Props> = ({
               </Text>
               <Text style={styles.settingDescription}>
                 {t('settings.privacy.consentDescription')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+          </Pressable>
+        </View>
+
+        {/* Notifications Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.notifications.sectionTitle')}</Text>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingItem,
+              pressed && styles.settingItemPressed,
+            ]}
+            onPress={onManageNotifications}
+          >
+            <View style={styles.settingIcon}>
+              <Ionicons name="notifications" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>
+                {t('settings.notifications.manage')}
+              </Text>
+              <Text style={styles.settingDescription}>
+                {t('settings.notifications.manageDescription')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />

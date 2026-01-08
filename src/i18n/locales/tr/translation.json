@@ -433,6 +433,39 @@
       "manageConsent": "İzinleri Yönet",
       "consentDescription": "Veri işleme izinlerinizi değiştirin"
     },
+    "notifications": {
+      "sectionTitle": "Bildirimler",
+      "title": "Bildirim Ayarları",
+      "subtitle": "Almak istediğiniz bildirimleri seçin",
+      "manage": "Bildirimleri Yönet",
+      "manageDescription": "Hangi bildirimleri almak istediğinizi seçin",
+      "enableAll": "Tüm Bildirimleri Aç",
+      "enabledDescription": "Bildirimler açık",
+      "disabledDescription": "Bildirimler kapalı",
+      "categories": "Bildirim Kategorileri",
+      "chatRooms": "Sohbet Odaları",
+      "chatRoomsDescription": "Yeni sohbet odası açıldığında bildirim al",
+      "liveMatches": "Canlı Maçlar",
+      "liveMatchesDescription": "Maç başladığında ve bittiğinde bildirim al",
+      "matchGoals": "Gol Bildirimleri",
+      "matchGoalsDescription": "Takımımız gol attığında bildirim al",
+      "news": "Haberler",
+      "newsDescription": "Yeni haber yayınlandığında bildirim al",
+      "announcements": "Duyurular",
+      "announcementsDescription": "Duyurunuz onaylandığında bildirim al",
+      "polls": "Anketler",
+      "pollsDescription": "Yeni anket oluşturulduğunda bildirim al",
+      "testButton": "Test Bildirimi Gönder",
+      "testTitle": "Test Bildirimi",
+      "testBody": "Bildirim sistemi çalışıyor! ⚽",
+      "testScheduled": "2 saniye içinde test bildirimi gelecek",
+      "testFailed": "Test bildirimi gönderilemedi",
+      "disableTitle": "Bildirimleri Kapat?",
+      "disableMessage": "Tüm bildirimler kapatılacak. Devam etmek istiyor musunuz?",
+      "disableConfirm": "Kapat",
+      "permissionDeniedTitle": "İzin Gerekli",
+      "permissionDeniedMessage": "Bildirimler için izin vermeniz gerekiyor. Lütfen cihaz ayarlarından izin verin."
+    },
     "developer": {
       "title": "Geliştirici",
       "resetOnboarding": "Onboarding'i Sıfırla",
@@ -455,5 +488,6 @@
   "ok": "Tamam",
   "cancel": "İptal",
   "success": "Başarılı",
-  "error": "Hata"
+  "error": "Hata",
+  "loading": "Yükleniyor..."
 }

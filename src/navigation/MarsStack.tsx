@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Modal, View, StyleSheet } from "react-native";
 import MarsScreen from "../screens/MarsScreen";
 import ArchiveScreen from "../screens/ArchiveScreen";
 import PlayersScreen from "../screens/PlayersScreen";
@@ -9,6 +10,7 @@ import SettingsScreen from "../screens/SettingsScreen";
 import TermsOfServiceScreen from "../screens/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import ConsentScreen from "../screens/ConsentScreen";
+import NotificationPreferences from "../components/NotificationPreferences";
 import { MarsStackParamList } from "./types";
 import { colors } from "../theme/colors";
 import { typography } from "../theme/typography";
@@ -30,7 +32,7 @@ const screenOptions = {
 } as const;
 
 const MarsStack: React.FC = () => {
-  const [modalView, setModalView] = useState<'none' | 'terms' | 'privacy' | 'consent'>('none');
+  const [modalView, setModalView] = useState<'none' | 'terms' | 'privacy' | 'consent' | 'notifications'>('none');
 
   return (
     <>
@@ -66,6 +68,7 @@ const MarsStack: React.FC = () => {
               onViewTerms={() => setModalView('terms')}
               onViewPrivacy={() => setModalView('privacy')}
               onManageConsent={() => setModalView('consent')}
+              onManageNotifications={() => setModalView('notifications')}
             />
           )}
         </Stack.Screen>
@@ -90,6 +93,16 @@ const MarsStack: React.FC = () => {
           onViewTerms={() => setModalView('terms')}
           onViewPrivacy={() => setModalView('privacy')}
         />
+      )}
+      {modalView === 'notifications' && (
+        <Modal
+          visible={true}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setModalView('none')}
+        >
+          <NotificationPreferences onClose={() => setModalView('none')} />
+        </Modal>
       )}
     </>
   );

@@ -411,6 +411,39 @@
       "manageConsent": "Manage Permissions",
       "consentDescription": "Change your data processing preferences"
     },
+    "notifications": {
+      "sectionTitle": "Notifications",
+      "title": "Notification Settings",
+      "subtitle": "Choose which notifications you want to receive",
+      "manage": "Manage Notifications",
+      "manageDescription": "Choose which notifications you want to receive",
+      "enableAll": "Enable All Notifications",
+      "enabledDescription": "Notifications are enabled",
+      "disabledDescription": "Notifications are disabled",
+      "categories": "Notification Categories",
+      "chatRooms": "Chat Rooms",
+      "chatRoomsDescription": "Get notified when a new chat room opens",
+      "liveMatches": "Live Matches",
+      "liveMatchesDescription": "Get notified when matches start and end",
+      "matchGoals": "Goal Notifications",
+      "matchGoalsDescription": "Get notified when our team scores",
+      "news": "News",
+      "newsDescription": "Get notified when new articles are published",
+      "announcements": "Announcements",
+      "announcementsDescription": "Get notified when your announcement is approved",
+      "polls": "Polls",
+      "pollsDescription": "Get notified when new polls are created",
+      "testButton": "Send Test Notification",
+      "testTitle": "Test Notification",
+      "testBody": "Notification system is working! ⚽",
+      "testScheduled": "Test notification will arrive in 2 seconds",
+      "testFailed": "Failed to send test notification",
+      "disableTitle": "Disable Notifications?",
+      "disableMessage": "All notifications will be disabled. Do you want to continue?",
+      "disableConfirm": "Disable",
+      "permissionDeniedTitle": "Permission Required",
+      "permissionDeniedMessage": "You need to grant notification permission. Please enable it in device settings."
+    },
     "developer": {
       "title": "Developer",
       "resetOnboarding": "Reset Onboarding",
@@ -433,5 +466,6 @@
   "ok": "OK",
   "cancel": "Cancel",
   "success": "Success",
-  "error": "Error"
+  "error": "Error",
+  "loading": "Loading..."
 }
