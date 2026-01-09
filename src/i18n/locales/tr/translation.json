@@ -489,5 +489,15 @@
   "cancel": "İptal",
   "success": "Başarılı",
   "error": "Hata",
-  "loading": "Yükleniyor..."
+  "loading": "Yükleniyor...",
+  "notifications": {
+    "title": "Bildirimler",
+    "unread": "okunmamış",
+    "noNotifications": "Bildirim yok",
+    "noNotificationsSubtitle": "Hepsi okundu!",
+    "justNow": "Şimdi",
+    "minutesAgo": "dk önce",
+    "hoursAgo": "sa önce",
+    "daysAgo": "gün önce"
+  }
 }

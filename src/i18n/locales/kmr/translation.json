@@ -116,5 +116,15 @@
     "nicknamePlaceholder": "Nickname",
     "closedTitle": "Chat is currently closed",
     "emptyState": "Be the first to drop a message and warm up the tribune."
+  },
+  "notifications": {
+    "title": "Agahdarî",
+    "unread": "nexwendî",
+    "noNotifications": "Agahdarî tune",
+    "noNotificationsSubtitle": "Hemû hate xwendin!",
+    "justNow": "Niha",
+    "minutesAgo": "deq berê",
+    "hoursAgo": "demjimêr berê",
+    "daysAgo": "roj berê"
   }
 }

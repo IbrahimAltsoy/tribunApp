@@ -20,11 +20,13 @@ const IS_IOS = Platform.OS === "ios";
 type HeaderProps = {
   onPressNotifications?: () => void;
   onPressLanguage?: () => void;
+  notificationCount?: number;
 };
 
 const Header: React.FC<HeaderProps> = ({
   onPressNotifications,
   onPressLanguage,
+  notificationCount = 0,
 }) => {
   const { i18n } = useTranslation();
   const notificationScale = useRef(new Animated.Value(1)).current;
@@ -171,12 +173,22 @@ const Header: React.FC<HeaderProps> = ({
                 color={colors.white}
               />
               {/* Animated Badge */}
-              <Animated.View
-                style={[
-                  styles.notificationBadge,
-                  { transform: [{ scale: pulseAnim }] },
-                ]}
-              />
+              {notificationCount > 0 && (
+                <Animated.View
+                  style={[
+                    styles.notificationBadge,
+                    { transform: [{ scale: pulseAnim }] },
+                  ]}
+                >
+                  {notificationCount > 9 ? (
+                    <Text style={styles.notificationBadgeText}>9+</Text>
+                  ) : (
+                    <Text style={styles.notificationBadgeText}>
+                      {notificationCount}
+                    </Text>
+                  )}
+                </Animated.View>
+              )}
             </BlurView>
           </Animated.View>
         </Pressable>
@@ -316,14 +328,23 @@ const styles = StyleSheet.create({
   // Notification Badge
   notificationBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
+    top: 8,
+    right: 8,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: colors.accent,
     borderWidth: 2,
     borderColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "700",
+    textAlign: "center",
   },
 
   // Divider

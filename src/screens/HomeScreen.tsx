@@ -30,6 +30,7 @@ import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import AllMomentsModal from "../components/home/AllMomentsModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import NotificationList from "../components/NotificationList";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -38,6 +39,7 @@ import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
 import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
+import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
@@ -52,6 +54,8 @@ const HomeScreen: React.FC = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [allMomentsVisible, setAllMomentsVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [selectedMoment, setSelectedMoment] = useState<
     FanMomentDto | undefined
   >(undefined);
@@ -103,6 +107,32 @@ const HomeScreen: React.FC = () => {
     loadPoll();
   }, [i18n.language]);
 
+  // Backend'den Unread Notification Count yükle
+  useEffect(() => {
+    const loadNotificationCount = async () => {
+      try {
+        const response = await notificationService.getNotifications({
+          unreadOnly: true,
+          page: 1,
+          pageSize: 1,
+        });
+
+        if (response.success) {
+          setUnreadNotificationCount(response.unreadCount || 0);
+          await notificationService.setBadgeCount(response.unreadCount || 0);
+        }
+      } catch (error) {
+        logger.error('Failed to load notification count:', error);
+      }
+    };
+
+    loadNotificationCount();
+
+    // Refresh notification count every 30 seconds
+    const interval = setInterval(loadNotificationCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const momentList = useMemo(() => moments, [moments]);
 
   const handleOpenDetail = useCallback((moment: FanMomentDto) => {
@@ -128,6 +158,30 @@ const HomeScreen: React.FC = () => {
 
   const handleLanguagePress = useCallback(() => {
     setLanguageModalVisible(true);
+  }, []);
+
+  const handleNotificationPress = useCallback(() => {
+    setNotificationModalVisible(true);
+  }, []);
+
+  const handleNotificationModalClose = useCallback(async () => {
+    setNotificationModalVisible(false);
+
+    // Refresh notification count when modal closes
+    try {
+      const response = await notificationService.getNotifications({
+        unreadOnly: true,
+        page: 1,
+        pageSize: 1,
+      });
+
+      if (response.success) {
+        setUnreadNotificationCount(response.unreadCount || 0);
+        await notificationService.setBadgeCount(response.unreadCount || 0);
+      }
+    } catch (error) {
+      logger.error('Failed to refresh notification count:', error);
+    }
   }, []);
 
   const handleStorePress = useCallback(() => {
@@ -308,7 +362,11 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Header onPressLanguage={handleLanguagePress} />
+        <Header
+          onPressLanguage={handleLanguagePress}
+          onPressNotifications={handleNotificationPress}
+          notificationCount={unreadNotificationCount}
+        />
 
         <FanMomentsSection
           moments={momentList}
@@ -358,6 +416,20 @@ const HomeScreen: React.FC = () => {
         <BlurView intensity={80} tint="dark" style={styles.modalOverlay}>
           <View style={styles.languageModal}>
             <LanguageSwitcher onClose={() => setLanguageModalVisible(false)} />
+          </View>
+        </BlurView>
+      </Modal>
+
+      {/* Notification Modal */}
+      <Modal
+        visible={notificationModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleNotificationModalClose}
+      >
+        <BlurView intensity={80} tint="dark" style={styles.modalOverlay}>
+          <View style={styles.notificationModal}>
+            <NotificationList onClose={handleNotificationModalClose} />
           </View>
         </BlurView>
       </Modal>
@@ -708,6 +780,27 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     paddingBottom: Platform.OS === "ios" ? spacing.xxl + spacing.lg : spacing.xl,
     gap: spacing.lg,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 20,
+      },
+    }),
+  },
+  notificationModal: {
+    width: "100%",
+    height: "85%",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    backgroundColor: colors.background,
+    overflow: "hidden",
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,

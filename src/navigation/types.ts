@@ -8,3 +8,9 @@ export type MarsStackParamList = {
   NotificationTest: undefined;
 };
 
+export type RootStackParamList = {
+  MainTabs: undefined;
+  Terms: undefined;
+  Privacy: undefined;
+};
+

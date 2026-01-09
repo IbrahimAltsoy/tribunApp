@@ -10,12 +10,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
 
 type Props = {
-  onClose: () => void;
+  onClose?: () => void;
   showAcceptButton?: boolean;
   onAccept?: () => void;
 };
@@ -26,12 +27,21 @@ const TermsOfServiceScreen: React.FC<Props> = ({
   onAccept,
 }) => {
   const { t } = useTranslation();
+  const navigation = useNavigation();
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <Pressable onPress={onClose} style={styles.closeButton}>
+        <Pressable onPress={handleClose} style={styles.closeButton}>
           <Ionicons name="close" size={28} color={colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>{t('terms.title')}</Text>

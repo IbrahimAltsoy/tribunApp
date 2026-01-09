@@ -467,5 +467,15 @@
   "cancel": "Cancel",
   "success": "Success",
   "error": "Error",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "notifications": {
+    "title": "Notifications",
+    "unread": "unread",
+    "noNotifications": "No notifications",
+    "noNotificationsSubtitle": "You're all caught up!",
+    "justNow": "Just now",
+    "minutesAgo": "m ago",
+    "hoursAgo": "h ago",
+    "daysAgo": "d ago"
+  }
 }

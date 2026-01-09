@@ -57,7 +57,9 @@
       "Bash(find:*)",
       "Bash(Select-String -Pattern \"error\" -Context 0,2)",
       "Bash(npm run type-check:*)",
-      "Bash(del NUL)"
+      "Bash(del NUL)",
+      "Bash(xargs cat:*)",
+      "Bash(dotnet ef migrations script:*)"
     ]
   }
 }

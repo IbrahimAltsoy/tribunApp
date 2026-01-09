@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator } from 'react-native';
 import BottomTabs from './BottomTabs';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -9,6 +10,9 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import { colors } from '../theme/colors';
 import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
+import type { RootStackParamList } from './types';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const navTheme: Theme = {
   ...DefaultTheme,
@@ -116,7 +120,39 @@ const RootNavigator: React.FC = () => {
 
   return (
     <NavigationContainer theme={navTheme}>
-      <BottomTabs />
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="MainTabs" component={BottomTabs} />
+        <Stack.Screen
+          name="Terms"
+          component={TermsOfServiceScreen}
+          options={{
+            headerShown: true,
+            headerTitle: '',
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTintColor: colors.primary,
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="Privacy"
+          component={PrivacyPolicyScreen}
+          options={{
+            headerShown: true,
+            headerTitle: '',
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTintColor: colors.primary,
+            presentation: 'modal',
+          }}
+        />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

@@ -485,6 +485,126 @@ const setBadgeCount = async (count: number): Promise<void> => {
   }
 };
 
+/**
+ * Get notifications from backend
+ */
+const getNotifications = async (options?: {
+  unreadOnly?: boolean;
+  page?: number;
+  pageSize?: number;
+}): Promise<any> => {
+  try {
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const pushToken = await getStoredPushToken();
+
+    if (!pushToken) {
+      return { success: false, data: [], totalCount: 0, unreadCount: 0 };
+    }
+
+    const params = new URLSearchParams({
+      deviceId: pushToken,
+      unreadOnly: options?.unreadOnly ? 'true' : 'false',
+      page: (options?.page || 1).toString(),
+      pageSize: (options?.pageSize || 20).toString(),
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/notifications?${params}`);
+    const result = await response.json();
+
+    return result;
+  } catch (error) {
+    logger.error('Failed to get notifications:', error);
+    return { success: false, data: [], totalCount: 0, unreadCount: 0 };
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+const markAsRead = async (notificationId: string): Promise<boolean> => {
+  try {
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/notifications/${notificationId}/mark-as-read`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.success || false;
+  } catch (error) {
+    logger.error('Failed to mark notification as read:', error);
+    return false;
+  }
+};
+
+/**
+ * Mark all notifications as read
+ */
+const markAllAsRead = async (): Promise<number> => {
+  try {
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const pushToken = await getStoredPushToken();
+
+    if (!pushToken) {
+      return 0;
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/notifications/mark-all-as-read?deviceId=${pushToken}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.data || 0;
+  } catch (error) {
+    logger.error('Failed to mark all as read:', error);
+    return 0;
+  }
+};
+
+/**
+ * Delete notification
+ */
+const deleteNotification = async (notificationId: string): Promise<boolean> => {
+  try {
+    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+
+    const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+      method: 'DELETE',
+    });
+
+    const result = await response.json();
+    return result.success || false;
+  } catch (error) {
+    logger.error('Failed to delete notification:', error);
+    return false;
+  }
+};
+
+/**
+ * Get stored push token from AsyncStorage
+ */
+const getStoredPushToken = async (): Promise<string | null> => {
+  try {
+    const AsyncStorage = await import('@react-native-async-storage/async-storage');
+    return await AsyncStorage.default.getItem('expo_push_token');
+  } catch (error) {
+    logger.error('Failed to get stored push token:', error);
+    return null;
+  }
+};
+
 export const notificationService = {
   // Initialization
   initialize,
@@ -502,6 +622,12 @@ export const notificationService = {
   // Preferences
   getPreferences,
   savePreferences,
+
+  // API calls
+  getNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
 
   // Utilities
   cancelAllNotifications,
