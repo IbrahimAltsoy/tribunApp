@@ -76,7 +76,9 @@
       "Bash(cmd.exe /c \"taskkill /F /PID 159868\")",
       "Bash(PORT=8082 npx expo start:*)",
       "Bash(git push)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(eas build:cancel:*)",
+      "Bash(eas build:view:*)"
     ]
   }
 }
