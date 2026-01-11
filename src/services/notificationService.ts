@@ -215,7 +215,17 @@ const getExpoPushToken = async (): Promise<string | null> => {
 
     // Get the Expo push token
     // Note: Requires EAS project setup. For development, local notifications work without this.
-    const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
+    let projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
+
+    // Fallback to expo-constants if env var not set
+    if (!projectId) {
+      try {
+        const Constants = await import('expo-constants');
+        projectId = Constants.default.expoConfig?.extra?.eas?.projectId;
+      } catch (error) {
+        logger.error('Failed to load expo-constants:', error);
+      }
+    }
 
     if (!projectId) {
       logger.log('⚠️ EAS Project ID not configured');
@@ -223,6 +233,8 @@ const getExpoPushToken = async (): Promise<string | null> => {
       logger.log('To enable: Run "eas init" and update app.json with projectId');
       return null;
     }
+
+    logger.log('🔑 Using EAS Project ID:', projectId);
 
     const tokenData = await Notifications.getExpoPushTokenAsync({
       projectId: projectId,
@@ -244,6 +256,11 @@ const registerPushToken = async (token: string): Promise<boolean> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
+    logger.log('📡 Registering push token with backend...');
+    logger.log('🌐 API URL:', API_BASE_URL);
+    logger.log('📱 Platform:', Platform.OS);
+    logger.log('🔑 Token:', token.substring(0, 30) + '...');
+
     const response = await fetch(`${API_BASE_URL}/api/notifications/register`, {
       method: 'POST',
       headers: {
@@ -258,13 +275,18 @@ const registerPushToken = async (token: string): Promise<boolean> => {
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('❌ Failed to register token. Status:', response.status);
+      logger.error('Response:', errorText);
       throw new Error(`Failed to register token: ${response.status}`);
     }
 
-    logger.log('Push token registered successfully');
+    const result = await response.json();
+    logger.log('✅ Push token registered successfully');
+    logger.log('Response:', result);
     return true;
   } catch (error) {
-    logger.error('Failed to register push token with backend:', error);
+    logger.error('❌ Failed to register push token with backend:', error);
     return false;
   }
 };
@@ -275,12 +297,16 @@ const registerPushToken = async (token: string): Promise<boolean> => {
  */
 const initialize = async (): Promise<void> => {
   try {
+    logger.log('🚀 Initializing push notifications...');
     const token = await getExpoPushToken();
     if (token) {
+      logger.log('✅ Got push token, registering with backend...');
       await registerPushToken(token);
+    } else {
+      logger.log('⚠️ No push token obtained (might be emulator or permission denied)');
     }
   } catch (error) {
-    logger.error('Failed to initialize push notifications:', error);
+    logger.error('❌ Failed to initialize push notifications:', error);
   }
 };
 
