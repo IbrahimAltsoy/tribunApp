@@ -23,7 +23,6 @@ import * as ImagePicker from "expo-image-picker";
 import { Image } from "react-native";
 import { mediaService } from "../services/mediaService";
 import Header from "../components/Header";
-import SectionHeader from "../components/home/SectionHeader";
 import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";

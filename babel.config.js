@@ -8,7 +8,7 @@ module.exports = function (api) {
     plugins: [
       // Remove console.* statements in production builds
       isProduction && [
-        'transform-remove-console',
+        'babel-plugin-transform-remove-console',
         {
           exclude: ['error', 'warn'], // Keep error and warn for critical issues
         },
@@ -17,7 +17,7 @@ module.exports = function (api) {
     env: {
       production: {
         plugins: [
-          ['transform-remove-console', { exclude: ['error', 'warn'] }],
+          ['babel-plugin-transform-remove-console', { exclude: ['error', 'warn'] }],
         ],
       },
     },

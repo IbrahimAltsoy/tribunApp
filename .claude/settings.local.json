@@ -59,7 +59,23 @@
       "Bash(npm run type-check:*)",
       "Bash(del NUL)",
       "Bash(xargs cat:*)",
-      "Bash(dotnet ef migrations script:*)"
+      "Bash(dotnet ef migrations script:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(npx eas:*)",
+      "Bash(eas build:*)",
+      "Bash(dir:*)",
+      "Bash(eas build:list:*)",
+      "Bash(adb install:*)",
+      "Bash(adb devices:*)",
+      "Bash(adb kill-server:*)",
+      "Bash(adb start-server:*)",
+      "Bash(del \"C:\\\\Users\\\\Lenovo\\\\.android\\\\avd\\\\Medium_Phone.avd\\\\*.lock\")",
+      "Bash(adb shell:*)",
+      "Bash(adb shell am start:*)",
+      "Bash(adb uninstall:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 159868\")",
+      "Bash(PORT=8082 npx expo start:*)",
+      "Bash(git push)"
     ]
   }
 }
