@@ -42,12 +42,14 @@ const RootNavigator: React.FC = () => {
 
   // Setup notification response listener for deep linking
   useEffect(() => {
-    const subscription = notificationService.addNotificationResponseListener((response) => {
+    const unsubscribe = notificationService.addNotificationResponseListener((response) => {
       handleNotificationResponse(response, navigationRef);
     });
 
     return () => {
-      subscription?.remove();
+      if (unsubscribe) {
+        unsubscribe();
+      }
     };
   }, []);
 

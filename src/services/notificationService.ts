@@ -411,8 +411,17 @@ const addNotificationReceivedListener = (
 ): (() => void) | null => {
   if (!Notifications) return null;
 
-  const subscription = Notifications.addNotificationReceivedListener(callback);
-  return () => subscription.remove();
+  try {
+    const subscription = Notifications.addNotificationReceivedListener(callback);
+    return () => {
+      if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
+    };
+  } catch (error) {
+    logger.error('Failed to add notification received listener:', error);
+    return null;
+  }
 };
 
 /**
@@ -423,8 +432,17 @@ const addNotificationResponseListener = (
 ): (() => void) | null => {
   if (!Notifications) return null;
 
-  const subscription = Notifications.addNotificationResponseReceivedListener(callback);
-  return () => subscription.remove();
+  try {
+    const subscription = Notifications.addNotificationResponseReceivedListener(callback);
+    return () => {
+      if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
+    };
+  } catch (error) {
+    logger.error('Failed to add notification response listener:', error);
+    return null;
+  }
 };
 
 /**
