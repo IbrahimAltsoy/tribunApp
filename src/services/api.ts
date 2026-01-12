@@ -1,33 +1,129 @@
 /**
  * API Service Layer
  * Centralized API communication with error handling, retries, and type safety
- * Currently uses mock data, but ready for backend integration
+ * Fully integrated with backend API
  */
 
 import { API_CONFIG, ERROR_MESSAGES } from '../constants/app';
 import { logger } from '../utils/logger';
-import {
-  NewsItem,
-  FixtureItem,
-  FanMoment,
-  Poll,
-  Announcement,
-  Player,
-  KitItem,
-  StandingRow,
-} from '../data/mockData';
+import { ImageSourcePropType } from 'react-native';
 
-// Import mock data for fallback
-import {
-  newsData,
-  fixtureData,
-  fanMoments,
-  polls,
-  announcements,
-  players,
-  kits,
-  standings,
-} from '../data/mockData';
+/* ================= TYPE DEFINITIONS ================= */
+
+export type NewsItem = {
+  id: string;
+  title: string;
+  summary: string;
+  content?: string;
+  imageUrl?: string;
+  thumbnailUrl?: string;
+  category?: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  authorName?: string;
+  isPublished: boolean;
+  publishedAt?: string;
+  viewCount: number;
+  locale: string;
+  createdAt: string;
+};
+
+export type FixtureItem = {
+  id: string;
+  opponent: string;
+  date: string;
+  time: string;
+  venue: string;
+  competition: string;
+  isHome: boolean;
+  status?: "upcoming" | "live" | "finished";
+  score?: string;
+};
+
+export type FanMoment = {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  imageUrl?: string;
+  caption: string;
+  location?: string;
+  createdAt: string;
+  likeCount: number;
+  commentCount: number;
+  isLiked?: boolean;
+};
+
+export type Poll = {
+  id: string;
+  question: string;
+  options: Array<{
+    id: string;
+    text: string;
+    voteCount: number;
+  }>;
+  totalVotes: number;
+  endsAt: string;
+  userVote?: string;
+  isActive: boolean;
+};
+
+export type Announcement = {
+  id: string;
+  title: string;
+  city: string;
+  location: string;
+  date: string;
+  contact: string;
+  note?: string;
+  status: "Pending" | "Approved" | "Rejected";
+  createdAt: string;
+};
+
+export type Player = {
+  id: string;
+  name: string;
+  position: string;
+  jerseyNumber: number;
+  age?: number;
+  birthDate?: string;
+  height?: number;
+  weight?: number;
+  preferredFoot?: string;
+  marketValue?: string;
+  imageUrl?: string;
+  teamType: 'Mens' | 'Womens';
+  isActive: boolean;
+  instagramUrl?: string;
+  twitterUrl?: string;
+};
+
+export type KitItem = {
+  id: string;
+  name: string;
+  season: string;
+  type: 'Home' | 'Away' | 'Third' | 'Special';
+  imageUrl?: string;
+  description?: string;
+};
+
+export type StandingRow = {
+  pos: number;
+  team: string;
+  mp: number;
+  w: number;
+  d: number;
+  l: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  pts: number;
+  positionChange?: number;
+  logo?: string;
+  form?: string[];
+};
 
 /**
  * API Response wrapper

@@ -14,11 +14,38 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { archiveHighlights } from "../data/mockData";
 
 import { colors, shadows } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+
+/* ================= ARCHIVE DATA ================= */
+
+/**
+ * Archive highlights - Historical milestones and achievements
+ * This data is static and rarely changes, so it's kept locally
+ * rather than fetched from API for better performance
+ */
+const archiveHighlights = [
+  {
+    id: "h1",
+    title: "Diyarbakır'ın sesi",
+    detail:
+      "1932'den bugüne amatörden profesyonele uzanan yolculuk. Sur içi mahallelerinden yükselen tribün kültürü.",
+  },
+  {
+    id: "h2",
+    title: "Kupa koşusu",
+    detail:
+      "2024 Türkiye Kupası çeyrek finali, penaltılar ve ardından gelen tribün yürüyüşü.",
+  },
+  {
+    id: "h3",
+    title: "Deplasman ruhu",
+    detail:
+      "Anadolu şehirlerinde renkleriyle yankılanan taraftar kortejleri, dayanışma hikayeleri.",
+  },
+];
 
 /* ================= HERO ================= */
 

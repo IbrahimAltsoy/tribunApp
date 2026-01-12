@@ -17,7 +17,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { kits, players, Announcement } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -28,6 +27,19 @@ import { api } from "../services/api";
 import { logger } from "../utils/logger";
 
 const IS_IOS = Platform.OS === "ios";
+
+// Announcement type definition
+interface Announcement {
+  id: string;
+  title: string;
+  city: string;
+  location: string;
+  date: string;
+  contact: string;
+  note?: string;
+  status: "Pending" | "Approved" | "Rejected";
+  createdAt: string;
+}
 
 const MarsScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -189,14 +201,14 @@ const MarsScreen: React.FC = () => {
     },
     {
       label: t("team.title"),
-      value: players.length,
+      value: "", // Squad size - value fetched from API
       meta: t("team.subtitle"),
       route: "Team",
       hideValue: true,
     },
     {
       label: t("archive.sectionKits"),
-      value: kits.length,
+      value: "", // Kit collection - value fetched from API
       meta: t("archive.formaPeriod"),
       route: "Kits",
       hideValue: true,

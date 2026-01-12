@@ -3,11 +3,22 @@ import { StyleSheet, Text, View } from "react-native";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { fixtureData } from "../../data/mockData";
 import { useTranslation } from "react-i18next";
 
+interface Fixture {
+  id: string;
+  opponent: string;
+  date: string;
+  time: string;
+  venue: string;
+  competition: string;
+  isHome: boolean;
+  status?: "upcoming" | "live" | "finished";
+  score?: string;
+}
+
 type Props = {
-  fixtures: typeof fixtureData;
+  fixtures: Fixture[];
 };
 
 const FixtureList: React.FC<Props> = ({ fixtures }) => {
