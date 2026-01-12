@@ -54,7 +54,6 @@ const NotificationList: React.FC<NotificationListProps> = ({
   // Load notifications
   const loadNotifications = useCallback(async (isRefresh = false) => {
     try {
-      logger.log('📥 NotificationList: Loading notifications...');
       if (isRefresh) {
         setRefreshing(true);
       } else {
@@ -65,8 +64,6 @@ const NotificationList: React.FC<NotificationListProps> = ({
         page: 1,
         pageSize: 50,
       });
-
-      logger.log('📥 NotificationList: Response received:', response);
 
       if (response.success && response.data) {
         setNotifications(response.data);
@@ -94,7 +91,6 @@ const NotificationList: React.FC<NotificationListProps> = ({
   }, []);
 
   useEffect(() => {
-    logger.log('🔔 NotificationList: Component mounted, loading data...');
     loadNotifications();
     loadPreferences();
   }, [loadNotifications, loadPreferences]);

@@ -537,10 +537,7 @@ const getNotifications = async (options?: {
     const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const pushToken = await getStoredPushToken();
 
-    logger.log('🔑 Push token from storage:', pushToken ? pushToken.substring(0, 30) + '...' : 'NULL');
-
     if (!pushToken) {
-      logger.warn('⚠️ No push token found, cannot fetch notifications');
       return { success: false, data: [], totalCount: 0, unreadCount: 0 };
     }
 
@@ -552,13 +549,8 @@ const getNotifications = async (options?: {
     });
 
     const fullUrl = `${apiUrl}/api/notifications?${params}`;
-    logger.log('🔔 Fetching notifications from:', fullUrl);
-
     const response = await fetch(fullUrl);
-    logger.log('📡 Response status:', response.status);
-
     const result = await response.json();
-    logger.log('📦 Notifications received:', result.totalCount || 0);
 
     return result;
   } catch (error) {
