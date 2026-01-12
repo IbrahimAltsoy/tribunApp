@@ -11,6 +11,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { View } from "react-native";
 import RootNavigator from "./navigation/RootNavigator";
 import ErrorBoundary from "./components/ErrorBoundary";
+import SplashScreen from "./components/SplashScreen";
 import { colors } from "./theme/colors";
 import { initSentry } from "./utils/sentry";
 import { notificationService } from "./services/notificationService";
@@ -33,7 +34,7 @@ const App: React.FC = () => {
   }, []);
 
   if (!fontsLoaded) {
-    return null;
+    return <SplashScreen />;
   }
 
   return (
