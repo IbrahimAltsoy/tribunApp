@@ -6,7 +6,7 @@ import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { Announcement } from "../../data/mockData";
+import { Announcement } from "../../services/api";
 
 type Props = {
   announcement: Announcement;

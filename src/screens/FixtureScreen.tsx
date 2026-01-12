@@ -24,19 +24,27 @@ import type {
   LiveScoreDto,
   TopScorerDataDto,
 } from "../types/football";
-import {
-  mensStandings,
-  womensStandings,
-  mensPastResults,
-  womensPastResults,
-  mensUpcomingFixtures,
-  womensUpcomingFixtures,
-  mensLeagueLegend,
-  womensLeagueLegend,
-  type StandingRow,
-  type MatchResult,
-  type UpcomingMatch,
-} from "../data/mockData";
+import { StandingRow } from "../services/api";
+
+// Type definitions for match data
+type MatchResult = {
+  id: string;
+  opponent: string;
+  date: string;
+  result: string;
+  competition: string;
+  isHome: boolean;
+};
+
+type UpcomingMatch = {
+  id: string;
+  opponent: string;
+  date: string;
+  time: string;
+  venue: string;
+  competition: string;
+  isHome: boolean;
+};
 
 type GenderTeam = "mens" | "womens";
 type StandingsView = "general" | "home" | "away" | "scorers";
@@ -298,30 +306,20 @@ const FixtureScreen = () => {
         pos: index + 1,
       }));
     }
-    return selectedGender === "mens" ? mensStandings : womensStandings;
-  }, [selectedGender, backendStandings, standingsView]);
+    return []; // Empty if no backend data available
+  }, [backendStandings, standingsView]);
 
   const currentPastResults = useMemo(() => {
-    // Use backend data if available, otherwise fallback to mock data
-    if (backendPastMatches.length > 0) {
-      return backendPastMatches;
-    }
-    return selectedGender === "mens" ? mensPastResults : womensPastResults;
-  }, [selectedGender, backendPastMatches]);
+    return backendPastMatches; // Use backend data only
+  }, [backendPastMatches]);
 
   const currentUpcomingFixtures = useMemo(() => {
-    // Use backend data if available, otherwise fallback to mock data
-    if (backendUpcomingMatches.length > 0) {
-      return backendUpcomingMatches;
-    }
-    return selectedGender === "mens"
-      ? mensUpcomingFixtures
-      : womensUpcomingFixtures;
-  }, [selectedGender, backendUpcomingMatches]);
+    return backendUpcomingMatches; // Use backend data only
+  }, [backendUpcomingMatches]);
 
   const currentLeagueLegend = useMemo(
-    () => (selectedGender === "mens" ? mensLeagueLegend : womensLeagueLegend),
-    [selectedGender]
+    () => [], // No legend data - can be fetched from API if needed
+    []
   );
 
   // Our team name based on gender

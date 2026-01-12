@@ -18,16 +18,40 @@ import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { staffService, type StaffDto } from "../services/staffService";
 import { playerService, type PlayerDto } from "../services/playerService";
-import {
-  mensManagement,
-  womensManagement,
-  mensCoachingStaff,
-  womensCoachingStaff,
-  type ManagementMember,
-  type CoachingStaffMember,
-  type SocialMedia,
-  type SquadPlayer,
-} from "../data/mockData";
+
+// Type definitions
+type SocialMedia = {
+  platform: string;
+  url: string;
+};
+
+type ManagementMember = {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+  bio?: string;
+  social?: SocialMedia[];
+};
+
+type CoachingStaffMember = {
+  id: string;
+  name: string;
+  role: string;
+  imageUrl?: string;
+  bio?: string;
+  social?: SocialMedia[];
+};
+
+type SquadPlayer = {
+  id: string;
+  name: string;
+  position: string;
+  jerseyNumber: number;
+  imageUrl?: string;
+  bio?: string;
+  social?: SocialMedia[];
+};
 
 type GenderTeam = "mens" | "womens";
 type TabType = "management" | "coaching" | "squad";
@@ -263,8 +287,8 @@ const TeamScreen = () => {
       { management: ManagementMember[]; coaching: CoachingStaffMember[] }
     >
   >({
-    mens: { management: mensManagement, coaching: mensCoachingStaff },
-    womens: { management: womensManagement, coaching: womensCoachingStaff },
+    mens: { management: [], coaching: [] },
+    womens: { management: [], coaching: [] },
   });
   const [squadByGender, setSquadByGender] = useState<
     Record<GenderTeam, SquadPlayer[]>

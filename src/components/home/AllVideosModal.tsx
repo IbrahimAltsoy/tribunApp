@@ -18,22 +18,34 @@ import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { liveMatch } from "../../data/mockData";
 
 const IS_IOS = Platform.OS === "ios";
+
+type LiveEvent = {
+  id: string;
+  minute: number;
+  team: "home" | "away";
+  type: "goal" | "card" | "var" | "sub";
+  player: string;
+  detail: string;
+  videoUrl?: string;
+  thumbUrl?: string;
+};
 
 type AllVideosModalProps = {
   visible: boolean;
   onClose: () => void;
+  events?: LiveEvent[]; // Optional events array
 };
 
 const AllVideosModal: React.FC<AllVideosModalProps> = ({
   visible,
   onClose,
+  events = [], // Default to empty array
 }) => {
   const { t } = useTranslation();
 
-  const renderVideoItem = ({ item }: { item: (typeof liveMatch.events)[0] }) => {
+  const renderVideoItem = ({ item }: { item: LiveEvent }) => {
     const thumb =
       item.thumb ||
       (item.thumbUrl
@@ -196,7 +208,7 @@ const AllVideosModal: React.FC<AllVideosModalProps> = ({
               <View>
                 <Text style={styles.headerTitle}>{t("home.liveTicker.allVideosTitle")}</Text>
                 <Text style={styles.headerSubtitle}>
-                  {t("home.liveTicker.videoCountTitle", { count: liveMatch.events.length })}
+                  {t("home.liveTicker.videoCountTitle", { count: events.length })}
                 </Text>
               </View>
             </View>
@@ -213,7 +225,7 @@ const AllVideosModal: React.FC<AllVideosModalProps> = ({
 
           {/* Video List */}
           <FlatList
-            data={liveMatch.events}
+            data={events}
             renderItem={renderVideoItem}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
