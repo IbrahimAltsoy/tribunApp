@@ -1,3 +1,5 @@
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
 export type ChatRoomDto = {
   id: string;
   name: string;
@@ -31,8 +33,8 @@ type PagedResult<T> = {
   pageSize: number;
 };
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE_URL}/api/chat`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/chat");
 
 const getRooms = async (): Promise<{
   success: boolean;

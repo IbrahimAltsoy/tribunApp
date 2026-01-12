@@ -63,7 +63,7 @@ class Logger {
    */
   info(...args: any[]): void {
     if (this.isDevelopment) {
-      console.info('ℹ️', ...args);
+      console.info('[INFO]', ...args);
     }
   }
 
@@ -72,7 +72,7 @@ class Logger {
    */
   warn(...args: any[]): void {
     if (this.isDevelopment) {
-      console.warn('⚠️', ...args);
+      console.warn('[WARN]', ...args);
     }
     // In production, you might want to send warnings to analytics
     // analytics.trackWarning(args);
@@ -95,7 +95,7 @@ class Logger {
    */
   error(...args: any[]): void {
     if (this.isDevelopment) {
-      console.error('❌', ...args);
+      console.error('[ERROR]', ...args);
     } else {
       // In production, send to error tracking service
       // Sentry.captureException(new Error(JSON.stringify(args)));
@@ -107,7 +107,7 @@ class Logger {
    */
   debug(...args: any[]): void {
     if (this.isDevelopment) {
-      console.debug('🔍', ...args);
+      console.debug('[DEBUG]', ...args);
     }
   }
 
@@ -146,7 +146,7 @@ class Logger {
    */
   devOnly(...args: any[]): void {
     if (this.isDevelopment) {
-      console.log('🔧 [DEV]', ...args);
+      console.log('[DEV]', ...args);
     }
   }
 

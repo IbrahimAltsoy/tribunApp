@@ -1,4 +1,5 @@
 import * as SignalR from "@microsoft/signalr";
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
 
 export type ChatHubMessage = {
   id: string;
@@ -23,10 +24,8 @@ export enum ConnectionStatus {
   Failed = "Failed",
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
-// Remove trailing slash from API_BASE_URL to avoid double slashes
-const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-const HUB_URL = `${baseUrl}/hubs/chat`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const HUB_URL = joinUrl(API_BASE_URL, "/hubs/chat");
 
 class ChatHubService {
   private connection: SignalR.HubConnection | null = null;

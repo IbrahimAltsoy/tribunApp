@@ -26,7 +26,7 @@ import { chatHubService } from "../services/chatHubService";
 import { useTranslation } from "react-i18next";
 
 const IS_IOS = Platform.OS === "ios";
-const quickReactions = ["⚽", "🔥", "💪", "👏", "🎯"];
+const quickReactions = ["👏", "💚", "🔥", "⚽", "🎉"];
 const MESSAGE_PAGE_SIZE = 50;
 
 const formatTimestamp = (value?: string) => {

@@ -10,6 +10,7 @@ import { pollService } from "../../services/pollService";
 import { pollSignalRService, ConnectionStatus } from "../../services/pollSignalRService";
 import type { PollDto } from "../../types/poll";
 import { logger } from "../../utils/logger";
+import { getApiBaseUrl, joinUrl } from "../../utils/apiBaseUrl";
 
 const IS_IOS = Platform.OS === "ios";
 
@@ -147,8 +148,9 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
         const sessionId = await pollService.getSessionId();
 
         // Check if user voted for this poll (poll-based, not option-based)
+        const apiBaseUrl = getApiBaseUrl("http://localhost:5000");
         const response = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000'}/api/polls/voted-option?pollId=${poll.id}&sessionId=${sessionId}`
+          `${joinUrl(apiBaseUrl, "/api/polls/voted-option")}?pollId=${poll.id}&sessionId=${sessionId}`
         );
         const json = await response.json();
 

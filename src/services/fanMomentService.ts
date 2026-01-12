@@ -7,8 +7,10 @@ import type {
 } from '../types/fanMoment';
 
 // Get API URL from environment or use default
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE_URL}/api/fanmoments`;
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/fanmoments");
 
 /**
  * Get or create a unique session ID for this device

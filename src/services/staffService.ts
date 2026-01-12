@@ -1,3 +1,5 @@
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
 export type StaffDto = {
   id: string;
   name: string;
@@ -11,8 +13,8 @@ export type StaffDto = {
   displayOrder?: number;
 };
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE_URL}/api/staff`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/staff");
 
 const getStaff = async (
   teamType: "Mens" | "Womens"

@@ -1,9 +1,10 @@
 import * as SignalR from '@microsoft/signalr';
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
 import type { PollDto } from '../types/poll';
 
 // Get API URL from environment
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-const HUB_URL = `${API_BASE_URL}/hubs/poll`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const HUB_URL = joinUrl(API_BASE_URL, "/hubs/poll");
 
 // Connection status enum for better state management
 export enum ConnectionStatus {

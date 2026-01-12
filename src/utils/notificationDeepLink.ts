@@ -3,9 +3,9 @@
  * Handles navigation when user taps on a notification
  */
 
-import { NotificationType, type NotificationData } from '../services/notificationService';
-import { notificationService } from '../services/notificationService';
-import { logger } from './logger';
+import { NotificationType, type NotificationData } from "../services/notificationService";
+import { notificationService } from "../services/notificationService";
+import { logger } from "./logger";
 
 /**
  * Navigation action for deep linking
@@ -18,16 +18,16 @@ export type NavigationAction = {
 /**
  * Get navigation action from notification data
  */
-export const getNavigationAction = (data: NotificationData): NavigationAction | null => {
+export const getNavigationAction = (
+  data: NotificationData
+): NavigationAction | null => {
   try {
     switch (data.type) {
       case NotificationType.CHAT_ROOM_OPENED:
         return {
-          screen: 'Marş', // Navigate to Marş tab
+          screen: "MainTabs",
           params: {
-            // If you have a specific chat screen, add it here
-            // screen: 'Chat',
-            // chatRoomId: data.id,
+            screen: "Mars",
           },
         };
 
@@ -35,44 +35,46 @@ export const getNavigationAction = (data: NotificationData): NavigationAction | 
       case NotificationType.MATCH_GOAL:
       case NotificationType.MATCH_FINISHED:
         return {
-          screen: 'Maç', // Navigate to Maç (Fixture) tab
+          screen: "MainTabs",
           params: {
-            matchId: data.id,
+            screen: "Fixture",
+            params: {
+              matchId: data.id,
+            },
           },
         };
 
       case NotificationType.NEWS_PUBLISHED:
         return {
-          screen: 'Haber', // Navigate to Haber (News) tab
+          screen: "MainTabs",
           params: {
-            newsId: data.id,
+            screen: "Feed",
+            params: {
+              newsId: data.id,
+            },
           },
         };
 
       case NotificationType.ANNOUNCEMENT_APPROVED:
-        return {
-          screen: 'Marş', // Navigate to Marş tab
-          params: {
-            // If you have announcements screen, add it here
-          },
-        };
-
       case NotificationType.POLL_CREATED:
         return {
-          screen: 'Marş', // Navigate to Marş tab
+          screen: "MainTabs",
           params: {
-            // If you have polls screen, add it here
+            screen: "Mars",
           },
         };
 
       case NotificationType.GENERAL:
       default:
         return {
-          screen: 'Ana Sayfa', // Navigate to Home tab
+          screen: "MainTabs",
+          params: {
+            screen: "Home",
+          },
         };
     }
   } catch (error) {
-    logger.error('Failed to get navigation action:', error);
+    logger.error("Failed to get navigation action:", error);
     return null;
   }
 };
@@ -85,36 +87,38 @@ export const handleNotificationResponse = async (
   navigationRef: any
 ): Promise<void> => {
   try {
-    const data = response?.notification?.request?.content?.data as NotificationData | undefined;
+    const data = response?.notification?.request?.content?.data as
+      | NotificationData
+      | undefined;
 
     if (!data) {
-      logger.warn('No notification data found');
+      logger.warn("No notification data found");
       return;
     }
 
     // Mark notification as read when user taps it
     if (data.notificationId) {
-      logger.log('📖 Marking notification as read:', data.notificationId);
+      logger.log("Marking notification as read:", data.notificationId);
       await notificationService.markAsRead(data.notificationId);
     }
 
     const action = getNavigationAction(data);
 
     if (!action) {
-      logger.warn('No navigation action for notification type:', data.type);
+      logger.warn("No navigation action for notification type:", data.type);
       return;
     }
 
     // Wait for navigation to be ready
     setTimeout(() => {
       if (navigationRef?.current?.isReady()) {
-        logger.log('Navigating to:', action.screen, action.params);
+        logger.log("Navigating to:", action.screen, action.params);
         navigationRef.current?.navigate(action.screen, action.params);
       } else {
-        logger.warn('Navigation not ready');
+        logger.warn("Navigation not ready");
       }
     }, 100);
   } catch (error) {
-    logger.error('Failed to handle notification response:', error);
+    logger.error("Failed to handle notification response:", error);
   }
 };

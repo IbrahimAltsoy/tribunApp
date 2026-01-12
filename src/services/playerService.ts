@@ -1,3 +1,5 @@
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
 export type PlayerDto = {
   id: string;
   name: string;
@@ -18,8 +20,8 @@ export type PlayerDto = {
   biography?: string | null;
 };
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE_URL}/api/players`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/players");
 
 const getPlayers = async (
   teamType: "Mens" | "Womens"

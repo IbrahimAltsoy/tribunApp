@@ -1,7 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE_URL}/api/media`;
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/media");
 
 /**
  * Get or create a unique session ID for this device

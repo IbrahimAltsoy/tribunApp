@@ -29,21 +29,35 @@ import { StandingRow } from "../services/api";
 // Type definitions for match data
 type MatchResult = {
   id: string;
-  opponent: string;
+  week: number;
   date: string;
-  result: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
   competition: string;
-  isHome: boolean;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 };
 
 type UpcomingMatch = {
   id: string;
-  opponent: string;
+  week: number;
   date: string;
   time: string;
   venue: string;
+  homeTeam: string;
+  awayTeam: string;
   competition: string;
-  isHome: boolean;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
+};
+
+type LeagueLegendItem = {
+  id: string;
+  color: string;
+  label: string;
+  description: string;
 };
 
 type GenderTeam = "mens" | "womens";
@@ -317,7 +331,7 @@ const FixtureScreen = () => {
     return backendUpcomingMatches; // Use backend data only
   }, [backendUpcomingMatches]);
 
-  const currentLeagueLegend = useMemo(
+  const currentLeagueLegend = useMemo<LeagueLegendItem[]>(
     () => [], // No legend data - can be fetched from API if needed
     []
   );
@@ -397,8 +411,10 @@ const FixtureScreen = () => {
                   (p) => p.id === goal.participantId
                 );
 
-                const teamName = scoringTeam?.name || t("fixture.scorers.defaultTeam");
-                const playerName = goal.playerName || t("fixture.scorers.defaultPlayer");
+                const teamName =
+                  scoringTeam?.name || t("fixture.scorers.defaultTeam");
+                const playerName =
+                  goal.playerName || t("fixture.scorers.defaultPlayer");
                 const minute = goal.minute || 0;
 
                 // Trigger all celebration effects
@@ -470,7 +486,7 @@ const FixtureScreen = () => {
       }
       logger.log("⚡ Polling live scores... (15sec interval)");
       loadLiveScores();
-    }, 15000); // 15 seconds - balanced between real-time updates and performance ⚡
+    }, 1500000); // 15 seconds - balanced between real-time updates and performance ⚡
 
     return () => clearInterval(interval);
   }, [selectedGender, previousMatchState]);

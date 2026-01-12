@@ -1,3 +1,5 @@
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
 export type KitDto = {
   id: string;
   name: string;
@@ -16,8 +18,8 @@ export type KitItem = {
   image?: { uri: string };
 };
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE_URL}/api/kits`;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/kits");
 
 const mapKit = (kit: KitDto): KitItem => ({
   id: kit.id,

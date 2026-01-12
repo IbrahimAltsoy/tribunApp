@@ -6,6 +6,7 @@
 
 import { API_CONFIG, ERROR_MESSAGES } from '../constants/app';
 import { logger } from '../utils/logger';
+import { getApiBaseUrl, joinUrl } from '../utils/apiBaseUrl';
 import { ImageSourcePropType } from 'react-native';
 
 /* ================= TYPE DEFINITIONS ================= */
@@ -158,9 +159,13 @@ class ApiService {
 
   constructor() {
     // Use environment variable or fallback to mock data
-    this.baseUrl = process.env.EXPO_PUBLIC_API_URL || '';
+    this.baseUrl = getApiBaseUrl();
     this.timeout = API_CONFIG.TIMEOUT;
     this.useMockData = !this.baseUrl; // Use mock data if no API URL configured
+  }
+
+  private buildUrl(path: string): string {
+    return joinUrl(this.baseUrl, path);
   }
 
   /**
@@ -179,7 +184,7 @@ class ApiService {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(this.buildUrl(endpoint), {
         ...options,
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +257,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/news?pageNumber=${pageNumber}&pageSize=${pageSize}&isPublished=${isPublished}`, {
+      const response = await fetch(this.buildUrl(`/api/news?pageNumber=${pageNumber}&pageSize=${pageSize}&isPublished=${isPublished}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -292,7 +297,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/news/latest?count=${count}`, {
+      const response = await fetch(this.buildUrl(`/api/news/latest?count=${count}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -335,7 +340,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/news/${id}`, {
+      const response = await fetch(this.buildUrl(`/api/news/${id}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -375,7 +380,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/news/category/${categorySlug}?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
+      const response = await fetch(this.buildUrl(`/api/news/category/${categorySlug}?pageNumber=${pageNumber}&pageSize=${pageSize}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -445,7 +450,7 @@ class ApiService {
     }
 
     try {
-      let url = `${this.baseUrl}/api/fanmoments?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+      let url = this.buildUrl(`/api/fanmoments?pageNumber=${pageNumber}&pageSize=${pageSize}`);
       if (status) {
         url += `&status=${status}`;
       }
@@ -497,19 +502,20 @@ class ApiService {
       await this.simulateDelay(500);
       const newMoment: FanMoment = {
         id: `moment-${Date.now()}`,
-        username: request.nickname,
-        description: request.caption,
+        userId: request.sessionId,
+        userName: request.nickname,
+        caption: request.caption,
         imageUrl: request.imageUrl,
-        videoUrl: request.videoUrl,
-        status: 'Pending',
+        location: request.city,
         likeCount: 0,
+        commentCount: 0,
         createdAt: new Date().toISOString(),
       };
       return { success: true, data: newMoment };
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/fanmoments`, {
+      const response = await fetch(this.buildUrl('/api/fanmoments'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -549,7 +555,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/fanmoments/${id}/like`, {
+      const response = await fetch(this.buildUrl(`/api/fanmoments/${id}/like`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -591,7 +597,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/polls/active`, {
+      const response = await fetch(this.buildUrl('/api/polls/active'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -653,7 +659,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/polls/vote`, {
+      const response = await fetch(this.buildUrl('/api/polls/vote'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -693,7 +699,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/polls/voted-option?pollId=${pollId}&sessionId=${sessionId}`, {
+      const response = await fetch(this.buildUrl(`/api/polls/voted-option?pollId=${pollId}&sessionId=${sessionId}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -735,7 +741,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/announcements?status=${status}`, {
+      const response = await fetch(this.buildUrl(`/api/announcements?status=${status}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -795,7 +801,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/announcements`, {
+      const response = await fetch(this.buildUrl('/api/announcements'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -837,7 +843,7 @@ class ApiService {
     }
 
     try {
-      let url = `${this.baseUrl}/api/players?teamType=${teamType}`;
+      let url = this.buildUrl(`/api/players?teamType=${teamType}`);
       if (position) {
         url += `&position=${position}`;
       }
@@ -884,7 +890,7 @@ class ApiService {
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/players/${id}`, {
+      const response = await fetch(this.buildUrl(`/api/players/${id}`), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

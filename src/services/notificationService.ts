@@ -8,9 +8,12 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
 
 // Lazy load notifications to avoid Expo Go errors
 let Notifications: typeof import('expo-notifications') | null = null;
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const NOTIFICATION_API_BASE_URL = getApiBaseUrl("http://localhost:5118");
 
 /**
  * Notification types that can be sent
@@ -72,7 +75,7 @@ const initNotifications = async (): Promise<boolean> => {
 
   // Skip notifications in Expo Go Android (development mode)
   if (__DEV__ && Platform.OS === 'android') {
-    logger.log('📱 Notifications disabled in Expo Go Android');
+    logger.log('Notifications disabled in Expo Go Android');
     return false;
   }
 
@@ -245,10 +248,7 @@ const getExpoPushToken = async (): Promise<string | null> => {
  */
 const registerPushToken = async (token: string): Promise<boolean> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    const response = await fetch(`${apiUrl}/api/notifications/register`, {
+    const response = await fetch(joinUrl(API_BASE_URL, "/api/notifications/register"), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -450,10 +450,7 @@ const syncPreferencesWithBackend = async (
   preferences: NotificationPreferences
 ): Promise<void> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    await fetch(`${apiUrl}/api/notifications/preferences`, {
+    await fetch(joinUrl(API_BASE_URL, "/api/notifications/preferences"), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -517,8 +514,6 @@ const getNotifications = async (options?: {
   pageSize?: number;
 }): Promise<any> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const pushToken = await getStoredPushToken();
 
     if (!pushToken) {
@@ -532,7 +527,7 @@ const getNotifications = async (options?: {
       pageSize: (options?.pageSize || 20).toString(),
     });
 
-    const fullUrl = `${apiUrl}/api/notifications?${params}`;
+    const fullUrl = `${joinUrl(NOTIFICATION_API_BASE_URL, "/api/notifications")}?${params}`;
     const response = await fetch(fullUrl);
     const result = await response.json();
 
@@ -548,11 +543,8 @@ const getNotifications = async (options?: {
  */
 const markAsRead = async (notificationId: string): Promise<boolean> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
     const response = await fetch(
-      `${apiUrl}/api/notifications/${notificationId}/mark-as-read`,
+      joinUrl(NOTIFICATION_API_BASE_URL, `/api/notifications/${notificationId}/mark-as-read`),
       {
         method: 'PUT',
         headers: {
@@ -574,8 +566,6 @@ const markAsRead = async (notificationId: string): Promise<boolean> => {
  */
 const markAllAsRead = async (): Promise<number> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const pushToken = await getStoredPushToken();
 
     if (!pushToken) {
@@ -583,7 +573,7 @@ const markAllAsRead = async (): Promise<number> => {
     }
 
     const response = await fetch(
-      `${apiUrl}/api/notifications/mark-all-as-read?deviceId=${pushToken}`,
+      `${joinUrl(NOTIFICATION_API_BASE_URL, "/api/notifications/mark-all-as-read")}?deviceId=${pushToken}`,
       {
         method: 'PUT',
         headers: {
@@ -605,10 +595,7 @@ const markAllAsRead = async (): Promise<number> => {
  */
 const deleteNotification = async (notificationId: string): Promise<boolean> => {
   try {
-    const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
-    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    const response = await fetch(`${apiUrl}/api/notifications/${notificationId}`, {
+    const response = await fetch(joinUrl(NOTIFICATION_API_BASE_URL, `/api/notifications/${notificationId}`), {
       method: 'DELETE',
     });
 

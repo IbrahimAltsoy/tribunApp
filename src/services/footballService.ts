@@ -7,8 +7,10 @@ import type {
 } from '../types/football';
 
 // Get API URL from environment or use default
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE_URL}/api/football`;
+import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+
+const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
+const API_URL = joinUrl(API_BASE_URL, "/api/football");
 
 /**
  * Get standings table for a season
