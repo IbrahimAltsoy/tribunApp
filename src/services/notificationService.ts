@@ -176,23 +176,14 @@ const requestPermissions = async (): Promise<boolean> => {
     if (!initialized || !Notifications) return false;
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    logger.log('📱 Current notification permission status:', existingStatus);
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
-      logger.log('🔔 Requesting notification permissions...');
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
-      logger.log('📱 Permission request result:', finalStatus);
     }
 
-    if (finalStatus !== 'granted') {
-      logger.log('❌ Notification permission denied');
-      return false;
-    }
-
-    logger.log('✅ Notification permission granted');
-    return true;
+    return finalStatus === 'granted';
   } catch (error) {
     logger.error('Failed to request notification permissions:', error);
     return false;
@@ -205,17 +196,13 @@ const requestPermissions = async (): Promise<boolean> => {
  */
 const getExpoPushToken = async (): Promise<string | null> => {
   try {
-    logger.log('📱 Platform:', Platform.OS, 'Version:', Platform.Version);
-
     // Notifications only work on physical devices
     if (!Device.isDevice) {
-      logger.log('Push notifications only work on physical devices');
       return null;
     }
 
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
-      logger.log('❌ No notification permission');
       return null;
     }
 
@@ -236,28 +223,19 @@ const getExpoPushToken = async (): Promise<string | null> => {
     }
 
     if (!projectId) {
-      logger.log('⚠️ EAS Project ID not configured');
-      logger.log('📱 Local notifications will work, but push notifications from server require EAS setup');
-      logger.log('To enable: Run "eas init" and update app.json with projectId');
       return null;
     }
-
-    logger.log('🔑 Using EAS Project ID:', projectId);
 
     const tokenData = await Notifications.getExpoPushTokenAsync({
       projectId: projectId,
     });
 
-    logger.log('✅ Expo Push Token:', tokenData.data);
-
     // Save token to AsyncStorage for later retrieval
     await AsyncStorage.setItem('expo_push_token', tokenData.data);
-    logger.log('💾 Push token saved to storage');
 
     return tokenData.data;
   } catch (error) {
-    logger.error('❌ Failed to get push token:', error);
-    logger.log('💡 Local notifications will still work');
+    logger.error('Failed to get push token:', error);
     return null;
   }
 };
@@ -269,11 +247,6 @@ const registerPushToken = async (token: string): Promise<boolean> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
     const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-
-    logger.log('📡 Registering push token with backend...');
-    logger.log('🌐 API URL:', apiUrl);
-    logger.log('📱 Platform:', Platform.OS);
-    logger.log('🔑 Token:', token.substring(0, 30) + '...');
 
     const response = await fetch(`${apiUrl}/api/notifications/register`, {
       method: 'POST',
@@ -290,17 +263,14 @@ const registerPushToken = async (token: string): Promise<boolean> => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      logger.error('❌ Failed to register token. Status:', response.status);
-      logger.error('Response:', errorText);
+      logger.error('Failed to register token:', response.status, errorText);
       throw new Error(`Failed to register token: ${response.status}`);
     }
 
-    const result = await response.json();
-    logger.log('✅ Push token registered successfully');
-    logger.log('Response:', result);
+    await response.json();
     return true;
   } catch (error) {
-    logger.error('❌ Failed to register push token with backend:', error);
+    logger.error('Failed to register push token:', error);
     return false;
   }
 };
@@ -311,16 +281,12 @@ const registerPushToken = async (token: string): Promise<boolean> => {
  */
 const initialize = async (): Promise<void> => {
   try {
-    logger.log('🚀 Initializing push notifications...');
     const token = await getExpoPushToken();
     if (token) {
-      logger.log('✅ Got push token, registering with backend...');
       await registerPushToken(token);
-    } else {
-      logger.log('⚠️ No push token obtained (might be emulator or permission denied)');
     }
   } catch (error) {
-    logger.error('❌ Failed to initialize push notifications:', error);
+    logger.error('Failed to initialize push notifications:', error);
   }
 };
 
