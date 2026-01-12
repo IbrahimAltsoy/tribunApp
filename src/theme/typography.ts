@@ -1,3 +1,5 @@
+import { scaleFont } from '../utils/responsive';
+
 export const typography = {
   regular: 'Montserrat_400Regular',
   medium: 'Montserrat_500Medium',
@@ -6,22 +8,29 @@ export const typography = {
   extraBold: 'Montserrat_800ExtraBold',
 };
 
+/**
+ * Responsive font sizes
+ * Scales based on screen size for optimal readability
+ */
 export const fontSizes = {
-  xs: 11,
-  sm: 13,
-  md: 15,
-  base: 17,
-  lg: 20,
-  xl: 28,
-  xxl: 40,
-  xxxl: 56,
-  display: 72,
+  xs: scaleFont(11),
+  sm: scaleFont(13),
+  md: scaleFont(15),
+  base: scaleFont(17),
+  lg: scaleFont(20),
+  xl: scaleFont(28),
+  xxl: scaleFont(40),
+  xxxl: scaleFont(56),
+  display: scaleFont(72),
 };
 
+/**
+ * Responsive line heights
+ */
 export const lineHeights = {
-  tight: 18,
-  normal: 22,
-  relaxed: 26,
-  loose: 30,
-  xl: 60,
+  tight: scaleFont(18),
+  normal: scaleFont(22),
+  relaxed: scaleFont(26),
+  loose: scaleFont(30),
+  xl: scaleFont(60),
 };
