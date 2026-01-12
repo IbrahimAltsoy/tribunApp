@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import {
   FlatList,
   Image,
@@ -7,101 +7,138 @@ import {
   Text,
   View,
   ListRenderItem,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { players } from "../data/mockData";
+import { Player } from "../data/mockData";
 import { colors, shadows } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
+import { api } from "../services/api";
+import { logger } from "../utils/logger";
 
 const PlayersScreen: React.FC = () => {
   const { t } = useTranslation();
+  const [playersData, setPlayersData] = useState<Player[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const renderPlayerCard: ListRenderItem<typeof players[0]> = useCallback(({ item: p }) => (
-    <View style={styles.card}>
-      <View style={styles.headerRow}>
-        <Text style={styles.playerNumber}>#{p.number}</Text>
-        <Pressable>
-          <Ionicons name="star-outline" size={22} color={colors.primary} />
-        </Pressable>
-      </View>
+  // Load players from API
+  useEffect(() => {
+    const loadPlayers = async () => {
+      try {
+        setIsLoading(true);
+        logger.log('Loading players from API...');
+        const response = await api.getPlayers('Mens'); // Load men's team by default
 
-      <Image
-        source={p.image || require("../assets/footboll/1.jpg")}
-        style={styles.playerImage}
-      />
+        if (response.success && response.data) {
+          logger.log(`Loaded ${response.data.length} players`);
+          setPlayersData(response.data);
+        } else {
+          logger.error('Failed to load players:', response.error);
+        }
+      } catch (error) {
+        logger.error('Error loading players:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      <Text style={styles.playerName}>{p.name}</Text>
-      <View style={styles.positionBadge}>
-        <Text style={styles.positionText}>{p.position}</Text>
-      </View>
+    loadPlayers();
+  }, []);
 
-      <View style={styles.statsRow}>
-        <Stat label={t("stats.matches")} value={p.matches ?? "-"} />
-        <Stat label={t("stats.goals")} value={p.goals ?? "-"} />
-        <Stat label={t("stats.assists")} value={p.assists ?? "-"} />
-        <Stat
-          label={t("stats.rating")}
-          value={p.rating ? `${p.rating}/10` : "-"}
+  const renderPlayerCard: ListRenderItem<Player> = useCallback(({ item: p }) => {
+    const playerNumber = p.jerseyNumber || p.number || 0;
+    const playerBio = p.biography || p.bio || '';
+    const playerAge = p.age || (p.birthDate ? Math.floor((new Date().getTime() - new Date(p.birthDate).getTime()) / 31557600000) : undefined);
+    const playerHeight = p.height ? `${(p.height / 100).toFixed(2)} m` : '- m';
+    const playerFoot = p.preferredFoot || p.foot || '-';
+    const playerHometown = p.birthPlace || p.hometown || t("archive.contactUnknown");
+    const playerImageSource = p.imageUrl ? { uri: p.imageUrl } : (p.image || require("../assets/footboll/1.jpg"));
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.headerRow}>
+          <Text style={styles.playerNumber}>#{playerNumber}</Text>
+          <Pressable>
+            <Ionicons name="star-outline" size={22} color={colors.primary} />
+          </Pressable>
+        </View>
+
+        <Image
+          source={playerImageSource}
+          style={styles.playerImage}
         />
+
+        <Text style={styles.playerName}>{p.name}</Text>
+        <View style={styles.positionBadge}>
+          <Text style={styles.positionText}>{p.position}</Text>
+        </View>
+
+        <View style={styles.statsRow}>
+          <Stat label={t("stats.matches")} value={p.matches ?? "-"} />
+          <Stat label={t("stats.goals")} value={p.goals ?? "-"} />
+          <Stat label={t("stats.assists")} value={p.assists ?? "-"} />
+          <Stat
+            label={t("stats.rating")}
+            value={p.rating ? `${p.rating}/10` : "-"}
+          />
+        </View>
+
+        <View style={styles.metaGrid}>
+          <Meta
+            icon="walk"
+            text={playerFoot}
+          />
+          <Meta icon="male" text={playerHeight} />
+          <Meta icon="flash" text={playerAge ? `${playerAge} ${t("years")}` : "-"} />
+          <Meta icon="map" text={playerHometown} />
+        </View>
+
+        {playerBio ? <Text style={styles.bio}>{playerBio}</Text> : null}
+
+        {p.strengths && p.strengths.length > 0 && (
+          <>
+            <Text style={styles.label}>{t("strengths")}</Text>
+            <View style={styles.tagRow}>
+              {p.strengths.map((s) => (
+                <View style={styles.tag} key={s}>
+                  <Ionicons name="checkmark" size={14} color={colors.text} />
+                  <Text style={styles.tagText}>{s}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {p.career?.length ? (
+          <>
+            <Text style={styles.label}>{t("career")}</Text>
+            <View style={styles.careerBox}>
+              {p.career.map((c, i) => (
+                <Text key={`${p.id}-car-${i}`} style={styles.careerText}>
+                  • {c}
+                </Text>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        <View style={styles.actionRow}>
+          <Pressable style={styles.actionBtn}>
+            <Ionicons name="heart" size={18} color={colors.text} />
+          </Pressable>
+          <Pressable style={styles.actionBtn}>
+            <Ionicons name="share-social" size={18} color={colors.text} />
+          </Pressable>
+          <Pressable style={styles.actionBtn}>
+            <Ionicons name="chatbubble-ellipses" size={18} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
-
-      <View style={styles.metaGrid}>
-        <Meta
-          icon="walk"
-          text={
-            p.foot === "Both"
-              ? t("archive.footBoth")
-              : p.foot === "Left"
-                ? t("archive.footLeft")
-                : t("archive.footRight")
-          }
-        />
-        <Meta icon="male" text={`${p.height} m`} />
-        <Meta icon="flash" text={`${p.age} ${t("years")}`} />
-        <Meta icon="map" text={p.hometown || t("archive.contactUnknown")} />
-      </View>
-
-      <Text style={styles.bio}>{p.bio}</Text>
-
-      <Text style={styles.label}>{t("strengths")}</Text>
-      <View style={styles.tagRow}>
-        {p.strengths.map((s) => (
-          <View style={styles.tag} key={s}>
-            <Ionicons name="checkmark" size={14} color={colors.text} />
-            <Text style={styles.tagText}>{s}</Text>
-          </View>
-        ))}
-      </View>
-
-      {p.career?.length ? (
-        <>
-          <Text style={styles.label}>{t("career")}</Text>
-          <View style={styles.careerBox}>
-            {p.career.map((c, i) => (
-              <Text key={`${p.id}-car-${i}`} style={styles.careerText}>
-                • {c}
-              </Text>
-            ))}
-          </View>
-        </>
-      ) : null}
-
-      <View style={styles.actionRow}>
-        <Pressable style={styles.actionBtn}>
-          <Ionicons name="heart" size={18} color={colors.text} />
-        </Pressable>
-        <Pressable style={styles.actionBtn}>
-          <Ionicons name="share-social" size={18} color={colors.text} />
-        </Pressable>
-        <Pressable style={styles.actionBtn}>
-          <Ionicons name="chatbubble-ellipses" size={18} color={colors.text} />
-        </Pressable>
-      </View>
-    </View>
-  ), [t]);
+    );
+  }, [t]);
 
   const keyExtractor = useCallback((item: typeof players[0]) => item.id, []);
 
@@ -114,10 +151,21 @@ const PlayersScreen: React.FC = () => {
     </>
   ), [t]);
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>{t("loading")}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
-        data={players}
+        data={playersData}
         renderItem={renderPlayerCard}
         keyExtractor={keyExtractor}
         ListHeaderComponent={ListHeaderComponent}
@@ -127,6 +175,11 @@ const PlayersScreen: React.FC = () => {
         maxToRenderPerBatch={10}
         windowSize={5}
         initialNumToRender={5}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>{t("noPlayersFound")}</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -221,6 +274,31 @@ const styles = StyleSheet.create({
 
   actionRow: { flexDirection: "row", justifyContent: "space-around", marginTop: spacing.sm },
   actionBtn: { padding: 10, borderRadius: 12, borderWidth: 1, borderColor: colors.borderLight },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.lg,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSizes.md,
+    color: colors.text,
+    fontFamily: typography.medium,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: spacing.xl,
+  },
+  emptyText: {
+    fontSize: fontSizes.md,
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    textAlign: "center",
+  },
 });
 
 export default PlayersScreen;

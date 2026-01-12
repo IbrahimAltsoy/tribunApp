@@ -30,6 +30,7 @@ export enum NotificationType {
 export type NotificationData = {
   type: NotificationType;
   id?: string; // Entity ID (chatRoomId, matchId, newsId, etc.)
+  notificationId?: string; // Notification history ID for mark-as-read functionality
   title: string;
   body: string;
   [key: string]: any; // Additional custom data
@@ -241,6 +242,12 @@ const getExpoPushToken = async (): Promise<string | null> => {
     });
 
     logger.log('✅ Expo Push Token:', tokenData.data);
+
+    // Save token to AsyncStorage for later retrieval
+    const AsyncStorage = await import('@react-native-async-storage/async-storage');
+    await AsyncStorage.default.setItem('expo_push_token', tokenData.data);
+    logger.log('💾 Push token saved to storage');
+
     return tokenData.data;
   } catch (error) {
     logger.error('❌ Failed to get push token:', error);
@@ -255,13 +262,14 @@ const getExpoPushToken = async (): Promise<string | null> => {
 const registerPushToken = async (token: string): Promise<boolean> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
     logger.log('📡 Registering push token with backend...');
-    logger.log('🌐 API URL:', API_BASE_URL);
+    logger.log('🌐 API URL:', apiUrl);
     logger.log('📱 Platform:', Platform.OS);
     logger.log('🔑 Token:', token.substring(0, 30) + '...');
 
-    const response = await fetch(`${API_BASE_URL}/api/notifications/register`, {
+    const response = await fetch(`${apiUrl}/api/notifications/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -455,8 +463,9 @@ const syncPreferencesWithBackend = async (
 ): Promise<void> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-    await fetch(`${API_BASE_URL}/api/notifications/preferences`, {
+    await fetch(`${apiUrl}/api/notifications/preferences`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -521,9 +530,13 @@ const getNotifications = async (options?: {
 }): Promise<any> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const pushToken = await getStoredPushToken();
 
+    logger.log('🔑 Push token from storage:', pushToken ? pushToken.substring(0, 30) + '...' : 'NULL');
+
     if (!pushToken) {
+      logger.warn('⚠️ No push token found, cannot fetch notifications');
       return { success: false, data: [], totalCount: 0, unreadCount: 0 };
     }
 
@@ -534,8 +547,14 @@ const getNotifications = async (options?: {
       pageSize: (options?.pageSize || 20).toString(),
     });
 
-    const response = await fetch(`${API_BASE_URL}/api/notifications?${params}`);
+    const fullUrl = `${apiUrl}/api/notifications?${params}`;
+    logger.log('🔔 Fetching notifications from:', fullUrl);
+
+    const response = await fetch(fullUrl);
+    logger.log('📡 Response status:', response.status);
+
     const result = await response.json();
+    logger.log('📦 Notifications received:', result.totalCount || 0);
 
     return result;
   } catch (error) {
@@ -550,9 +569,10 @@ const getNotifications = async (options?: {
 const markAsRead = async (notificationId: string): Promise<boolean> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
     const response = await fetch(
-      `${API_BASE_URL}/api/notifications/${notificationId}/mark-as-read`,
+      `${apiUrl}/api/notifications/${notificationId}/mark-as-read`,
       {
         method: 'PUT',
         headers: {
@@ -575,6 +595,7 @@ const markAsRead = async (notificationId: string): Promise<boolean> => {
 const markAllAsRead = async (): Promise<number> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     const pushToken = await getStoredPushToken();
 
     if (!pushToken) {
@@ -582,7 +603,7 @@ const markAllAsRead = async (): Promise<number> => {
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/notifications/mark-all-as-read?deviceId=${pushToken}`,
+      `${apiUrl}/api/notifications/mark-all-as-read?deviceId=${pushToken}`,
       {
         method: 'PUT',
         headers: {
@@ -605,8 +626,9 @@ const markAllAsRead = async (): Promise<number> => {
 const deleteNotification = async (notificationId: string): Promise<boolean> => {
   try {
     const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5118';
+    const apiUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
-    const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
+    const response = await fetch(`${apiUrl}/api/notifications/${notificationId}`, {
       method: 'DELETE',
     });
 

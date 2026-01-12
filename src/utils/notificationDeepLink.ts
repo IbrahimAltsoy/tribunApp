@@ -4,6 +4,7 @@
  */
 
 import { NotificationType, type NotificationData } from '../services/notificationService';
+import { notificationService } from '../services/notificationService';
 import { logger } from './logger';
 
 /**
@@ -79,16 +80,22 @@ export const getNavigationAction = (data: NotificationData): NavigationAction | 
 /**
  * Handle notification response (when user taps notification)
  */
-export const handleNotificationResponse = (
+export const handleNotificationResponse = async (
   response: any,
   navigationRef: any
-): void => {
+): Promise<void> => {
   try {
     const data = response?.notification?.request?.content?.data as NotificationData | undefined;
 
     if (!data) {
       logger.warn('No notification data found');
       return;
+    }
+
+    // Mark notification as read when user taps it
+    if (data.notificationId) {
+      logger.log('📖 Marking notification as read:', data.notificationId);
+      await notificationService.markAsRead(data.notificationId);
     }
 
     const action = getNavigationAction(data);

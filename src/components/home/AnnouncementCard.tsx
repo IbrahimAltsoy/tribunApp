@@ -6,14 +6,22 @@ import { openURLSafely } from "../../utils/urlValidator";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import { announcements } from "../../data/mockData";
+import { Announcement } from "../../data/mockData";
 
 type Props = {
-  announcement: (typeof announcements)[0];
+  announcement: Announcement;
 };
 
 const AnnouncementCard: React.FC<Props> = ({ announcement }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Format the event date
+  const formattedDate = announcement.date || new Date(announcement.eventDate).toLocaleDateString(i18n.language, {
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
   const handleLinkPress = () => {
     openURLSafely(announcement.link, {
@@ -34,22 +42,26 @@ const AnnouncementCard: React.FC<Props> = ({ announcement }) => {
         </View>
         <View style={styles.datePill}>
           <Ionicons name="calendar-outline" size={14} color={colors.text} />
-          <Text style={styles.pillText}>{announcement.date}</Text>
+          <Text style={styles.pillText}>{formattedDate}</Text>
         </View>
       </View>
 
-      <View style={styles.metaRow}>
-        <Ionicons name="navigate-outline" size={16} color={colors.mutedText} />
-        <Text style={styles.metaText}>{announcement.location}</Text>
-      </View>
+      {announcement.location && (
+        <View style={styles.metaRow}>
+          <Ionicons name="navigate-outline" size={16} color={colors.mutedText} />
+          <Text style={styles.metaText}>{announcement.location}</Text>
+        </View>
+      )}
 
-      <Text style={styles.note}>{announcement.note}</Text>
+      {announcement.note && <Text style={styles.note}>{announcement.note}</Text>}
 
       <View style={styles.footerRow}>
-        <View style={styles.contactRow}>
-          <Ionicons name="chatbubbles-outline" size={16} color={colors.text} />
-          <Text style={styles.contactText}>{announcement.contact}</Text>
-        </View>
+        {announcement.contact && (
+          <View style={styles.contactRow}>
+            <Ionicons name="chatbubbles-outline" size={16} color={colors.text} />
+            <Text style={styles.contactText}>{announcement.contact}</Text>
+          </View>
+        )}
         {announcement.link && (
           <Pressable
             style={styles.cta}

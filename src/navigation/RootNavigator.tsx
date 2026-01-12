@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer, DefaultTheme, Theme } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavigationContainer, DefaultTheme, Theme, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator } from 'react-native';
 import BottomTabs from './BottomTabs';
@@ -10,6 +10,8 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import { colors } from '../theme/colors';
 import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
+import { notificationService } from '../services/notificationService';
+import { handleNotificationResponse } from '../utils/notificationDeepLink';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -28,11 +30,25 @@ const navTheme: Theme = {
 
 type FlowState = 'loading' | 'onboarding' | 'consent' | 'main' | 'terms' | 'privacy' | 'manageConsent';
 
+// Create navigation ref for deep linking
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
+
 const RootNavigator: React.FC = () => {
   const [flowState, setFlowState] = useState<FlowState>('loading');
 
   useEffect(() => {
     checkOnboardingStatus();
+  }, []);
+
+  // Setup notification response listener for deep linking
+  useEffect(() => {
+    const subscription = notificationService.addNotificationResponseListener((response) => {
+      handleNotificationResponse(response, navigationRef);
+    });
+
+    return () => {
+      subscription?.remove();
+    };
   }, []);
 
   const checkOnboardingStatus = async () => {
@@ -119,7 +135,7 @@ const RootNavigator: React.FC = () => {
   }
 
   return (
-    <NavigationContainer theme={navTheme}>
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

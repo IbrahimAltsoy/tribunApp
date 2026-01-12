@@ -78,7 +78,29 @@
       "Bash(git push)",
       "Bash(git reset:*)",
       "Bash(eas build:cancel:*)",
-      "Bash(eas build:view:*)"
+      "Bash(eas build:view:*)",
+      "Bash(npx expo start --clear)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_ProcessName -like \"*TribunApp*\" -or $_Id -eq 104348})",
+      "Bash(ping:*)",
+      "Bash(cmd.exe /c \"tasklist | findstr /i dotnet\")",
+      "Bash(cmd.exe /c \"taskkill /F /PID 104348\")",
+      "Bash(npx expo prebuild:*)",
+      "Bash(npm run ios:*)",
+      "Bash(pod install:*)",
+      "Bash(npx expo prebuild --clean)",
+      "Read(//d/Tribun/tribunApp/**)",
+      "Bash(xargs:*)",
+      "Bash(while read pid)",
+      "Bash(do taskkill //F //PID $pid)",
+      "Bash(done)",
+      "Bash(pkill:*)",
+      "Bash(git restore:*)",
+      "Bash(grep:*)",
+      "Bash(do:*)"
+    ],
+    "additionalDirectories": [
+      "d:\\Tribun\\tribunApi\\src\\TribunApp.Application\\Services"
     ]
   }
 }

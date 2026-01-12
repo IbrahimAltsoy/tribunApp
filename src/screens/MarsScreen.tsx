@@ -10,33 +10,34 @@ import {
   Text,
   TextInput,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import {
-  announcements as announcementData,
-  kits,
-  players,
-} from "../data/mockData";
+import { kits, players, Announcement } from "../data/mockData";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { useTranslation } from "react-i18next";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { MarsStackParamList } from "../navigation/types";
+import { api } from "../services/api";
+import { logger } from "../utils/logger";
 
 const IS_IOS = Platform.OS === "ios";
 
 const MarsScreen: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<NavigationProp<MarsStackParamList>>();
   const [submitOpen, setSubmitOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [announcementList, setAnnouncementList] = useState(announcementData);
+  const [announcementList, setAnnouncementList] = useState<Announcement[]>([]);
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [submission, setSubmission] = useState({
@@ -71,6 +72,32 @@ const MarsScreen: React.FC = () => {
     new Animated.Value(0),
     new Animated.Value(0),
   ]);
+
+  // Load announcements from API
+  useEffect(() => {
+    const loadAnnouncements = async () => {
+      try {
+        setIsLoadingAnnouncements(true);
+        logger.log('Loading announcements from API...');
+        const response = await api.getAnnouncements('Approved');
+
+        if (response.success && response.data) {
+          logger.log(`Loaded ${response.data.length} announcements`);
+          setAnnouncementList(response.data);
+        } else {
+          logger.error('Failed to load announcements:', response.error);
+          Alert.alert(t("error"), response.error || t("archive.loadError"));
+        }
+      } catch (error) {
+        logger.error('Error loading announcements:', error);
+        Alert.alert(t("error"), t("archive.loadError"));
+      } finally {
+        setIsLoadingAnnouncements(false);
+      }
+    };
+
+    loadAnnouncements();
+  }, []);
 
   // Animate hero and stats on mount
   useEffect(() => {
@@ -207,7 +234,7 @@ const MarsScreen: React.FC = () => {
     },
   ];
 
-  const handleSubmitAnnouncement = () => {
+  const handleSubmitAnnouncement = async () => {
     setFormSuccess(null);
 
     // Comprehensive validation
@@ -232,11 +259,6 @@ const MarsScreen: React.FC = () => {
     // Date validation
     if (!submission.date?.trim()) {
       errors.push(t("announcement.dateRequired"));
-    } else {
-      const datePattern = /^\d{1,2}\s\w+,?\s\d{2}:\d{2}$/;
-      if (!datePattern.test(submission.date)) {
-        errors.push(t("announcement.invalidDateFormat"));
-      }
     }
 
     // Optional field length validation
@@ -256,31 +278,63 @@ const MarsScreen: React.FC = () => {
       return;
     }
 
-    setFormError(null);
-    setAnnouncementList((prev) => [
-      {
-        id: `local-${Date.now()}`,
-        title: submission.title.trim(),
+    try {
+      setIsSubmitting(true);
+      setFormError(null);
+
+      // Prepare announcement data for backend
+      const announcementData = {
         city: submission.city.trim(),
-        location: submission.location.trim(),
-        date: submission.date.trim(),
-        contact: submission.contact?.trim() || t("archive.contactUnknown"),
-        note: submission.note.trim(),
-        status: "pending" as const,
-      },
-      ...prev,
-    ]);
-    setSubmission({
-      title: "",
-      city: "",
-      location: "",
-      date: "",
-      contact: "",
-      note: "",
-    });
-    setSelectedDate(new Date());
-    setFormSuccess(t("archive.formSuccess"));
-    setSubmitOpen(false);
+        location: submission.location.trim() || undefined,
+        eventDate: selectedDate.toISOString(),
+        contact: submission.contact.trim() || undefined,
+        translations: [
+          {
+            languageCode: i18n.language,
+            title: submission.title.trim(),
+            note: submission.note.trim() || undefined,
+          }
+        ]
+      };
+
+      logger.log('Submitting announcement:', announcementData);
+      const response = await api.submitAnnouncement(announcementData);
+
+      if (response.success && response.data) {
+        logger.log('Announcement submitted successfully');
+
+        // Add to local list with pending status
+        setAnnouncementList((prev) => [response.data!, ...prev]);
+
+        // Reset form
+        setSubmission({
+          title: "",
+          city: "",
+          location: "",
+          date: "",
+          contact: "",
+          note: "",
+        });
+        setSelectedDate(new Date());
+        setFormSuccess(t("archive.formSuccess"));
+        setSubmitOpen(false);
+
+        Alert.alert(
+          t("success"),
+          t("archive.submissionPending"),
+          [{ text: t("ok") }]
+        );
+      } else {
+        throw new Error(response.error || 'Unknown error');
+      }
+    } catch (error) {
+      logger.error('Failed to submit announcement:', error);
+      const errorMessage = error instanceof Error ? error.message : t("archive.submitError");
+      setFormError(errorMessage);
+      Alert.alert(t("error"), errorMessage, [{ text: t("ok") }]);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -435,6 +489,17 @@ const MarsScreen: React.FC = () => {
           subtitle={t("archive.sectionAnnouncementsSubtitle")}
           icon="megaphone-outline"
         />
+        {isLoadingAnnouncements ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>{t("loading")}</Text>
+          </View>
+        ) : announcementList.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="megaphone-outline" size={48} color={colors.mutedText} />
+            <Text style={styles.emptyText}>{t("archive.noAnnouncements")}</Text>
+          </View>
+        ) : (
         <View style={styles.announcementList}>
           {announcementList.map((item, index) => {
             const cardAnim = announcementCardsAnim[index] || new Animated.Value(1);
@@ -501,7 +566,7 @@ const MarsScreen: React.FC = () => {
                             color={colors.primary}
                           />
                         </View>
-                        {item.status === "pending" ? (
+                        {item.status === "Pending" ? (
                           <View style={styles.pendingBadge}>
                             <Ionicons
                               name="time-outline"
@@ -532,7 +597,14 @@ const MarsScreen: React.FC = () => {
                             size={14}
                             color={colors.mutedText}
                           />
-                          <Text style={styles.metaChipText}>{item.date}</Text>
+                          <Text style={styles.metaChipText}>
+                            {item.date || new Date(item.eventDate).toLocaleDateString(i18n.language, {
+                              day: 'numeric',
+                              month: 'long',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </Text>
                         </View>
                       </View>
                       {item.location ? (
@@ -565,6 +637,7 @@ const MarsScreen: React.FC = () => {
             );
           })}
         </View>
+        )}
 
         <SectionHeading
           title={t("archive.sectionCreate")}
@@ -746,12 +819,23 @@ const MarsScreen: React.FC = () => {
             <Pressable
               style={({ pressed }) => [
                 styles.submitBtn,
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+                (pressed || isSubmitting) && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+                isSubmitting && { opacity: 0.6 },
               ]}
               onPress={handleSubmitAnnouncement}
+              disabled={isSubmitting}
             >
-              <Text style={styles.submitText}>{t("archive.submit")}</Text>
-              <Ionicons name="shield-checkmark" size={16} color={colors.text} />
+              {isSubmitting ? (
+                <>
+                  <ActivityIndicator size="small" color={colors.text} />
+                  <Text style={styles.submitText}>{t("submitting")}</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.submitText}>{t("archive.submit")}</Text>
+                  <Ionicons name="shield-checkmark" size={16} color={colors.text} />
+                </>
+              )}
             </Pressable>
           </ScrollView>
         </SafeAreaView>
@@ -1510,6 +1594,28 @@ const styles = StyleSheet.create({
   datePickerDoneText: {
     color: colors.text,
     fontFamily: typography.semiBold,
+  },
+  loadingContainer: {
+    padding: spacing.xl,
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  loadingText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+  },
+  emptyContainer: {
+    padding: spacing.xl,
+    alignItems: "center",
+    gap: spacing.md,
+    marginVertical: spacing.lg,
+  },
+  emptyText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    textAlign: "center",
   },
 });
 

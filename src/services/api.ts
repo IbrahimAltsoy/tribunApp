@@ -147,14 +147,82 @@ class ApiService {
   // ========== NEWS ==========
 
   /**
-   * Get all news articles
+   * Get all news articles (paginated)
    */
-  async getNews(): Promise<ApiResponse<NewsItem[]>> {
+  async getNews(pageNumber: number = 1, pageSize: number = 10, isPublished: boolean = true): Promise<ApiResponse<NewsItem[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
       return { success: true, data: newsData };
     }
-    return this.fetch<NewsItem[]>('/news');
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/news?pageNumber=${pageNumber}&pageSize=${pageSize}&isPublished=${isPublished}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Accept-Language': 'tr',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Backend returns { success: true, data: { items: [...], totalPages: N, ... } }
+      if (result.success && result.data?.items) {
+        return { success: true, data: result.data.items };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch news', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Get latest news (limited count)
+   */
+  async getLatestNews(count: number = 5): Promise<ApiResponse<NewsItem[]>> {
+    if (this.useMockData) {
+      await this.simulateDelay();
+      return { success: true, data: newsData.slice(0, count) };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/news/latest?count=${count}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Accept-Language': 'tr',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch latest news: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch latest news', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
@@ -169,19 +237,75 @@ class ApiService {
       }
       return { success: true, data: news };
     }
-    return this.fetch<NewsItem>(`/news/${id}`);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/news/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Accept-Language': 'tr',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch news by id', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
-   * Get news by category
+   * Get news by category slug
    */
-  async getNewsByCategory(category: string): Promise<ApiResponse<NewsItem[]>> {
+  async getNewsByCategory(categorySlug: string, pageNumber: number = 1, pageSize: number = 10): Promise<ApiResponse<NewsItem[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
-      const filtered = newsData.filter((n) => n.category === category);
+      const filtered = newsData.filter((n) => n.category?.slug === categorySlug);
       return { success: true, data: filtered };
     }
-    return this.fetch<NewsItem[]>(`/news?category=${category}`);
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/news/category/${categorySlug}?pageNumber=${pageNumber}&pageSize=${pageSize}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Accept-Language': 'tr',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news by category: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data?.items) {
+        return { success: true, data: result.data.items };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch news by category', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   // ========== FIXTURES ==========
@@ -211,116 +335,485 @@ class ApiService {
   // ========== FAN MOMENTS ==========
 
   /**
-   * Get all fan moments
+   * Get all fan moments (paginated, only approved ones by default)
    */
-  async getFanMoments(): Promise<ApiResponse<FanMoment[]>> {
+  async getFanMoments(
+    pageNumber: number = 1,
+    pageSize: number = 10,
+    status: string = 'Approved',
+    sessionId?: string
+  ): Promise<ApiResponse<FanMoment[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
       return { success: true, data: fanMoments };
     }
-    return this.fetch<FanMoment[]>('/fan-moments');
+
+    try {
+      let url = `${this.baseUrl}/api/fanmoments?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+      if (status) {
+        url += `&status=${status}`;
+      }
+      if (sessionId) {
+        url += `&sessionId=${sessionId}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch fan moments: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data?.items) {
+        return { success: true, data: result.data.items };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch fan moments', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
    * Submit a new fan moment
    */
-  async submitFanMoment(
-    moment: Omit<FanMoment, 'id' | 'timestamp'>
-  ): Promise<ApiResponse<FanMoment>> {
+  async submitFanMoment(request: {
+    nickname: string;
+    city: string;
+    caption: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    source?: string;
+    sessionId: string;
+  }): Promise<ApiResponse<FanMoment>> {
     if (this.useMockData) {
       await this.simulateDelay(500);
       const newMoment: FanMoment = {
         id: `moment-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-        ...moment,
+        username: request.nickname,
+        description: request.caption,
+        imageUrl: request.imageUrl,
+        videoUrl: request.videoUrl,
+        status: 'Pending',
+        likeCount: 0,
+        createdAt: new Date().toISOString(),
       };
       return { success: true, data: newMoment };
     }
 
-    return this.fetch<FanMoment>('/fan-moments', {
-      method: 'POST',
-      body: JSON.stringify(moment),
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/api/fanmoments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit fan moment: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to submit fan moment', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Like a fan moment
+   */
+  async likeFanMoment(id: string, sessionId: string): Promise<ApiResponse<boolean>> {
+    if (this.useMockData) {
+      await this.simulateDelay(200);
+      return { success: true, data: true };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/fanmoments/${id}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(sessionId),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to like fan moment: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to like fan moment', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   // ========== POLLS ==========
 
   /**
-   * Get active polls
+   * Get active poll (backend returns single active poll)
+   */
+  async getActivePoll(): Promise<ApiResponse<Poll>> {
+    if (this.useMockData) {
+      await this.simulateDelay();
+      return { success: true, data: polls[0] };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/polls/active`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, error: 'No active poll found' };
+        }
+        throw new Error(`Failed to fetch active poll: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch active poll', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Get all polls (for backward compatibility, returns array)
    */
   async getPolls(): Promise<ApiResponse<Poll[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
       return { success: true, data: polls };
     }
-    return this.fetch<Poll[]>('/polls');
+
+    // Get active poll and return as array
+    const response = await this.getActivePoll();
+    if (response.success && response.data) {
+      return { success: true, data: [response.data] };
+    }
+    return { success: true, data: [] }; // Return empty array if no active poll
   }
 
   /**
    * Submit poll vote
    */
-  async votePoll(pollId: string, optionId: string): Promise<ApiResponse<Poll>> {
+  async votePoll(pollOptionId: string, sessionId: string): Promise<ApiResponse<Poll>> {
     if (this.useMockData) {
       await this.simulateDelay(300);
-      const poll = polls.find((p) => p.id === pollId);
+      const poll = polls[0];
       if (!poll) {
         return { success: false, error: 'Poll not found' };
       }
       return { success: true, data: poll };
     }
 
-    return this.fetch<Poll>(`/polls/${pollId}/vote`, {
-      method: 'POST',
-      body: JSON.stringify({ optionId }),
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/api/polls/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ pollOptionId, sessionId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to vote: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to submit vote', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Check if user has already voted on a poll
+   */
+  async getVotedOption(pollId: string, sessionId: string): Promise<ApiResponse<string | null>> {
+    if (this.useMockData) {
+      await this.simulateDelay(200);
+      return { success: true, data: null };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/polls/voted-option?pollId=${pollId}&sessionId=${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to check voted option: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to check voted option', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   // ========== ANNOUNCEMENTS ==========
 
   /**
-   * Get all announcements
+   * Get announcements (only approved ones by default)
    */
-  async getAnnouncements(): Promise<ApiResponse<Announcement[]>> {
+  async getAnnouncements(status: 'Pending' | 'Approved' | 'Rejected' = 'Approved'): Promise<ApiResponse<Announcement[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
-      return { success: true, data: announcements };
+      // Filter by status if specified
+      const filtered = status ? announcements.filter(a => a.status === status) : announcements;
+      return { success: true, data: filtered };
     }
-    return this.fetch<Announcement[]>('/announcements');
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/announcements?status=${status}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch announcements: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Backend returns { success: true, data: [...], message: "..." }
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch announcements', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
-   * Submit new announcement
+   * Submit new announcement (will be pending approval)
    */
-  async submitAnnouncement(
-    announcement: Omit<Announcement, 'id'>
-  ): Promise<ApiResponse<Announcement>> {
+  async submitAnnouncement(announcement: {
+    city: string;
+    location?: string;
+    eventDate: string; // ISO date string
+    contact?: string;
+    translations: Array<{
+      languageCode: string;
+      title: string;
+      note?: string;
+    }>;
+  }): Promise<ApiResponse<Announcement>> {
     if (this.useMockData) {
       await this.simulateDelay(500);
       const newAnnouncement: Announcement = {
         id: `announcement-${Date.now()}`,
-        ...announcement,
-        status: 'pending',
+        title: announcement.translations[0]?.title || '',
+        note: announcement.translations[0]?.note,
+        city: announcement.city,
+        location: announcement.location,
+        eventDate: announcement.eventDate,
+        contact: announcement.contact,
+        status: 'Pending',
+        createdAt: new Date().toISOString(),
       };
       return { success: true, data: newAnnouncement };
     }
 
-    return this.fetch<Announcement>('/announcements', {
-      method: 'POST',
-      body: JSON.stringify(announcement),
-    });
+    try {
+      const response = await fetch(`${this.baseUrl}/api/announcements`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(announcement),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to submit announcement: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to submit announcement', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   // ========== PLAYERS ==========
 
   /**
-   * Get all players
+   * Get all players by team type
    */
-  async getPlayers(): Promise<ApiResponse<Player[]>> {
+  async getPlayers(teamType: 'Mens' | 'Womens' = 'Mens', position?: string): Promise<ApiResponse<Player[]>> {
     if (this.useMockData) {
       await this.simulateDelay();
       return { success: true, data: players };
     }
-    return this.fetch<Player[]>('/players');
+
+    try {
+      let url = `${this.baseUrl}/api/players?teamType=${teamType}`;
+      if (position) {
+        url += `&position=${position}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch players: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch players', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Get player by ID
+   */
+  async getPlayerById(id: string): Promise<ApiResponse<Player>> {
+    if (this.useMockData) {
+      await this.simulateDelay();
+      const player = players.find((p) => p.id === id);
+      if (!player) {
+        return { success: false, error: 'Player not found' };
+      }
+      return { success: true, data: player };
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/players/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch player: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('API: Failed to fetch player by id', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   // ========== KITS ==========

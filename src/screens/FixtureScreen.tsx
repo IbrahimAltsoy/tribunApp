@@ -462,7 +462,7 @@ const FixtureScreen = () => {
     // Load live scores initially
     loadLiveScores();
 
-    // Poll every 2 seconds for ultra real-time updates, but stop if match is finished
+    // Poll every 15 seconds for real-time updates (optimized from 2s), but stop if match is finished
     const interval = setInterval(async () => {
       // Check if match is finished before polling
       if (previousMatchState === 5) {
@@ -470,9 +470,9 @@ const FixtureScreen = () => {
         logger.log("⏹️ Match finished, stopping polling");
         return;
       }
-      logger.log("⚡ Polling live scores... (2sec interval)");
+      logger.log("⚡ Polling live scores... (15sec interval)");
       loadLiveScores();
-    }, 2000); // 2 seconds for ultra real-time goal notifications ⚡
+    }, 15000); // 15 seconds - balanced between real-time updates and performance ⚡
 
     return () => clearInterval(interval);
   }, [selectedGender, previousMatchState]);

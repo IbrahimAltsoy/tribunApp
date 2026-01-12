@@ -4,10 +4,24 @@ export type NewsItem = {
   id: string;
   title: string;
   summary: string;
-  time: string;
-  category: string;
-  image?: ImageSourcePropType;
-  body?: string[];
+  content?: string; // Full content from backend
+  imageUrl?: string; // Backend image URL
+  thumbnailUrl?: string; // Backend thumbnail URL
+  category?: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  authorName?: string;
+  isPublished: boolean;
+  publishedAt?: string; // ISO date string
+  viewCount: number;
+  locale: string;
+  createdAt: string;
+  // Deprecated fields for backward compatibility with mock data
+  time?: string; // Deprecated: use publishedAt or createdAt
+  image?: ImageSourcePropType; // Deprecated: use imageUrl
+  body?: string[]; // Deprecated: use content
 };
 
 export type FixtureItem = {
@@ -71,19 +85,35 @@ export type Player = {
   id: string;
   name: string;
   position: string;
-  number: number;
-  age: number;
-  height: string;
-  foot: "Right" | "Left" | "Both";
-  bio: string;
-  strengths: string[];
-  hometown?: string;
+  jerseyNumber: number;
+  age?: number;
+  birthDate?: string; // ISO date string
+  height?: number; // in cm from backend
+  weight?: number; // in kg from backend
+  preferredFoot?: string;
+  marketValue?: string;
+  imageUrl?: string; // Backend image URL
+  teamType: 'Mens' | 'Womens';
+  isActive: boolean;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  // Translated fields from backend
+  detailedPosition?: string;
+  birthPlace?: string;
+  nationality?: string;
+  biography?: string;
+  // Deprecated fields for backward compatibility
+  number?: number; // Deprecated: use jerseyNumber
+  foot?: "Right" | "Left" | "Both"; // Deprecated: use preferredFoot
+  bio?: string; // Deprecated: use biography
+  strengths?: string[];
+  hometown?: string; // Deprecated: use birthPlace
   matches?: number;
   goals?: number;
   assists?: number;
   rating?: number;
   career?: string[];
-  image?: ImageSourcePropType;
+  image?: ImageSourcePropType; // Deprecated: use imageUrl
 };
 
 export type SocialMedia = {
@@ -145,40 +175,59 @@ export type KitItem = {
   image?: ImageSourcePropType;
 };
 
-export type PollOption = { id: string; text: string; votes: number };
+export type PollOption = {
+  id: string;
+  text: string;
+  voteCount: number;
+  votePercentage: number;
+  // Deprecated fields for backward compatibility
+  votes?: number; // Deprecated: use voteCount instead
+};
 
 export type Poll = {
   id: string;
   question: string;
-  closesIn: string;
+  isActive: boolean;
+  closesAt?: string; // ISO date string
   options: PollOption[];
+  // Deprecated fields for backward compatibility
+  closesIn?: string; // Deprecated: use closesAt instead
 };
 
 export type Announcement = {
   id: string;
   title: string;
   city: string;
-  location: string;
-  date: string;
-  link?: string;
-  contact: string;
-  note: string;
-  status?: "pending" | "approved" | "rejected";
+  location?: string;
+  eventDate: string; // ISO string or formatted date from backend
+  contact?: string;
+  note?: string;
+  status: "Pending" | "Approved" | "Rejected"; // Backend uses PascalCase enum
+  createdAt: string;
+  // Optional fields for display
+  link?: string; // Not in backend, kept for backwards compatibility with mock data
+  date?: string; // Deprecated: use eventDate instead
 };
 
 export type FanMoment = {
   id: string;
-  user: string;
-  location: string;
-  caption: string;
-  time: string;
-  timestamp?: string;
-  source: "Tribun" | "Sehir Meydani" | "Ev/Izleme";
-  image?: ImageSourcePropType | { uri: string } | string;
-  video?: string;
-  likeCount?: number;
-  status?: 'Pending' | 'Approved' | 'Rejected';
+  username: string; // Backend field
+  imageUrl?: string; // Backend image URL
+  videoUrl?: string; // Backend video URL
+  description?: string; // Backend description field
+  status: 'Pending' | 'Approved' | 'Rejected';
+  likeCount: number;
+  createdAt: string; // ISO date string from backend
   isOwnMoment?: boolean; // Ownership flag from backend
+  // Deprecated fields for backward compatibility
+  user?: string; // Deprecated: use username
+  location?: string; // Deprecated: not in backend
+  caption?: string; // Deprecated: use description
+  time?: string; // Deprecated: use createdAt
+  timestamp?: string; // Deprecated: use createdAt
+  source?: "Tribun" | "Sehir Meydani" | "Ev/Izleme"; // Deprecated: not in backend
+  image?: ImageSourcePropType | { uri: string } | string; // Deprecated: use imageUrl
+  video?: string; // Deprecated: use videoUrl
 };
 
 export type MatchResult = {
@@ -3854,46 +3903,61 @@ export const announcements: Announcement[] = [
     title: "Deplasman otobüsü (İzmir çıkışlı)",
     city: "İzmir",
     location: "Konak Meydanı - Saat Kulesi önü",
+    eventDate: "2025-12-12T10:00:00Z",
     date: "12 Aralık, 10:00",
     contact: "@amedaway",
     link: "https://amedfans.org/otobus",
     note: "50 kişilik kontenjan, pankart ve davul için izin alındı.",
+    status: "Approved",
+    createdAt: "2025-12-01T10:00:00Z",
   },
   {
     id: "a2",
     title: "Maç önü buluşması",
     city: "Diyarbakır",
     location: "On Gözlü Köprü",
+    eventDate: "2025-12-08T15:00:00Z",
     date: "08 Aralık, 15:00",
     contact: "@greenwall",
     note: "Koreografi paylaştırması ve bilet dağıtımı.",
+    status: "Approved",
+    createdAt: "2025-12-01T11:00:00Z",
   },
   {
     id: "a3",
     title: "Diyarbakır çocuk tribünü",
     city: "Diyarbakır",
     location: "Maraton G Kapısı",
+    eventDate: "2025-12-15T16:00:00Z",
     date: "Her iç saha - 1 saat önce",
     contact: "iletisim@amedfan.org",
     note: "12 yaş altı için ücretsiz giriş ve boyama etkinliği.",
+    status: "Approved",
+    createdAt: "2025-12-01T12:00:00Z",
   },
   {
     id: "a4",
     title: "Kahvaltı & deplasman hazırlığı",
     city: "İstanbul",
     location: "Kadıköy Moda Sahili",
+    eventDate: "2025-12-14T09:30:00Z",
     date: "14 Aralık, 09:30",
     contact: "@curvasur",
     note: "Bilet teslimi, konvoy ve pankart koordinasyonu.",
+    status: "Approved",
+    createdAt: "2025-12-02T08:00:00Z",
   },
   {
     id: "a5",
     title: "Üniversite tribün tanışması",
     city: "Ankara",
     location: "Kolej Metro Çıkışı",
+    eventDate: "2025-12-16T18:00:00Z",
     date: "16 Aralık, 18:00",
     contact: "@genclikamed",
     note: "Yeni gelenler için hatıra atkı dağıtımı.",
+    status: "Approved",
+    createdAt: "2025-12-02T09:00:00Z",
   },
 ];
 
