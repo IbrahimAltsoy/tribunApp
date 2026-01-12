@@ -174,18 +174,22 @@ const requestPermissions = async (): Promise<boolean> => {
     if (!initialized || !Notifications) return false;
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    logger.log('📱 Current notification permission status:', existingStatus);
     let finalStatus = existingStatus;
 
     if (existingStatus !== 'granted') {
+      logger.log('🔔 Requesting notification permissions...');
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      logger.log('📱 Permission request result:', finalStatus);
     }
 
     if (finalStatus !== 'granted') {
-      logger.log('Notification permission denied');
+      logger.log('❌ Notification permission denied');
       return false;
     }
 
+    logger.log('✅ Notification permission granted');
     return true;
   } catch (error) {
     logger.error('Failed to request notification permissions:', error);
@@ -199,6 +203,9 @@ const requestPermissions = async (): Promise<boolean> => {
  */
 const getExpoPushToken = async (): Promise<string | null> => {
   try {
+    const Platform = await import('react-native').then(m => m.Platform);
+    logger.log('📱 Platform:', Platform.OS, 'Version:', Platform.Version);
+
     // Notifications only work on physical devices
     if (!Device.isDevice) {
       logger.log('Push notifications only work on physical devices');
@@ -207,7 +214,7 @@ const getExpoPushToken = async (): Promise<string | null> => {
 
     const hasPermission = await requestPermissions();
     if (!hasPermission) {
-      logger.log('No notification permission');
+      logger.log('❌ No notification permission');
       return null;
     }
 
