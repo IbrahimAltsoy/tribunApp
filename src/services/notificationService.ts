@@ -205,7 +205,6 @@ const requestPermissions = async (): Promise<boolean> => {
  */
 const getExpoPushToken = async (): Promise<string | null> => {
   try {
-    const Platform = await import('react-native').then(m => m.Platform);
     logger.log('📱 Platform:', Platform.OS, 'Version:', Platform.Version);
 
     // Notifications only work on physical devices
