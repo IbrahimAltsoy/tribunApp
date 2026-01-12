@@ -433,8 +433,7 @@ const addNotificationResponseListener = (
  */
 const getPreferences = async (): Promise<NotificationPreferences> => {
   try {
-    const AsyncStorage = await import('@react-native-async-storage/async-storage');
-    const stored = await AsyncStorage.default.getItem('notification_preferences');
+    const stored = await AsyncStorage.getItem('notification_preferences');
 
     if (stored) {
       return { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
@@ -452,8 +451,7 @@ const getPreferences = async (): Promise<NotificationPreferences> => {
  */
 const savePreferences = async (preferences: NotificationPreferences): Promise<void> => {
   try {
-    const AsyncStorage = await import('@react-native-async-storage/async-storage');
-    await AsyncStorage.default.setItem('notification_preferences', JSON.stringify(preferences));
+    await AsyncStorage.setItem('notification_preferences', JSON.stringify(preferences));
 
     // Sync with backend
     await syncPreferencesWithBackend(preferences);
