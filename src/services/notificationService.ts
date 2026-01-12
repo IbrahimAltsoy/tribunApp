@@ -4,6 +4,7 @@
  */
 
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
@@ -229,8 +230,7 @@ const getExpoPushToken = async (): Promise<string | null> => {
     // Fallback to expo-constants if env var not set
     if (!projectId) {
       try {
-        const Constants = await import('expo-constants');
-        projectId = Constants.default.expoConfig?.extra?.eas?.projectId;
+        projectId = Constants.expoConfig?.extra?.eas?.projectId;
       } catch (error) {
         logger.error('Failed to load expo-constants:', error);
       }
