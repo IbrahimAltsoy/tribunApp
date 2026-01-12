@@ -5,6 +5,7 @@
 
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 
 // Lazy load notifications to avoid Expo Go errors
@@ -251,8 +252,7 @@ const getExpoPushToken = async (): Promise<string | null> => {
     logger.log('✅ Expo Push Token:', tokenData.data);
 
     // Save token to AsyncStorage for later retrieval
-    const AsyncStorage = await import('@react-native-async-storage/async-storage');
-    await AsyncStorage.default.setItem('expo_push_token', tokenData.data);
+    await AsyncStorage.setItem('expo_push_token', tokenData.data);
     logger.log('💾 Push token saved to storage');
 
     return tokenData.data;
@@ -652,8 +652,7 @@ const deleteNotification = async (notificationId: string): Promise<boolean> => {
  */
 const getStoredPushToken = async (): Promise<string | null> => {
   try {
-    const AsyncStorage = await import('@react-native-async-storage/async-storage');
-    return await AsyncStorage.default.getItem('expo_push_token');
+    return await AsyncStorage.getItem('expo_push_token');
   } catch (error) {
     logger.error('Failed to get stored push token:', error);
     return null;
