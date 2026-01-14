@@ -360,7 +360,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.screenContent}>
         <Header
           onPressLanguage={handleLanguagePress}
           onPressNotifications={handleNotificationPress}
@@ -376,7 +376,7 @@ const HomeScreen: React.FC = () => {
           onDeleteMoment={handleDeleteMoment}
           slot={smartSlot}
         />
-      </ScrollView>
+      </View>
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
       <ShareMomentModal
@@ -661,7 +661,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContent: {
+  screenContent: {
+    flex: 1,
     paddingBottom: spacing.xxl,
   },
   smartSlot: {

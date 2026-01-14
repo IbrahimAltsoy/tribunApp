@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
+  FlatList,
   ImageBackground,
   Pressable,
   StyleSheet,
@@ -10,10 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
 import { useTranslation } from "react-i18next";
+import { mediaService } from "../../services/mediaService";
 import type { FanMomentDto } from "../../types/fanMoment";
 
 const IS_IOS = Platform.OS === "ios";
@@ -33,9 +36,82 @@ const AnimatedMomentCard: React.FC<{
   onPress: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
-}> = React.memo(({ moment, onPress, onEdit, onDelete }) => {
+  activeAudioMomentId: string | null;
+  activeMomentId: string | null;
+  setActiveAudioMomentId: (id: string | null) => void;
+}> = React.memo(
+  ({
+    moment,
+    onPress,
+    onEdit,
+    onDelete,
+    activeAudioMomentId,
+    activeMomentId,
+    setActiveAudioMomentId,
+  }) => {
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [videoUri, setVideoUri] = useState<string | null>(null);
+  const lastPlaybackTime = useRef(0);
+  const wasActive = useRef(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadVideo = async () => {
+      if (!moment.videoUrl) {
+        setVideoUri(null);
+        return;
+      }
+
+      if (/^https?:\/\//i.test(moment.videoUrl)) {
+        if (isActive) {
+          setVideoUri(moment.videoUrl);
+        }
+        return;
+      }
+
+      const result = await mediaService.getSignedUrl(moment.videoUrl);
+      if (isActive) {
+        setVideoUri(result.success ? result.url ?? null : null);
+      }
+    };
+
+    loadVideo();
+
+    return () => {
+      isActive = false;
+    };
+  }, [moment.videoUrl]);
+
+  const player = useVideoPlayer(videoUri ? { uri: videoUri } : null, (player) => {
+    player.loop = true;
+    player.muted = true;
+    player.play();
+  });
+
+  useEffect(() => {
+    if (!player || !videoUri) {
+      return;
+    }
+
+    const isActive = activeMomentId === moment.id;
+    if (isActive) {
+      if (!wasActive.current && lastPlaybackTime.current > 0) {
+        player.currentTime = lastPlaybackTime.current;
+      }
+      player.muted = activeAudioMomentId !== moment.id;
+      player.play();
+    } else {
+      if (wasActive.current) {
+        lastPlaybackTime.current = player.currentTime || 0;
+      }
+      player.muted = true;
+      player.pause();
+    }
+
+    wasActive.current = isActive;
+  }, [activeMomentId, activeAudioMomentId, moment.id, player, videoUri]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -120,6 +196,90 @@ const AnimatedMomentCard: React.FC<{
               </View>
             )}
           </ImageBackground>
+        ) : moment.videoUrl ? (
+          <View style={[styles.momentImage, styles.momentFallback]}>
+            {videoUri && player ? (
+              <VideoView
+                player={player}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                surfaceType="textureView"
+                useExoShutter={false}
+              />
+            ) : null}
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                if (activeMomentId !== moment.id) {
+                  return;
+                }
+                if (activeAudioMomentId === moment.id) {
+                  setActiveAudioMomentId(null);
+                } else {
+                  setActiveAudioMomentId(moment.id);
+                }
+              }}
+              style={({ pressed }) => [
+                styles.soundToggle,
+                pressed && styles.soundTogglePressed,
+              ]}
+            >
+              <Ionicons
+                name={activeAudioMomentId === moment.id ? "volume-high" : "volume-mute"}
+                size={16}
+                color={colors.white}
+              />
+            </Pressable>
+            {/* Owner Actions - Top Right Corner (for non-image moments) */}
+            {moment.isOwnMoment && (onEdit || onDelete) && (
+              <View style={styles.ownerActions}>
+                {onEdit && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onEdit();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="pencil" size={16} color={colors.primary} />
+                    </BlurView>
+                  </Pressable>
+                )}
+                {onDelete && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={colors.error}
+                      />
+                    </BlurView>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
         ) : (
           <View style={[styles.momentImage, styles.momentFallback]}>
             {/* Owner Actions - Top Right Corner (for non-image moments) */}
@@ -197,7 +357,8 @@ const AnimatedMomentCard: React.FC<{
       </Animated.View>
     </Pressable>
   );
-});
+  }
+);
 
 const FanMomentsSection: React.FC<Props> = React.memo(({
   moments,
@@ -214,6 +375,21 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   const addCardScale = useRef(new Animated.Value(1)).current;
   const moreCardScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [activeAudioMomentId, setActiveAudioMomentId] = useState<string | null>(null);
+  const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 70 }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: Array<{ item: FanMomentDto }> }) => {
+      const firstVisible = viewableItems[0]?.item;
+      setActiveMomentId(firstVisible?.id ?? null);
+    }
+  ).current;
+
+  useEffect(() => {
+    if (activeAudioMomentId && activeAudioMomentId !== activeMomentId) {
+      setActiveAudioMomentId(null);
+    }
+  }, [activeAudioMomentId, activeMomentId]);
 
   // Pulse animation for add button
   useEffect(() => {
@@ -272,107 +448,120 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   };
 
   return (
-    <View style={styles.momentsColumn}>
-      {/* Composer - Instagram-like */}
-      <Pressable
-        onPress={onPressAdd}
-        onPressIn={handleAddPressIn}
-        onPressOut={handleAddPressOut}
-      >
-        <Animated.View
-          style={[
-            styles.momentComposer,
-            { transform: [{ scale: addCardScale }] },
-          ]}
-        >
-          <View style={styles.composerLeft}>
-            <View style={styles.composerAvatar}>
-              <Ionicons name="person" size={18} color={colors.text} />
-            </View>
-            <View style={styles.composerTextBlock}>
-              <Text style={styles.composerTitle}>
-                {t("home.shareMomentTitle")}
-              </Text>
-              <Text style={styles.composerSub}>
-                {t("home.shareMomentSubtitle")}
-              </Text>
-            </View>
-          </View>
-          <Animated.View
-            style={[
-              styles.composerAction,
-              { transform: [{ scale: pulseAnim }] },
-            ]}
+    <FlatList
+      data={visibleMoments}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.momentsColumn}
+      showsVerticalScrollIndicator={false}
+      ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+      viewabilityConfig={viewabilityConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+      ListHeaderComponent={
+        <>
+          <Pressable
+            onPress={onPressAdd}
+            onPressIn={handleAddPressIn}
+            onPressOut={handleAddPressOut}
           >
-            <Ionicons name="camera" size={18} color={colors.primary} />
-          </Animated.View>
-        </Animated.View>
-      </Pressable>
-
-      {slot && visibleMoments.length < 3 && (
-        <View style={styles.slotContainer}>{slot}</View>
-      )}
-
-      {/* Fan Moments */}
-      {visibleMoments.map((moment, index) => (
-        <React.Fragment key={moment.id}>
+            <Animated.View
+              style={[
+                styles.momentComposer,
+                { transform: [{ scale: addCardScale }] },
+              ]}
+            >
+              <View style={styles.composerLeft}>
+                <View style={styles.composerAvatar}>
+                  <Ionicons name="person" size={18} color={colors.text} />
+                </View>
+                <View style={styles.composerTextBlock}>
+                  <Text style={styles.composerTitle}>
+                    {t("home.shareMomentTitle")}
+                  </Text>
+                  <Text style={styles.composerSub}>
+                    {t("home.shareMomentSubtitle")}
+                  </Text>
+                </View>
+              </View>
+              <Animated.View
+                style={[
+                  styles.composerAction,
+                  { transform: [{ scale: pulseAnim }] },
+                ]}
+              >
+                <Ionicons name="camera" size={18} color={colors.primary} />
+              </Animated.View>
+            </Animated.View>
+          </Pressable>
+          {slot && visibleMoments.length < 3 && (
+            <View style={styles.slotContainer}>{slot}</View>
+          )}
+          <View style={styles.listSeparator} />
+        </>
+      }
+      ListFooterComponent={
+        moments.length > 10 ? (
+          <Pressable
+            onPress={onPressMore}
+            onPressIn={handleMorePressIn}
+            onPressOut={handleMorePressOut}
+          >
+            <Animated.View
+              style={[
+                styles.momentMoreCard,
+                { transform: [{ scale: moreCardScale }] },
+              ]}
+            >
+              <BlurView
+                intensity={IS_IOS ? 25 : 20}
+                tint="dark"
+                style={styles.momentMoreBlur}
+              >
+                <View style={styles.momentMoreIconWrapper}>
+                  <Ionicons
+                    name="albums-outline"
+                    size={28}
+                    color={colors.primary}
+                  />
+                </View>
+                <Text style={styles.momentMoreTitle}>
+                  {t("home.moreMomentsTitle")}
+                </Text>
+                <Text style={styles.momentMoreCount}>
+                  +{moments.length - 10} {t("home.more")}
+                </Text>
+              </BlurView>
+            </Animated.View>
+          </Pressable>
+        ) : null
+      }
+      renderItem={({ item, index }) => (
+        <>
           <AnimatedMomentCard
-            moment={moment}
-            onPress={() => onSelectMoment(moment)}
-            onEdit={onEditMoment ? () => onEditMoment(moment) : undefined}
-            onDelete={onDeleteMoment ? () => onDeleteMoment(moment) : undefined}
+            moment={item}
+            onPress={() => onSelectMoment(item)}
+            onEdit={onEditMoment ? () => onEditMoment(item) : undefined}
+            onDelete={onDeleteMoment ? () => onDeleteMoment(item) : undefined}
+            activeAudioMomentId={activeAudioMomentId}
+            activeMomentId={activeMomentId}
+            setActiveAudioMomentId={setActiveAudioMomentId}
           />
           {slot && index === 2 && (
             <View style={styles.slotContainer}>{slot}</View>
           )}
-        </React.Fragment>
-      ))}
-
-      {/* More Moments Card */}
-      {moments.length > 10 && (
-        <Pressable
-          onPress={onPressMore}
-          onPressIn={handleMorePressIn}
-          onPressOut={handleMorePressOut}
-        >
-          <Animated.View
-            style={[
-              styles.momentMoreCard,
-              { transform: [{ scale: moreCardScale }] },
-            ]}
-          >
-            <BlurView
-              intensity={IS_IOS ? 25 : 20}
-              tint="dark"
-              style={styles.momentMoreBlur}
-            >
-              <View style={styles.momentMoreIconWrapper}>
-                <Ionicons
-                  name="albums-outline"
-                  size={28}
-                  color={colors.primary}
-                />
-              </View>
-              <Text style={styles.momentMoreTitle}>
-                {t("home.moreMomentsTitle")}
-              </Text>
-              <Text style={styles.momentMoreCount}>
-                +{moments.length - 10} {t("home.more")}
-              </Text>
-            </BlurView>
-          </Animated.View>
-        </Pressable>
+        </>
       )}
-    </View>
+    />
   );
 });
 
 const styles = StyleSheet.create({
   momentsColumn: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.md,
     marginTop: spacing.md,
     paddingVertical: spacing.xs,
+  },
+  listSeparator: {
+    height: spacing.md,
   },
   slotContainer: {
     gap: spacing.md,
@@ -449,6 +638,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  soundToggle: {
+    position: "absolute",
+    bottom: spacing.sm,
+    right: spacing.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  soundTogglePressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.96 }],
   },
 
   // Owner Action Buttons
