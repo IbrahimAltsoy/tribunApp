@@ -1,4 +1,7 @@
 {
+  "header": {
+    "liveTracking": "LIVE TRACKING"
+  },
   "greeting": "Hello! Welcome to our app.",
   "change_language": "Change Language",
   "current_language": "Current Language:",
@@ -22,14 +25,6 @@
     "feed": "News",
     "chat": "Chat",
     "mars": "Amed"
-  },
-  "feed": {
-    "title": "News",
-    "subtitle": "Latest Amedspor buzz with mock data",
-    "category_all": "All",
-    "mock_reads": "Mock reads",
-    "back": "Back",
-    "time_ago": "{{time}} ago"
   },
   "fixture": {
     "title": "Match Center",
@@ -279,7 +274,7 @@
   },
   "feed": {
     "title": "News",
-    "subtitle": "Latest Amedspor buzz with mock data",
+    "subtitle": "Breaking news and updates from Amedspor",
     "category_all": "All",
     "mock_reads": "Mock reads",
     "reads": "reads",

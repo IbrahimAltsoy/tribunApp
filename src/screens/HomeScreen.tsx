@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -64,6 +65,7 @@ const HomeScreen: React.FC = () => {
   );
   const [editCaption, setEditCaption] = useState("");
   const [editImage, setEditImage] = useState<string | undefined>(undefined);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     visible: shareModalVisible,
@@ -76,25 +78,59 @@ const HomeScreen: React.FC = () => {
     submit,
   } = useShareMomentForm();
 
-  // Backend'den News yükle
-  // Backend'den FanMoments yüklee
-  useEffect(() => {
-    const loadMoments = async () => {
-      const response = await fanMomentService.getFanMoments(1, 10, "Approved");
-      if (response.success && response.data) {
-        setMoments(response.data);
-      } else {
-        setMoments([]);
+  // Load all data function (used for initial load and refresh)
+  const loadAllData = useCallback(async () => {
+    // Load moments
+    const momentsResponse = await fanMomentService.getFanMoments(1, 10, "Approved");
+    if (momentsResponse.success && momentsResponse.data) {
+      setMoments(momentsResponse.data);
+    } else {
+      setMoments([]);
+    }
+
+    // Load poll
+    const pollResponse = await pollService.getActivePoll();
+    if (pollResponse.success && pollResponse.data) {
+      setActivePoll(pollResponse.data);
+    } else {
+      setActivePoll(null);
+    }
+
+    // Load notification count
+    try {
+      const notifResponse = await notificationService.getNotifications({
+        unreadOnly: true,
+        page: 1,
+        pageSize: 1,
+      });
+      if (notifResponse.success) {
+        setUnreadNotificationCount(notifResponse.unreadCount || 0);
+        await notificationService.setBadgeCount(notifResponse.unreadCount || 0);
       }
-    };
-    loadMoments();
+    } catch (error) {
+      logger.error('Failed to load notification count:', error);
+    }
   }, []);
 
-  // Backend'den Poll yükle (dil değişikliğinde yeniden yükle)
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadAllData(),
+      new Promise(resolve => setTimeout(resolve, 800))
+    ]);
+    setRefreshing(false);
+  }, [loadAllData]);
+
+  // Initial load
+  useEffect(() => {
+    loadAllData();
+  }, [loadAllData]);
+
+  // Reload poll when language changes
   useEffect(() => {
     const loadPoll = async () => {
       const response = await pollService.getActivePoll();
-
       if (response.success && response.data) {
         setActivePoll(response.data);
       } else {
@@ -104,29 +140,23 @@ const HomeScreen: React.FC = () => {
     loadPoll();
   }, [i18n.language]);
 
-  // Backend'den Unread Notification Count yükle
+  // Auto-refresh notification count every 30 seconds
   useEffect(() => {
-    const loadNotificationCount = async () => {
+    const interval = setInterval(async () => {
       try {
         const response = await notificationService.getNotifications({
           unreadOnly: true,
           page: 1,
           pageSize: 1,
         });
-
         if (response.success) {
           setUnreadNotificationCount(response.unreadCount || 0);
           await notificationService.setBadgeCount(response.unreadCount || 0);
         }
       } catch (error) {
-        logger.error('Failed to load notification count:', error);
+        logger.error('Failed to refresh notification count:', error);
       }
-    };
-
-    loadNotificationCount();
-
-    // Refresh notification count every 30 seconds
-    const interval = setInterval(loadNotificationCount, 30000);
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -373,6 +403,8 @@ const HomeScreen: React.FC = () => {
           onEditMoment={handleEditMoment}
           onDeleteMoment={handleDeleteMoment}
           slot={smartSlot}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       </View>
 

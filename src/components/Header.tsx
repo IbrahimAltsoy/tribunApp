@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({
   onPressLanguage,
   notificationCount = 0,
 }) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const notificationScale = useRef(new Animated.Value(1)).current;
   const languageScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -144,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({
           <View style={styles.brandUnderline} />
           <Text style={styles.liveTag}>
             <View style={styles.liveDot} />
-            {" "}CANLI TAKİP
+            {" "}{t("header.liveTracking")}
           </Text>
         </Animated.View>
 

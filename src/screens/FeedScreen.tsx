@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Alert,
   ImageBackground,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
   Text,
   View,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
@@ -34,35 +36,52 @@ const FeedScreen: React.FC = () => {
   const [selected, setSelected] = useState<string>(ALL_CATEGORY_CODE);
   const [news, setNews] = useState<NewsDto[]>([]);
   const [activeNews, setActiveNews] = useState<NewsDto | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Load categories from backen
-  useEffect(() => {
-    const loadCategories = async () => {
-      const response = await newsService.getCategories();
-      if (response.success && response.data) {
-        setCategories(response.data);
-      }
-    };
-    loadCategories();
+  // Load categories
+  const loadCategories = useCallback(async () => {
+    const response = await newsService.getCategories();
+    if (response.success && response.data) {
+      setCategories(response.data);
+    }
   }, []);
 
   // Load news based on selected category
-  useEffect(() => {
-    const loadNews = async () => {
-      if (selected === ALL_CATEGORY_CODE) {
-        const response = await newsService.getNews(1, 100);
-        if (response.success && response.data) {
-          setNews(response.data.items);
-        }
-      } else {
-        const response = await newsService.getNewsByCategory(selected, 1, 100);
-        if (response.success && response.data) {
-          setNews(response.data.items);
-        }
+  const loadNews = useCallback(async () => {
+    if (selected === ALL_CATEGORY_CODE) {
+      const response = await newsService.getNews(1, 100);
+      if (response.success && response.data) {
+        setNews(response.data.items);
       }
-    };
-    loadNews();
+    } else {
+      const response = await newsService.getNewsByCategory(selected, 1, 100);
+      if (response.success && response.data) {
+        setNews(response.data.items);
+      }
+    }
   }, [selected]);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Minimum delay to ensure spinner is visible
+    await Promise.all([
+      loadCategories(),
+      loadNews(),
+      new Promise(resolve => setTimeout(resolve, 800))
+    ]);
+    setRefreshing(false);
+  }, [loadCategories, loadNews]);
+
+  // Initial load
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  // Load news when category changes
+  useEffect(() => {
+    loadNews();
+  }, [loadNews]);
 
   const categoryOptions = useMemo(() => {
     // Remove duplicates by slug (in case database has duplicates)
@@ -124,7 +143,24 @@ const FeedScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFFFFF"
+            colors={["#0FA958", "#12C26A"]}
+          />
+        }
+      >
+        {/* Loading indicator for pull-to-refresh */}
+        {refreshing && (
+          <View style={styles.refreshIndicator}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.refreshText}>Yenileniyor...</Text>
+          </View>
+        )}
         <Text style={styles.title}>{t("feed.title")}</Text>
         <Text style={styles.subtitle}>{t("feed.subtitle")}</Text>
 
@@ -383,6 +419,18 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  refreshText: {
+    color: colors.primary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
   title: {
     color: colors.text,

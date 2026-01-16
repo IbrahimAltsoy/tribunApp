@@ -8,6 +8,8 @@ import {
   View,
   Animated,
   Platform,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
@@ -29,6 +31,8 @@ type Props = {
   onEditMoment?: (moment: FanMomentDto) => void;
   onDeleteMoment?: (moment: FanMomentDto) => void;
   slot?: React.ReactNode;
+  refreshing?: boolean;
+  onRefresh?: () => void;
 };
 
 const AnimatedMomentCard: React.FC<{
@@ -368,6 +372,8 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   onEditMoment,
   onDeleteMoment,
   slot,
+  refreshing = false,
+  onRefresh,
 }) => {
   const { t } = useTranslation();
   const visibleMoments = (moments || []).slice(0, 10);
@@ -456,8 +462,26 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
       ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
+      contentInsetAdjustmentBehavior="automatic"
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFFFFF"
+            colors={["#0FA958", "#12C26A"]}
+          />
+        ) : undefined
+      }
       ListHeaderComponent={
         <>
+          {/* Loading indicator for pull-to-refresh */}
+          {refreshing && (
+            <View style={styles.refreshIndicator}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.refreshText}>Yenileniyor...</Text>
+            </View>
+          )}
           <Pressable
             onPress={onPressAdd}
             onPressIn={handleAddPressIn}
@@ -565,6 +589,18 @@ const styles = StyleSheet.create({
   },
   slotContainer: {
     gap: spacing.md,
+  },
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  refreshText: {
+    color: colors.primary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
 
   // Moment Card Styles

@@ -1,4 +1,7 @@
 {
+  "header": {
+    "liveTracking": "ŞOPANDINA ZINDÎ"
+  },
   "greeting": "Silav! Bi xêr hatî sepanê me.",
   "change_language": "Ziman biguherîne",
   "current_language": "Zimanê niha:",
@@ -25,7 +28,7 @@
   },
   "feed": {
     "title": "Nûçe",
-    "subtitle": "Nûçeyên rojane yên Amedspor",
+    "subtitle": "Nûçeyên dawî û pêşketin ji Amedspor",
     "category_all": "Hemû",
     "mock_reads": "Xwendin",
     "reads": "xwendin",

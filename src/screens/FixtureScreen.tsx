@@ -3,12 +3,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   Pressable,
   FlatList,
   Image,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { colors } from "../theme/colors";
@@ -106,6 +108,9 @@ const FixtureScreen = () => {
     minute: number;
   } | null>(null);
 
+  // Pull-to-refresh state
+  const [refreshing, setRefreshing] = useState(false);
+
   // Helper function to extract week number from round name
   const extractWeekNumber = (roundName: string): number => {
     const match = roundName.match(/\d+/);
@@ -152,6 +157,70 @@ const FixtureScreen = () => {
       awayTeamLogo: match.awayTeam.logoUrl || undefined,
     };
   };
+
+  // Load all data function (used for pull-to-refresh)
+  const loadAllData = useCallback(async () => {
+    try {
+      // Season IDs: Mens = 25749, Womens = 26532
+      const seasonId = selectedGender === "mens" ? 25749 : 26532;
+      // Team IDs: Mens = 3570, Womens = 261209
+      const teamId = selectedGender === "mens" ? 3570 : 261209;
+
+      // Load all data in parallel for faster refresh
+      const [standingsResponse, scheduleResponse, scorersResponse, liveResponse] = await Promise.all([
+        footballService.getStandingsTable(seasonId),
+        footballService.getTeamSchedule(teamId),
+        standingsView === "scorers" ? footballService.getTopScorers(seasonId) : Promise.resolve(null),
+        selectedGender === "mens" ? footballService.getLiveScores() : Promise.resolve(null),
+      ]);
+
+      // Process standings
+      if (standingsResponse.success && standingsResponse.data) {
+        setBackendStandings(standingsResponse.data as any);
+        const maxPlayed = Math.max(...standingsResponse.data.map((team) => team.played));
+        setCurrentWeekFromBackend(maxPlayed);
+      }
+
+      // Process schedule
+      if (scheduleResponse.success && scheduleResponse.data) {
+        const pastMatches = scheduleResponse.data.lastFiveMatches.map(mapToMatchResult);
+        setBackendPastMatches(pastMatches);
+        const upcomingMatches = scheduleResponse.data.upcomingFiveMatches.map(mapToUpcomingMatch);
+        setBackendUpcomingMatches(upcomingMatches);
+      }
+
+      // Process top scorers
+      if (scorersResponse && scorersResponse.success && scorersResponse.data) {
+        setTopScorers(scorersResponse.data.data);
+      }
+
+      // Process live match (only for men's team)
+      if (liveResponse && liveResponse.success && liveResponse.data) {
+        // Filter for Amedspor men's team (Team ID: 3570)
+        const amedMatch = liveResponse.data.find(
+          (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
+        );
+        if (amedMatch && amedMatch.stateId !== 5) {
+          setLiveMatch(amedMatch);
+        } else {
+          setLiveMatch(null);
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to refresh fixture data:', error);
+    }
+  }, [selectedGender, standingsView]);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Minimum delay to ensure spinner is visible
+    await Promise.all([
+      loadAllData(),
+      new Promise(resolve => setTimeout(resolve, 800))
+    ]);
+    setRefreshing(false);
+  }, [loadAllData]);
 
   // Load standings from backend
   useEffect(() => {
@@ -1494,7 +1563,24 @@ const FixtureScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#FFFFFF"
+            colors={["#0FA958", "#12C26A"]}
+          />
+        }
+      >
+        {/* Loading indicator for pull-to-refresh */}
+        {refreshing && (
+          <View style={styles.refreshIndicator}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.refreshText}>Yenileniyor...</Text>
+          </View>
+        )}
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="football-outline" size={28} color={colors.primary} />
@@ -1549,6 +1635,18 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
+  },
+  refreshText: {
+    color: colors.primary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
   header: {
     flexDirection: "row",

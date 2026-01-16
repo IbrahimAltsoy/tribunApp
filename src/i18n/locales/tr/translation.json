@@ -1,4 +1,7 @@
 {
+  "header": {
+    "liveTracking": "CANLI TAKİP"
+  },
   "greeting": "Merhaba! Uygulamımıza Hoş Geldiniz.",
   "change_language": "Dili Değiştir",
   "current_language": "Mevcut Dil:",
@@ -22,14 +25,6 @@
     "feed": "Haberler",
     "chat": "Sohbet",
     "mars": "Amed"
-  },
-  "feed": {
-    "title": "Haberler",
-    "subtitle": "Mock verilerle güncel Amedspor gündemi",
-    "category_all": "Tüm",
-    "mock_reads": "Mock okuma",
-    "back": "Geri",
-    "time_ago": "{{time}} önce"
   },
   "fixture": {
     "title": "Maç Merkezi",
@@ -301,7 +296,7 @@
   },
   "feed": {
     "title": "Haberler",
-    "subtitle": "Mock verilerle güncel Amedspor gündemi",
+    "subtitle": "Amedspor'dan son dakika haberleri ve gelişmeler",
     "category_all": "Tüm",
     "mock_reads": "Mock okuma",
     "reads": "okunma",
