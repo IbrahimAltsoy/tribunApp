@@ -1,7 +1,6 @@
 import type { NewsDto, NewsCategoryDto, PagedResult } from '../types/news';
-
-// Get API URL from environment or use default
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/news");
@@ -20,6 +19,7 @@ const getNews = async (
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -54,6 +54,7 @@ const getLatestNews = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -87,6 +88,7 @@ const getNewsById = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -124,6 +126,7 @@ const getNewsByCategory = async (
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -160,6 +163,7 @@ const getCategories = async (): Promise<{
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
     });
 

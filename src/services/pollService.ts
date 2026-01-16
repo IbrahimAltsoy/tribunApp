@@ -1,14 +1,10 @@
 import * as SecureStore from 'expo-secure-store';
 import type { PollDto, VotePollRequest } from '../types/poll';
-
-// Get API URL from environment or use default
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/polls");
-
-// Language state for API requests
-let currentLanguage = 'tr';
 
 /**
  * Get or create a unique session ID for this device
@@ -37,22 +33,16 @@ const getSessionId = async (): Promise<string> => {
 };
 
 /**
- * Set language for poll requests
- */
-const setLanguage = (language: string): void => {
-  currentLanguage = language;
-};
-
-/**
  * Get single active poll (for home screen)
  */
 const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; error?: string }> => {
   try {
+    const currentLanguage = languageService.getLanguage();
     const response = await fetch(`${API_URL}/active?language=${currentLanguage}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Accept-Language': currentLanguage,
+        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -83,11 +73,12 @@ const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; erro
  */
 const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; error?: string }> => {
   try {
+    const currentLanguage = languageService.getLanguage();
     const response = await fetch(`${API_URL}/active?language=${currentLanguage}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Accept-Language': currentLanguage,
+        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -131,6 +122,7 @@ const votePoll = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify(voteRequest),
     });
@@ -159,7 +151,6 @@ const votePoll = async (
 
 export const pollService = {
   getSessionId,
-  setLanguage,
   getActivePoll,
   getActivePolls,
   votePoll,

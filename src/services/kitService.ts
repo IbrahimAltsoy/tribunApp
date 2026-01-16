@@ -1,4 +1,5 @@
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 export type KitDto = {
   id: string;
@@ -37,6 +38,7 @@ const getKits = async (
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        ...languageService.getRequestHeaders(),
       },
     });
 

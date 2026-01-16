@@ -1,4 +1,5 @@
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 export type ChatRoomDto = {
   id: string;
@@ -44,7 +45,7 @@ const getRooms = async (): Promise<{
   try {
     const response = await fetch(`${API_URL}/rooms`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
     });
 
     if (!response.ok) {
@@ -77,7 +78,7 @@ const getRoomMessages = async (
       `${API_URL}/rooms/${roomId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`,
       {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
       }
     );
 
@@ -107,7 +108,7 @@ const sendMessage = async (
   try {
     const response = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
       body: JSON.stringify(payload),
     });
 
@@ -137,7 +138,7 @@ const getChatStatus = async (): Promise<{
   try {
     const response = await fetch(`${API_URL}/status`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
     });
 
     if (!response.ok) {
@@ -165,7 +166,7 @@ const reportMessage = async (
   try {
     const response = await fetch(`${API_URL}/messages/${messageId}/report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
       body: JSON.stringify(payload),
     });
 

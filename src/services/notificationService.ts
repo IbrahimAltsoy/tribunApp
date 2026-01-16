@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 // Lazy load notifications to avoid Expo Go errors
 let Notifications: typeof import('expo-notifications') | null = null;
@@ -252,6 +253,7 @@ const registerPushToken = async (token: string): Promise<boolean> => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify({
         token,
@@ -528,7 +530,11 @@ const getNotifications = async (options?: {
     });
 
     const fullUrl = `${joinUrl(NOTIFICATION_API_BASE_URL, "/api/notifications")}?${params}`;
-    const response = await fetch(fullUrl);
+    const response = await fetch(fullUrl, {
+      headers: {
+        ...languageService.getRequestHeaders(),
+      },
+    });
     const result = await response.json();
 
     return result;
@@ -549,6 +555,7 @@ const markAsRead = async (notificationId: string): Promise<boolean> => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -578,6 +585,7 @@ const markAllAsRead = async (): Promise<number> => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -597,6 +605,9 @@ const deleteNotification = async (notificationId: string): Promise<boolean> => {
   try {
     const response = await fetch(joinUrl(NOTIFICATION_API_BASE_URL, `/api/notifications/${notificationId}`), {
       method: 'DELETE',
+      headers: {
+        ...languageService.getRequestHeaders(),
+      },
     });
 
     const result = await response.json();

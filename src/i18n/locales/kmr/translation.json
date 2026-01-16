@@ -3,19 +3,19 @@
   "change_language": "Ziman biguherîne",
   "current_language": "Zimanê niha:",
   "actions": {
-    "close": "Close"
+    "close": "Bigire"
   },
   "nav": {
     "home": "Destpêk",
     "chat": "Odeyên sohbetê",
-    "matches": "Fîkstriya lîstikê",
+    "matches": "Fîkstiriya lîstikê",
     "settings": "Mîheng"
   },
   "feed_latest_news": "Nûçeyên dawî",
   "settings_title": "Mîhengên sepanê",
   "settings_select_lang": "Hilbijartina zimên",
-  "button_save": "Tomarke",
-  "error_unknown": "Çewtiyeke nexwesî rû da",
+  "button_save": "Tomar bike",
+  "error_unknown": "Çewtiyeke nexwestî rû da",
   "tabs": {
     "home": "Destpêk",
     "fixture": "Navenda lîstikan",
@@ -25,79 +25,263 @@
   },
   "feed": {
     "title": "Nûçe",
-    "subtitle": "Nûçeyên Amedspor bi daneyên mox",
+    "subtitle": "Nûçeyên rojane yên Amedspor",
     "category_all": "Hemû",
-    "mock_reads": "Xwendina mox",
+    "mock_reads": "Xwendin",
     "reads": "xwendin",
     "back": "Vegere",
     "time_ago": "{{time}} berê",
     "newsNotFound": "Nûçe nehat dîtin",
     "no_news": "Hîn nûçe tune",
-    "no_news_in_category": "Di vê kategoriyê de hîn nûçe tune"
+    "no_news_in_category": "Di vê kategoriyê de hîn nûçe tune",
+    "defaultCategory": "Nûçe",
+    "timeUnits": {
+      "minutes": "deqe",
+      "hours": "demjimêr",
+      "days": "roj"
+    }
   },
   "fixture": {
     "title": "Navenda Lîstikan",
-    "subtitle": "Skora zindî, fîkstr û astengên pûanê",
-    "tableTitle": "Pûan",
+    "subtitle": "Skora zindî, fîkstir û rewşa pûanan",
+    "tableTitle": "Rewşa Pûanan",
     "tableTeam": "Tîm",
-    "upcomingTitle": "Lîstikên têne",
+    "upcomingTitle": "Lîstikên Pêşeroj",
     "home": "Malê",
-    "away": "Derve",
+    "away": "Derveyî",
     "guest": "Mêvan",
     "vs": "{{home}} li dijî {{away}}",
-    "vsDash": "{{home}} - {{away}}"
+    "vsDash": "{{home}} - {{away}}",
+    "liveTickerTitle": "Gol / Pozîsyon",
+    "liveTickerSubtitle": "Gol, kart û pozîsyonên lîstikên zindî",
+    "genderSelector": {
+      "mens": "Tîma Mêran",
+      "womens": "Tîma Jinan"
+    },
+    "legend": {
+      "title": "Ravekirî",
+      "promotion": "Bilindkirin",
+      "playoffFinalist": "Fînalîstê Play-off",
+      "playoff": "Play-off",
+      "relegation": "Daketîn",
+      "pointsDeduction": "Cezayê Pûanan"
+    },
+    "lastWeeks": {
+      "title": "5 Hefteyên Dawî",
+      "week": "Hefteya {{week}}",
+      "noMatches": "Di vê hefteyê de lîstik nehat dîtin"
+    },
+    "upcomingFixtures": {
+      "title": "Lîstikên Pêşeroj",
+      "week": "Hefteya {{week}}",
+      "noMatches": "Di vê hefteyê de lîstik nehat dîtin"
+    },
+    "standings": {
+      "title": "Rewşa Pûanan",
+      "mensTeam": "Tîma Mêran",
+      "womensTeam": "Tîma Jinan",
+      "leagueMens": "TFF Lîga 1 2024-25",
+      "leagueWomens": "Lîga Jinan 1 2024-25",
+      "week": "Hefteya {{week}}",
+      "tabGeneral": "Giştî",
+      "tabHome": "Malê",
+      "tabAway": "Derveyî",
+      "tabScorers": "Golzanan",
+      "rank": "Rêz",
+      "team": "Tîm",
+      "played": "L",
+      "won": "Q",
+      "drawn": "B",
+      "lost": "W",
+      "goalsFor": "GK",
+      "goalsAgainst": "GX",
+      "goalDifference": "Fer",
+      "points": "P",
+      "form": "Form"
+    },
+    "scorers": {
+      "rank": "Rêz",
+      "player": "Lîstikvan",
+      "team": "Tîm",
+      "goals": "Gol",
+      "emptyState": "Daneyên golzanan nehat barkirin",
+      "defaultPlayer": "Lîstikvan",
+      "defaultTeam": "Tîm"
+    },
+    "notifications": {
+      "matchFinished": "Lîstik Qediya"
+    },
+    "liveTicker": {
+      "videoLoadError": "Vîdyo nehat barkirin"
+    }
   },
   "archive": {
     "heroTitle": "Arşîv & Ragihandin",
-    "heroSubtitle": "Dîrok, lejen, formayên bîranîn û lîsteya organizasyonan li yek derê.",
-    "sectionArchive": "Arşîva klûbê",
+    "heroSubtitle": "Dîrok, efsane, formayên bîranînê û lîsteyên rêxistinê li yek ekranê.",
+    "heroBadgeAmedArea": "Qada Amed",
+    "heroBadgeTribune": "Bîranîna Tribûnê",
+    "since1932": "Ji 1932'an ve",
+    "clubMemory": "Bîranîna klûbê",
+    "formaPeriod": "Serdema formayê",
+    "activeCalls": "Bangên çalak",
+    "sectionArchive": "Arşîva Klûbê",
+    "sectionArchiveSubtitle": "Çîroka mezin di sê rêzan de",
     "sectionLegends": "Lîstikvan",
+    "sectionLegendsSubtitle": "Kadro, rol û grafîkên formê",
     "sectionKits": "Forma & Berhevkirin",
-    "sectionMoments": "Demên tribûnê",
-    "sectionAnnouncements": "Ragihandinên organizasyonê",
-    "sectionCreate": "Ragihandina nû çêke",
+    "sectionKitsSubtitle": "Rêwîtiya bi formayan: reng, qumaş, bîranîn",
+    "sectionMoments": "Hilbijartina Tribûnê",
+    "sectionMomentsSubtitle": "Demên zindî, ji bajêr heya stadyûmê",
+    "sectionAnnouncements": "Ragihandinên Rêxistinê",
+    "sectionAnnouncementsSubtitle": "Rêxistin, deplasman, plana koreografiyê",
+    "sectionCreate": "Ragihandina Nû Çêke",
+    "sectionCreateSubtitle": "Ragihandina xwe ji me re bişîne, em li pey moderasyonê zêde bikin",
+    "pendingApproval": "Li benda pejirandinê",
+    "moderatedAnnouncements": "Ragihandin bi moderasyon in",
+    "moderationDescription": "Ji bo ewlehiya temaşevanan em ragihandinan belav dikin. Hûrguliyên xwe parve bikin, em kontrol bikin û zêde bikin.",
+    "announcementForm": "Forma ragihandinê",
+    "modalArchiveTitle": "Hûrguliyên Arşîvê",
+    "modalPlayersTitle": "Profîlên Lîstikvan",
+    "modalKitsTitle": "Forma & Berhevkirin",
+    "modalMomentsTitle": "Hilbijartina Tribûnê",
+    "modalSubmitTitle": "Ragihandin Bişîne",
     "timeAgo": "{{time}} berê",
     "contactLabel": "Têkilî: {{contact}}",
-    "contactUnknown": "Nenas",
-    "submit": "Ragihandina mox lê zêde bike",
-    "formHint": "Ev form bi daneyên mox dixebite, girêdanê backend tune.",
+    "contactUnknown": "Nehat diyarkirin",
+    "submit": "Bişîne û ji bo pejirandinê bişîne",
+    "formErrorRequired": "Sernav, bajar û dîrok pêwîst in.",
+    "formSuccess": "Pêşniyara ragihandinê hate çêkirin, ji bo pejirandinê hat şandin.",
+    "formHint": "Ragihandinên şandî piştî pejirandina admin tên weşandin.",
+    "viewPage": "Rûpelê veke",
+    "milestones": "Qonaxên Girîng",
+    "honors": "Kûpa & Sernavan",
+    "honorsPlaceholder": "Bilindbûnên lîgê, kupayên herêmî, qezenckrinên dîrokî yên derbî û xelatên temaşevanan li vir têne rêz kirin.",
+    "yearsOld": "salî",
+    "footLeft": "Lingê çep",
+    "footRight": "Lingê rast",
+    "footBoth": "Her du ling",
     "form": {
       "title": "Sernav",
       "city": "Bajar",
-      "location": "Cîh/Noqte",
+      "location": "Cîh / Noqte",
       "date": "Dîrok & Dem",
       "contact": "Têkilî",
-      "note": "Têbînî"
+      "note": "Têbînî",
+      "placeholderTitle": "Mînak: Otobusa deplasmanê",
+      "placeholderCity": "Mînak: Amed",
+      "placeholderLocation": "Noqteya civînê",
+      "placeholderDate": "Mînak: 12 Kanûn, 10:00",
+      "placeholderContact": "@bikarhêner an telefon",
+      "placeholderNote": "Ravekirin kurt"
+    },
+    "loadError": "Daneyan nekarîn barkirin"
+  },
+  "stats": {
+    "matches": "Lîstik",
+    "goals": "Gol",
+    "assists": "Asîst",
+    "rating": "Pûan"
+  },
+  "strengths": "Aliyên Bihêz",
+  "career": "Karîyer",
+  "years": "sal",
+  "settings": {
+    "title": "Mîheng",
+    "subtitle": "Nepenî û agahdariya qanûnî",
+    "select_language": "Ziman hilbijêre",
+    "save": "Tomar bike",
+    "legal": {
+      "title": "Qanûnî",
+      "termsOfService": "Şertên Bikaranînê",
+      "termsDescription": "Şertên bikaranîna karûbarê bibînin",
+      "privacyPolicy": "Polîtîkaya Nepenîtiyê",
+      "privacyDescription": "Polîtîkaya parastina daneyan bibînin"
+    },
+    "privacy": {
+      "title": "Nepenîtî",
+      "manageConsent": "Destûran Birêve Bibe",
+      "consentDescription": "Destûrên pêvajoya daneyên xwe biguherîne"
+    },
+    "notifications": {
+      "sectionTitle": "Agahdarî",
+      "title": "Mîhengên Agahdariyê",
+      "subtitle": "Agahdariyên ku dixwazin bistînin hilbijêrin",
+      "manage": "Agahdariyên Birêve Bibe",
+      "manageDescription": "Agahdariyên ku dixwazin bistînin hilbijêrin",
+      "enableAll": "Hemû Agahdariyên Veke",
+      "enabledDescription": "Agahdarî vekirî ne",
+      "disabledDescription": "Agahdarî girtî ne",
+      "categories": "Kategoriyên Agahdariyê",
+      "chatRooms": "Odeyên Sohbetê",
+      "chatRoomsDescription": "Gava odeya sohbeta nû vedibe agahdariyê bistîne",
+      "liveMatches": "Lîstikên Zindî",
+      "liveMatchesDescription": "Gava lîstik dest pê bike û biqede agahdariyê bistîne",
+      "matchGoals": "Agahdariyên Golê",
+      "matchGoalsDescription": "Gava tîma me gol bikê agahdariyê bistîne",
+      "news": "Nûçe",
+      "newsDescription": "Gava nûçeya nû were weşandin agahdariyê bistîne",
+      "announcements": "Ragihandin",
+      "announcementsDescription": "Gava ragihandina te were pejirandin agahdariyê bistîne",
+      "polls": "Rapirsî",
+      "pollsDescription": "Gava rapirsiya nû were çêkirin agahdariyê bistîne",
+      "testButton": "Agahdariya Testê Bişîne",
+      "testTitle": "Agahdariya Testê",
+      "testBody": "Sîstema agahdariyê dixebite!",
+      "testScheduled": "Di 2 çirkeyan de agahdariya testê dê were",
+      "testFailed": "Agahdariya testê nehat şandin",
+      "disableTitle": "Agahdariyên Bigire?",
+      "disableMessage": "Hemû agahdarî dê bêne girtin. Tu dixwazî berdewam bikî?",
+      "disableConfirm": "Bigire",
+      "permissionDeniedTitle": "Destûr Pêwîst e",
+      "permissionDeniedMessage": "Divê tu destûrê bidî agahdariyên. Ji kerema xwe ji mîhengên cîhazê destûrê bide."
+    },
+    "developer": {
+      "title": "Pêşdebir",
+      "resetOnboarding": "Onboarding'ê Sifirke",
+      "resetDescription": "Ekranên destpêkê dîsa nîşan bide"
+    },
+    "footer": {
+      "version": "Guherto {{version}}",
+      "copyright": "© 2026 Amedspor Tribûn. Hemû maf parastî ne."
+    },
+    "resetOnboarding": {
+      "title": "Onboarding Sifirke",
+      "message": "Ekranên destpêkê û destûr dê bên sifirandin. Sepan dê ji nû ve dest pê bike. Tu dixwazî berdewam bikî?",
+      "confirm": "Sifirke",
+      "success": "Onboarding hat sifirkirin",
+      "error": "Sifirkirin bi ser neket",
+      "restartTitle": "Sepanê Ji Nû Ve Dest Pê Bike",
+      "restartMessage": "Ji bo ku guhertin bi bandor bin sepanê bigire û ji nû ve veke."
     }
   },
-  "settings": {
-    "title": "Mîhengên sepanê",
-    "select_language": "Ziman hilbijêre",
-    "save": "Tomarke"
-  },
   "home": {
-    "momentsTitle": "Demên tribûnê roja lîstikê",
-    "newsTitle": "Rêya nûçeyan",
-    "newsSubtitle": "Nûçeyên mox û rojaneya tribûnê",
-    "fixturesTitle": "Lîstikên têne",
-    "fixturesSubtitle": "Fîkstr û dem",
-    "supportTitle": "Piştgirî bide tîma xwe",
+    "momentsTitle": "Demên Tribûnê yên Roja Lîstikê",
+    "newsTitle": "Herika Nûçeyan",
+    "newsSubtitle": "Nûçe û pêşketinên tribûnê",
+    "fixturesTitle": "Lîstikên Pêşeroj",
+    "fixturesSubtitle": "Fîkstir û agahiya demê",
+    "supportTitle": "Piştgirî Bide Tîma Xwe",
     "supportSubtitle": "Ji bo forma, eşarp û hilberên fermî bitikîne.",
-    "supportPill": "Firoşgeh",
+    "supportPill": "Firgeh",
     "supportStore": "AmedStore.com",
-    "announcementTitle": "Ragihandina organizasyonê",
+    "supportClubTitle": "Piştgirî Bide Klûba Xwe",
+    "supportClubSubtitle": "Ji firgaha fermî piştgirî bide, forma bikire",
+    "goToStore": "BIÇE FIRGEHÊ →",
+    "announcementTitle": "Ragihandina Rêxistinê",
     "announcementSubtitle": "Noqteyên civînê û rêyên têkilîyê bişopîne",
-    "shareMomentTitle": "Share a Moment",
-    "shareMomentSubtitle": "Add city, quick note and photo",
-    "moreMomentsTitle": "See more",
+    "shareMomentTitle": "Demê Parve Bike",
+    "shareMomentSubtitle": "Bajar, têbînî kurt û wêne zêde bike",
+    "moreMomentsTitle": "Bêtir Bibîne",
+    "allTribuneMoments": "Hemû Demên Tribûnê",
+    "timeAgo": "{{time}} berê",
     "momentDefaults": {
-      "user": "You",
-      "city": "City not provided",
-      "caption": "New moment",
-      "time": "Now"
+      "user": "Tu",
+      "city": "Bajar nehat diyarkirin",
+      "caption": "Parvekirin nû",
+      "time": "Niha"
     },
     "liveTicker": {
-      "moreVideos": "Vîdyoyên Bêtir",
+      "moreVideos": "Bêtir",
       "video": "Vîdyo",
       "videoCount": "+{{count}} vîdyo",
       "allVideosTitle": "Hemû Vîdyo",
@@ -106,22 +290,285 @@
     },
     "poll": {
       "title": "Rapirsî",
-      "weekMatch": "Lîstika hefteyê: kî dê bibê?"
-    }
+      "weekMatch": "Lîstika hefteyê: kî dê qezenc bike?"
+    },
+    "editMoment": "Demê Biguherîne",
+    "editMomentSubtitle": "Parvekirin xwe nûve bike",
+    "caption": "Ravekirin",
+    "enterCaption": "Ravekirin binivîse",
+    "save": "Tomar bike",
+    "cancel": "Betal bike",
+    "deleteFailed": "Jêbirin bi ser neket",
+    "updateFailed": "Nûvekirin bi ser neket"
   },
   "chat": {
-    "title": "Amedspor Tribun",
-    "subtitle": "Share the match hype, cheer together, ask quick questions.",
-    "placeholder": "Write a message...",
-    "nicknamePlaceholder": "Nickname",
-    "closedTitle": "Chat is currently closed",
-    "emptyState": "Be the first to drop a message and warm up the tribune."
+    "title": "Amedspor Tribûn",
+    "subtitle": "Sohbeta tribûnê: Heyecana lîstikê parve bike, piştgirî bide, pirsan bipirse.",
+    "placeholder": "Peyama xwe binivîse...",
+    "nicknamePlaceholder": "Navê taklit",
+    "closedTitle": "Sohbet niha girtî ye",
+    "emptyState": "Tu yekem peyamê bişîne, tribûnê germ bike.",
+    "anonymous": "Bênav"
   },
+  "like": "Bipsend",
+  "share": "Parve bike",
+  "details": "Hûrgulî",
+  "detailsView": "Hûrguliyan Bibîne",
+  "error": "Çewtî",
+  "ok": "Temam",
+  "cancel": "Betal bike",
+  "appSlogan": "Bihevra Amed",
+  "errorBoundary": {
+    "title": "Tiştek Şaş Bû",
+    "message": "Bibore, çewtiyeke nexwestî rû da.\nJi kerema xwe hewl bide ku sepanê ji nû ve dest pê bikî.",
+    "errorDetailsTitle": "Hûrguliyên Çewtiyê:",
+    "retry": "Dîsa Hewl Bide",
+    "hint": "Heke pirsgirêk berdewam bike ji kerema xwe sepanê bigire û ji nû ve veke"
+  },
+  "validation": {
+    "required": "Ev qad pêwîst e",
+    "tooShort": "Pir kurt e (kêmtirîn {{min}} tîp)",
+    "tooLong": "Pir dirêj e (herî zêde {{max}} tîp)",
+    "invalidFormat": "Formata çewt",
+    "invalidUrl": "URL-ya çewt",
+    "invalidImageUrl": "URL-ya wêneyê çewt (jpg, png, gif, webp)",
+    "invalidDate": "Formata dîrokê çewt",
+    "urlBlocked": "Ev girêdan ji ber sedemên ewlehiyê nayê vekirin",
+    "urlCannotOpen": "Ev girêdan li cîhaza te nayê vekirin",
+    "noUrlProvided": "URL nehat diyarkirin"
+  },
+  "shareMoment": {
+    "title": "Demê Parve Bike",
+    "cityPlaceholder": "Bajar / Cîh",
+    "captionPlaceholder": "Ravekirin kurt",
+    "addPhoto": "Wêne Zêde Bike",
+    "optional": "vebijarkî",
+    "selectPhoto": "Wêne Hilbijêre",
+    "selectImageSource": "Çavkaniya Wêneyê Hilbijêrin",
+    "camera": "Kamera",
+    "gallery": "Galerî",
+    "permissionDenied": "Destûr Hat Redkirin",
+    "cameraPermissionMessage": "Ji bo ku wêne bikişînin destûra kamerayê pêwîst e",
+    "galleryPermissionMessage": "Ji bo hilbijartina wêneyê destûra galeriyê pêwîst e",
+    "submit": "Parve Bike",
+    "cancel": "Betal bike",
+    "cityRequired": "Bajar divê were diyarkirin",
+    "cityTooShort": "Bajar divê kêmtirîn 2 tîp be",
+    "cityTooLong": "Bajar dikare herî zêde 100 tîp be",
+    "captionRequired": "Ravekirin pêwîst e",
+    "captionTooShort": "Ravekirin divê kêmtirîn 3 tîp be",
+    "captionTooLong": "Ravekirin dikare herî zêde 500 tîp be",
+    "success": "Dema te bi serkeftî hat parvekirin"
+  },
+  "announcement": {
+    "titleRequired": "Sernav pêwîst e",
+    "titleTooShort": "Sernav divê kêmtirîn 5 tîp be",
+    "titleTooLong": "Sernav dikare herî zêde 200 tîp be",
+    "cityRequired": "Bajar pêwîst e",
+    "cityTooLong": "Bajar dikare herî zêde 100 tîp be",
+    "dateRequired": "Dîrok pêwîst e",
+    "invalidDateFormat": "Formata dîrokê çewt (mînak: 15 Kanûn, 19:00)",
+    "locationTooLong": "Cîh dikare herî zêde 200 tîp be",
+    "contactTooLong": "Têkilî dikare herî zêde 100 tîp be",
+    "noteTooLong": "Têbînî dikare herî zêde 1000 tîp be"
+  },
+  "team": {
+    "title": "Tîm",
+    "subtitle": "Rêvebir, kadroya teknîkî û lîstikvan",
+    "genderSelector": {
+      "mens": "Tîma Mêran",
+      "womens": "Tîma Jinan"
+    },
+    "tabs": {
+      "management": "Kadroya Rêvebiriyê",
+      "coaching": "Kadroya Teknîkî",
+      "squad": "Lîstikvan"
+    },
+    "player": {
+      "jerseyNumber": "Jimara Formayê",
+      "position": "Pozîsyon",
+      "detailedPosition": "Pozîsyona Hûrgulî",
+      "age": "Temen",
+      "birthDate": "Dîroka Jidayikbûnê",
+      "birthPlace": "Cihê Jidayikbûnê",
+      "nationality": "Nijadî",
+      "height": "Bilindahî",
+      "weight": "Giranî",
+      "preferredFoot": "Lingê Tercîhkirî",
+      "marketValue": "Nirxa Bazarê",
+      "currentClub": "Klûba Niha",
+      "previousClubs": "Klûbên Berê",
+      "socialMedia": "Medyaya Civakî",
+      "foot": {
+        "left": "Çep",
+        "right": "Rast",
+        "both": "Her Du Ling"
+      }
+    },
+    "positions": {
+      "goalkeeper": "Golwêr",
+      "defender": "Defans",
+      "midfielder": "Navîn",
+      "forward": "Forvet"
+    },
+    "emptyState": "Di vê kategoriyê de hîn kes tune"
+  },
+  "onboarding": {
+    "skip": "Derbas bike",
+    "next": "Pêş",
+    "getStarted": "Dest Pê Bike",
+    "welcome": {
+      "title": "Bi Xêr Hatî Amedspor Tribûnê",
+      "description": "Bi tîma xwe re têkiliyê bigire, deman parve bike û tevlî civaka temaşevanan bibe"
+    },
+    "features": {
+      "title": "Her Tişt Li Yek Cihî",
+      "description": "Skorên zindî, sohbeta temaşevanan, nûçe û bêtir"
+    },
+    "community": {
+      "title": "Tribûna Cîhanî",
+      "description": "Bi temaşevanên ji çaraliyê cîhanê re têkilî danîn û bîranînên xwe parve bikin"
+    },
+    "privacy": {
+      "title": "Nepenîtiya Te Girîng e",
+      "description": "Daneyên te ewle ne. Kontrol temam di destê te de ye."
+    }
+  },
+  "consent": {
+    "title": "Nepenîtî û Destûr",
+    "subtitle": "Ji kerema xwe ji bo berdewamkirinê destûrên jêrîn kontrol bikin",
+    "required": "Destûrên Pêwîst",
+    "optional": "Destûrên Vebijarkî",
+    "optionalDescription": "Ev destûr ji me re dibin alîkar ku ezmûna te baştir bikin",
+    "accept": "Qebûl Bike û Berdewam Bike",
+    "termsAcceptance": "Min xwend û qebûl dikim",
+    "termsLink": "Şertên Bikaranînê",
+    "privacyAcceptance": "Min xwend û qebûl dikim",
+    "privacyLink": "Polîtîkaya Nepenîtiyê",
+    "kvkkNotice": "Di çarçoveya KVKK-ê de daneyên te yên kesane tên parastin û tenê ji bo armancên diyarkirî tên bikaranîn.",
+    "categories": {
+      "required": {
+        "name": "Fonksiyonên Bingehîn",
+        "description": "Ji bo xebata sepanê pêwîst e"
+      },
+      "analytics": {
+        "name": "Analîtîk û Başkirinên",
+        "description": "Ji me re dibe alîkar ku sepanê baştir bikin"
+      },
+      "marketing": {
+        "name": "Têkiliya Kirrûbirra",
+        "description": "Ji bo kampanya û ragihaninan"
+      },
+      "adTracking": {
+        "name": "Reklamên Kesanekirî",
+        "description": "Naveroka ku ji bo te hatiye xweş kirin (iOS)"
+      }
+    },
+    "error": {
+      "title": "Çewtî",
+      "requiredConsents": "Ji bo berdewamkirinê divê tu Şertên Bikaranînê û Polîtîkaya Nepenîtiyê qebûl bikî.",
+      "saveFailed": "Destûr nehatin tomarkirin. Ji kerema xwe dîsa hewl bide."
+    }
+  },
+  "terms": {
+    "title": "Şertên Bikaranînê",
+    "lastUpdated": "Nûvekirina Dawî: {{date}}",
+    "accept": "Ez Qebûl Dikim",
+    "sections": {
+      "scope": {
+        "title": "1. Qada Karûbarê",
+        "content": "Amedspor Tribûn platformek mobîl e ku temaşevanên Amedspor dikarin skorên lîstikê bişopînin, bi civaka temaşevanan re têkilî danîn û nûçe û nûvekirinan bistînin."
+      },
+      "userObligations": {
+        "title": "2. Berpirsiyariyên Bikarhêner",
+        "content": "• Agahiyên rast û rojane pêşkêş bikin\n• Bi bikarhênerên din re bi rêzdarî tevbigerin\n• Naveroka ku yasayan binpê dike an zirarê dide civakê parve nekin\n• Li mafên milkê rewşenbîriyê rêz bigirin"
+      },
+      "contentPolicy": {
+        "title": "3. Polîtîkaya Naverokê",
+        "content": "Naveroka ku ji hêla bikarhêneran ve tê parvekirin (wêne, şîrove, dem) berpirsiyariya bikarhêner e. Platform mafê xwe yê rakirina naveroka ku yasayan binpê dike, gotina nefretê dihewîne an bikarhênerên din aciz dike diparêze."
+      },
+      "intellectualProperty": {
+        "title": "4. Milkê Rewşenbîrî",
+        "content": "Hemû sêwiran, logo, naverok û kodên di sepanê de bi mafê kopîkirinê têne parastin. Bikarhêner qebûl dikin ku mafên bikaranîna naveroka xwe ya hevpar ji platformê re lîsans bikin."
+      },
+      "disclaimer": {
+        "title": "5. Redkirina Berpirsiyariyê",
+        "content": "Platform \"wek ku heye\" tê pêşkêş kirin. Garantî nayê dayîn ku karûbar bê navber an bê çewtî be. Bikarhêner sepanê bi risk û berpirsiyariya xwe bikar tînin."
+      },
+      "accountSuspension": {
+        "title": "6. Rawestandina Hesabê",
+        "content": "Rêvebiriya platformê mafê xwe yê rawestandin an bidawîkirina hesabên ku şertên bikaranînê binpê dikin bêyî hişyariya pêşîn diparêze."
+      },
+      "changes": {
+        "title": "7. Guhertin",
+        "content": "Ev şertên karûbarê dikarin dem bi dem werin nûvekirin. Guherinên girîng dê ji bikarhêneran re werin ragihandin. Piştî nûvekirinan sepanê bikar anîn tê wateya ku tu şertên nû qebûl dikî."
+      },
+      "contact": {
+        "title": "8. Têkilî",
+        "content": "Ji bo pirsan:\nE-name: destek@amedspor.com\nMalpera: www.amedspor.com"
+      }
+    },
+    "footer": "© 2026 Amedspor Tribûn. Hemû maf parastî ne."
+  },
+  "privacy": {
+    "title": "Polîtîkaya Nepenîtiyê",
+    "lastUpdated": "Nûvekirina Dawî: {{date}}",
+    "accept": "Ez Qebûl Dikim",
+    "sections": {
+      "dataController": {
+        "title": "1. Berpirsiyarê Daneyan",
+        "content": "Li gorî yasayên parastina daneyan ên pêkan (GDPR/KVKK), sepana Amedspor Tribûn berpirsiyarê daneyan ên daneyên te yên kesane ye."
+      },
+      "collectedData": {
+        "title": "2. Daneyên Hatine Berhevkirin",
+        "requiredLabel": "Daneyên Pêwîst:",
+        "requiredContent": "• Navê bikarhêner û agahiyên profîlê\n• Agahiyên cîhazê (model, sîstema xebitandinê)\n• Daneyên bikaranîna sepanê",
+        "optionalLabel": "Daneyên Vebijarkî:",
+        "optionalContent": "• Wêne û dîmen\n• Agahiyên cîhê (ji bo parvekirin)\n• Tercîhên ragihandinê"
+      },
+      "dataUsage": {
+        "title": "3. Armancên Bikaranîna Daneyan",
+        "content": "Daneyên te yên kesane ji bo armancên jêrîn têne pêvajokirin:\n• Pêşkêşkirina karûbarên sepanê\n• Başkirina ezmûna bikarhêner\n• Pêşkêşkirina piştgiriya teknîkî\n• Ewlehî û pêşîgirtina xapandinê\n• Analîza îstatîstîkî (bênav)"
+      },
+      "dataRetention": {
+        "title": "4. Serdema Hiştina Daneyan",
+        "content": "Daneyên te yên kesane ji bo serdema guncan ji bo armanca berhevkirinê û di nav hewcedariyên hiştina qanûnî de têne hiştîn. Gava tu hesabê xwe jê bikî, daneyên te dê di nav 30 rojan de ji sîstemê werin jêbirin."
+      },
+      "dataSharing": {
+        "title": "5. Parvekirina Daneyan",
+        "content": "Daneyên te yên kesane bi aliyên sêyemîn re nayên parvekirin ji bilî erkên qanûnî. Daneyên te dikarin di rewşên jêrîn de werin parvekirin:\n• Erkên qanûnî\n• Dabînkirina ewlehiya bikarhêner\n• Pêşkêşkerên karûbarê (cloud, analîtîk)"
+      },
+      "kvkkRights": {
+        "title": "6. Mafên Te",
+        "content": "Li gorî yasayên parastina daneyan, mafên jêrîn hene:\n• Fêr bibe gelo daneyên te yên kesane têne pêvajokirin\n• Ji bo daneyên pêvajoyî agahdariyê bixwaze\n• Rastkirina daneyan bixwaze\n• Jêbirina daneyan bixwaze\n• Li dijî çalakiyên pêvajoyê nerazîbûn bike"
+      },
+      "security": {
+        "title": "7. Tedbîrên Ewlehiyê",
+        "content": "Ji bo ewlehiya daneyên te yên kesane tedbîrên teknîkî û îdarî hatine girtin:\n• Veguhastina daneya şîfrekirî (SSL/TLS)\n• Hiştina daneya ewle\n• Kontrola gihîştinê û destûr\n• Kontrolên ewlehiyê yên birêkûpêk"
+      },
+      "cookies": {
+        "title": "8. Cookies û Şopandin",
+        "content": "Sepan dikare cookies û teknolojiyên wekhev bikar bîne da ku ezmûna bikarhêner baştir bike. Li cîhazên iOS-ê, em ê destûra te ya App Tracking Transparency (ATT) bixwazin."
+      },
+      "childrenPrivacy": {
+        "title": "9. Nepenîtiya Zarokan",
+        "content": "Sepana me ji bo zarokên di bin 13 salî de ne ye. Em bi zanebûn daneyên bikarhênerên di bin 13 salî de berhev nakin."
+      },
+      "contact": {
+        "title": "10. Têkilî",
+        "content": "Ji bo bikaranîna mafên xwe an pirsên têkildar bi nepenîtiyê:\nE-name: kvkk@amedspor.com"
+      }
+    },
+    "badge": "GDPR Hevgirtî",
+    "footer": "© 2026 Amedspor Tribûn. Hemû maf parastî ne."
+  },
+  "success": "Serketî",
+  "loading": "Tê barkirin...",
   "notifications": {
     "title": "Agahdarî",
     "unread": "nexwendî",
     "noNotifications": "Agahdarî tune",
-    "noNotificationsSubtitle": "Hemû hate xwendin!",
+    "noNotificationsSubtitle": "Hemû hatin xwendin!",
     "justNow": "Niha",
     "minutesAgo": "deq berê",
     "hoursAgo": "demjimêr berê",

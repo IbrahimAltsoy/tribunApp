@@ -6,8 +6,8 @@ import type {
   DeleteOwnFanMomentRequest
 } from '../types/fanMoment';
 
-// Get API URL from environment or use default
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { languageService } from "../utils/languageService";
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/fanmoments");
@@ -64,6 +64,7 @@ const getFanMoments = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -115,6 +116,7 @@ const createFanMoment = async (
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify(requestWithSession),
     });
@@ -160,6 +162,7 @@ const updateOwnFanMoment = async (
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify(requestWithSession),
     });
@@ -204,6 +207,7 @@ const deleteOwnFanMoment = async (id: string): Promise<{ success: boolean; error
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify(requestWithSession),
     });

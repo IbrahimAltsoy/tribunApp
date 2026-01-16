@@ -93,8 +93,6 @@ const HomeScreen: React.FC = () => {
   // Backend'den Poll yükle (dil değişikliğinde yeniden yükle)
   useEffect(() => {
     const loadPoll = async () => {
-      const currentLanguage = i18n.language;
-      pollService.setLanguage(currentLanguage);
       const response = await pollService.getActivePoll();
 
       if (response.success && response.data) {

@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
+import { formatDate } from '../i18n';
 
 type Props = {
   onClose?: () => void;
@@ -37,6 +38,24 @@ const TermsOfServiceScreen: React.FC<Props> = ({
     }
   };
 
+  // Format date based on current locale
+  const lastUpdatedDate = formatDate(new Date('2026-01-08'), {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const sections = [
+    'scope',
+    'userObligations',
+    'contentPolicy',
+    'intellectualProperty',
+    'disclaimer',
+    'accountSuspension',
+    'changes',
+    'contact',
+  ] as const;
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
@@ -55,82 +74,23 @@ const TermsOfServiceScreen: React.FC<Props> = ({
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.lastUpdated}>
-          {t('terms.lastUpdated', { date: '08 Ocak 2026' })}
+          {t('terms.lastUpdated', { date: lastUpdatedDate })}
         </Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Hizmet Kapsamı</Text>
-          <Text style={styles.paragraph}>
-            Amedspor Tribün uygulaması, Amedspor taraftarlarının maç skorlarını takip edebileceği,
-            taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği
-            bir mobil platformdur.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Kullanıcı Yükümlülükleri</Text>
-          <Text style={styles.paragraph}>
-            • Doğru ve güncel bilgiler sağlamak{'\n'}
-            • Diğer kullanıcılara saygılı davranmak{'\n'}
-            • Yasalara ve topluluğa zarar verecek içerik paylaşmamak{'\n'}
-            • Fikri mülkiyet haklarına saygı göstermek
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. İçerik Politikası</Text>
-          <Text style={styles.paragraph}>
-            Kullanıcılar tarafından paylaşılan içerikler (fotoğraflar, yorumlar, anılar) kullanıcının
-            sorumluluğundadır. Platform, yasalara aykırı, nefret söylemi içeren veya diğer kullanıcıları
-            rahatsız eden içerikleri kaldırma hakkını saklı tutar.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Fikri Mülkiyet</Text>
-          <Text style={styles.paragraph}>
-            Uygulamadaki tüm tasarım, logo, içerik ve kodlar telif hakkı ile korunmaktadır.
-            Kullanıcılar, paylaştıkları içeriklerin kullanım haklarını platforma lisanslamayı kabul ederler.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. Sorumluluk Reddi</Text>
-          <Text style={styles.paragraph}>
-            Platform "olduğu gibi" sunulmaktadır. Hizmetin kesintisiz veya hatasız olacağına dair
-            garanti verilmez. Kullanıcılar uygulamayı kendi risk ve sorumluluklarında kullanır.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. Hesap Askıya Alma</Text>
-          <Text style={styles.paragraph}>
-            Platform yönetimi, kullanım koşullarını ihlal eden hesapları uyarı vermeksizin
-            askıya alma veya sonlandırma hakkını saklı tutar.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. Değişiklikler</Text>
-          <Text style={styles.paragraph}>
-            Bu kullanım koşulları zaman zaman güncellenebilir. Önemli değişiklikler kullanıcılara
-            bildirilecektir. Güncellemelerden sonra uygulamayı kullanmaya devam etmek, yeni koşulları
-            kabul ettiğiniz anlamına gelir.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. İletişim</Text>
-          <Text style={styles.paragraph}>
-            Sorularınız için:{'\n'}
-            E-posta: destek@amedspor.com{'\n'}
-            Web: www.amedspor.com
-          </Text>
-        </View>
+        {sections.map((sectionKey) => (
+          <View key={sectionKey} style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {t(`terms.sections.${sectionKey}.title`)}
+            </Text>
+            <Text style={styles.paragraph}>
+              {t(`terms.sections.${sectionKey}.content`)}
+            </Text>
+          </View>
+        ))}
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            © 2026 Amedspor Tribün. Tüm hakları saklıdır.
+            {t('terms.footer')}
           </Text>
         </View>
       </ScrollView>

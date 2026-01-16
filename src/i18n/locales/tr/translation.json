@@ -170,7 +170,8 @@
     "placeholder": "Mesajını yaz...",
     "nicknamePlaceholder": "Takma ad",
     "closedTitle": "Sohbet şu an kapalı",
-    "emptyState": "İlk mesajı sen at, tribünü ısıt."
+    "emptyState": "İlk mesajı sen at, tribünü ısıt.",
+    "anonymous": "Anonim"
   },
   "like": "Beğen",
   "share": "Paylaş",
@@ -308,7 +309,13 @@
     "time_ago": "{{time}} önce",
     "newsNotFound": "Haber bulunamadı",
     "no_news": "Henüz haber yok",
-    "no_news_in_category": "Bu kategoride henüz haber yok"
+    "no_news_in_category": "Bu kategoride henüz haber yok",
+    "defaultCategory": "Haber",
+    "timeUnits": {
+      "minutes": "dakika",
+      "hours": "saat",
+      "days": "gün"
+    }
   },
   "team": {
     "title": "Takım",
@@ -411,12 +418,94 @@
   "terms": {
     "title": "Kullanım Koşulları",
     "lastUpdated": "Son Güncellenme: {{date}}",
-    "accept": "Kabul Ediyorum"
+    "accept": "Kabul Ediyorum",
+    "sections": {
+      "scope": {
+        "title": "1. Hizmet Kapsamı",
+        "content": "Amedspor Tribün uygulaması, Amedspor taraftarlarının maç skorlarını takip edebileceği, taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği bir mobil platformdur."
+      },
+      "userObligations": {
+        "title": "2. Kullanıcı Yükümlülükleri",
+        "content": "• Doğru ve güncel bilgiler sağlamak\n• Diğer kullanıcılara saygılı davranmak\n• Yasalara ve topluluğa zarar verecek içerik paylaşmamak\n• Fikri mülkiyet haklarına saygı göstermek"
+      },
+      "contentPolicy": {
+        "title": "3. İçerik Politikası",
+        "content": "Kullanıcılar tarafından paylaşılan içerikler (fotoğraflar, yorumlar, anılar) kullanıcının sorumluluğundadır. Platform, yasalara aykırı, nefret söylemi içeren veya diğer kullanıcıları rahatsız eden içerikleri kaldırma hakkını saklı tutar."
+      },
+      "intellectualProperty": {
+        "title": "4. Fikri Mülkiyet",
+        "content": "Uygulamadaki tüm tasarım, logo, içerik ve kodlar telif hakkı ile korunmaktadır. Kullanıcılar, paylaştıkları içeriklerin kullanım haklarını platforma lisanslamayı kabul ederler."
+      },
+      "disclaimer": {
+        "title": "5. Sorumluluk Reddi",
+        "content": "Platform \"olduğu gibi\" sunulmaktadır. Hizmetin kesintisiz veya hatasız olacağına dair garanti verilmez. Kullanıcılar uygulamayı kendi risk ve sorumluluklarında kullanır."
+      },
+      "accountSuspension": {
+        "title": "6. Hesap Askıya Alma",
+        "content": "Platform yönetimi, kullanım koşullarını ihlal eden hesapları uyarı vermeksizin askıya alma veya sonlandırma hakkını saklı tutar."
+      },
+      "changes": {
+        "title": "7. Değişiklikler",
+        "content": "Bu kullanım koşulları zaman zaman güncellenebilir. Önemli değişiklikler kullanıcılara bildirilecektir. Güncellemelerden sonra uygulamayı kullanmaya devam etmek, yeni koşulları kabul ettiğiniz anlamına gelir."
+      },
+      "contact": {
+        "title": "8. İletişim",
+        "content": "Sorularınız için:\nE-posta: destek@amedspor.com\nWeb: www.amedspor.com"
+      }
+    },
+    "footer": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
   },
   "privacy": {
     "title": "Gizlilik Politikası",
     "lastUpdated": "Son Güncellenme: {{date}}",
-    "accept": "Kabul Ediyorum"
+    "accept": "Kabul Ediyorum",
+    "sections": {
+      "dataController": {
+        "title": "1. Veri Sorumlusu",
+        "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin veri sorumlusu Amedspor Tribün uygulamasıdır."
+      },
+      "collectedData": {
+        "title": "2. Toplanan Veriler",
+        "requiredLabel": "Zorunlu Veriler:",
+        "requiredContent": "• Kullanıcı adı ve profil bilgileri\n• Cihaz bilgileri (model, işletim sistemi)\n• Uygulama kullanım verileri",
+        "optionalLabel": "Opsiyonel Veriler:",
+        "optionalContent": "• Fotoğraflar ve görseller\n• Konum bilgisi (paylaşımlar için)\n• İletişim tercihleri"
+      },
+      "dataUsage": {
+        "title": "3. Verilerin Kullanım Amaçları",
+        "content": "Kişisel verileriniz aşağıdaki amaçlarla işlenir:\n• Uygulama hizmetlerinin sunulması\n• Kullanıcı deneyiminin iyileştirilmesi\n• Teknik destek sağlanması\n• Güvenlik ve dolandırıcılık önleme\n• İstatistiksel analiz (anonim)"
+      },
+      "dataRetention": {
+        "title": "4. Veri Saklama Süresi",
+        "content": "Kişisel verileriniz, toplama amacına uygun süre boyunca ve yasal saklama yükümlülükleri çerçevesinde saklanır. Hesabınızı sildiğinizde verileriniz 30 gün içinde sistemden silinecektir."
+      },
+      "dataSharing": {
+        "title": "5. Veri Paylaşımı",
+        "content": "Kişisel verileriniz, yasal zorunluluklar dışında üçüncü taraflarla paylaşılmaz. Aşağıdaki durumlarda verileriniz paylaşılabilir:\n• Yasal yükümlülükler\n• Kullanıcı güvenliğinin sağlanması\n• Hizmet sağlayıcılar (bulut, analitik)"
+      },
+      "kvkkRights": {
+        "title": "6. KVKK Hakları",
+        "content": "KVKK madde 11 uyarınca aşağıdaki haklara sahipsiniz:\n• Kişisel verilerinizin işlenip işlenmediğini öğrenme\n• İşlenen veriler hakkında bilgi talep etme\n• Verilerin düzeltilmesini isteme\n• Verilerin silinmesini isteme\n• İşleme faaliyetlerine itiraz etme"
+      },
+      "security": {
+        "title": "7. Güvenlik Önlemleri",
+        "content": "Kişisel verilerinizin güvenliği için teknik ve idari önlemler alınmıştır:\n• Şifreli veri iletimi (SSL/TLS)\n• Güvenli veri saklama\n• Erişim kontrolü ve yetkilendirme\n• Düzenli güvenlik denetimleri"
+      },
+      "cookies": {
+        "title": "8. Çerezler ve Takip",
+        "content": "Uygulama, kullanıcı deneyimini iyileştirmek için çerezler ve benzeri teknolojiler kullanabilir. iOS cihazlarda App Tracking Transparency (ATT) izninizi isteyeceğiz."
+      },
+      "childrenPrivacy": {
+        "title": "9. Çocukların Gizliliği",
+        "content": "Uygulamamız 13 yaş altı çocuklara yönelik değildir. 13 yaş altı kullanıcılardan bilerek veri toplamayız."
+      },
+      "contact": {
+        "title": "10. İletişim",
+        "content": "KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:\nE-posta: kvkk@amedspor.com"
+      }
+    },
+    "badge": "KVKK & GDPR Uyumlu",
+    "footer": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
   },
   "settings": {
     "title": "Ayarlar",

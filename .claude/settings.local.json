@@ -98,7 +98,9 @@
       "Bash(git restore:*)",
       "Bash(grep:*)",
       "Bash(do:*)",
-      "Bash(npx react-native:*)"
+      "Bash(npx react-native:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)"
     ],
     "additionalDirectories": [
       "d:\\Tribun\\tribunApi\\src\\TribunApp.Application\\Services"

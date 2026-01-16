@@ -185,9 +185,9 @@ const FeedScreen: React.FC = () => {
                 const diffHours = Math.floor(diffMins / 60);
                 const diffDays = Math.floor(diffHours / 24);
 
-                if (diffMins < 60) return `${diffMins} dakika`;
-                if (diffHours < 24) return `${diffHours} saat`;
-                return `${diffDays} gün`;
+                if (diffMins < 60) return `${diffMins} ${t("feed.timeUnits.minutes")}`;
+                if (diffHours < 24) return `${diffHours} ${t("feed.timeUnits.hours")}`;
+                return `${diffDays} ${t("feed.timeUnits.days")}`;
               };
 
               return (
@@ -214,7 +214,7 @@ const FeedScreen: React.FC = () => {
                       <View style={styles.cardImageContent}>
                         <View style={styles.cardBadge}>
                           <Text style={styles.cardBadgeText}>
-                            {newsItem.category?.name || "Haber"}
+                            {newsItem.category?.name || t("feed.defaultCategory")}
                           </Text>
                         </View>
                         <Text style={styles.cardTitle}>{newsItem.title}</Text>
@@ -225,7 +225,7 @@ const FeedScreen: React.FC = () => {
                     {!newsItem.imageUrl && !newsItem.thumbnailUrl && (
                       <View style={styles.cardBadge}>
                         <Text style={styles.cardBadgeText}>
-                          {newsItem.category?.name || "Haber"}
+                          {newsItem.category?.name || t("feed.defaultCategory")}
                         </Text>
                       </View>
                     )}
@@ -292,7 +292,7 @@ const FeedScreen: React.FC = () => {
                   />
                   <View style={styles.detailBadge}>
                     <Text style={styles.detailBadgeText}>
-                      {activeNews.category?.name || "Haber"}
+                      {activeNews.category?.name || t("feed.defaultCategory")}
                     </Text>
                   </View>
                   <View style={styles.detailHeroText}>
@@ -315,9 +315,9 @@ const FeedScreen: React.FC = () => {
                             const diffHours = Math.floor(diffMins / 60);
                             const diffDays = Math.floor(diffHours / 24);
 
-                            if (diffMins < 60) return `${diffMins} dakika`;
-                            if (diffHours < 24) return `${diffHours} saat`;
-                            return `${diffDays} gün`;
+                            if (diffMins < 60) return `${diffMins} ${t("feed.timeUnits.minutes")}`;
+                            if (diffHours < 24) return `${diffHours} ${t("feed.timeUnits.hours")}`;
+                            return `${diffDays} ${t("feed.timeUnits.days")}`;
                           })(),
                         })}
                       </Text>
@@ -330,7 +330,7 @@ const FeedScreen: React.FC = () => {
                 <View style={styles.detailHeader}>
                   <View style={styles.detailBadge}>
                     <Text style={styles.detailBadgeText}>
-                      {activeNews.category?.name || "Haber"}
+                      {activeNews.category?.name || t("feed.defaultCategory")}
                     </Text>
                   </View>
                   <Text style={styles.detailTitle}>{activeNews.title}</Text>

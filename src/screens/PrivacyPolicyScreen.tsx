@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
+import { formatDate } from '../i18n';
 
 type Props = {
   onClose?: () => void;
@@ -37,6 +38,26 @@ const PrivacyPolicyScreen: React.FC<Props> = ({
     }
   };
 
+  // Format date based on current locale
+  const lastUpdatedDate = formatDate(new Date('2026-01-08'), {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const sections = [
+    'dataController',
+    'collectedData',
+    'dataUsage',
+    'dataRetention',
+    'dataSharing',
+    'kvkkRights',
+    'security',
+    'cookies',
+    'childrenPrivacy',
+    'contact',
+  ] as const;
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
@@ -55,121 +76,43 @@ const PrivacyPolicyScreen: React.FC<Props> = ({
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.lastUpdated}>
-          {t('privacy.lastUpdated', { date: '08 Ocak 2026' })}
+          {t('privacy.lastUpdated', { date: lastUpdatedDate })}
         </Text>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Veri Sorumlusu</Text>
-          <Text style={styles.paragraph}>
-            6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verilerinizin
-            veri sorumlusu Amedspor Tribün uygulamasıdır.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Toplanan Veriler</Text>
-          <Text style={styles.paragraph}>
-            <Text style={styles.bold}>Zorunlu Veriler:</Text>{'\n'}
-            • Kullanıcı adı ve profil bilgileri{'\n'}
-            • Cihaz bilgileri (model, işletim sistemi){'\n'}
-            • Uygulama kullanım verileri{'\n'}
-            {'\n'}
-            <Text style={styles.bold}>Opsiyonel Veriler:</Text>{'\n'}
-            • Fotoğraflar ve görseller{'\n'}
-            • Konum bilgisi (paylaşımlar için){'\n'}
-            • İletişim tercihleri
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. Verilerin Kullanım Amaçları</Text>
-          <Text style={styles.paragraph}>
-            Kişisel verileriniz aşağıdaki amaçlarla işlenir:{'\n'}
-            • Uygulama hizmetlerinin sunulması{'\n'}
-            • Kullanıcı deneyiminin iyileştirilmesi{'\n'}
-            • Teknik destek sağlanması{'\n'}
-            • Güvenlik ve dolandırıcılık önleme{'\n'}
-            • İstatistiksel analiz (anonim)
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Veri Saklama Süresi</Text>
-          <Text style={styles.paragraph}>
-            Kişisel verileriniz, toplama amacına uygun süre boyunca ve yasal saklama yükümlülükleri
-            çerçevesinde saklanır. Hesabınızı sildiğinizde verileriniz 30 gün içinde sistemden
-            silinecektir.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. Veri Paylaşımı</Text>
-          <Text style={styles.paragraph}>
-            Kişisel verileriniz, yasal zorunluluklar dışında üçüncü taraflarla paylaşılmaz.
-            Aşağıdaki durumlarda verileriniz paylaşılabilir:{'\n'}
-            • Yasal yükümlülükler{'\n'}
-            • Kullanıcı güvenliğinin sağlanması{'\n'}
-            • Hizmet sağlayıcılar (bulut, analitik)
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. KVKK Hakları</Text>
-          <Text style={styles.paragraph}>
-            KVKK madde 11 uyarınca aşağıdaki haklara sahipsiniz:{'\n'}
-            • Kişisel verilerinizin işlenip işlenmediğini öğrenme{'\n'}
-            • İşlenen veriler hakkında bilgi talep etme{'\n'}
-            • Verilerin düzeltilmesini isteme{'\n'}
-            • Verilerin silinmesini isteme{'\n'}
-            • İşleme faaliyetlerine itiraz etme
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. Güvenlik Önlemleri</Text>
-          <Text style={styles.paragraph}>
-            Kişisel verilerinizin güvenliği için teknik ve idari önlemler alınmıştır:{'\n'}
-            • Şifreli veri iletimi (SSL/TLS){'\n'}
-            • Güvenli veri saklama{'\n'}
-            • Erişim kontrolü ve yetkilendirme{'\n'}
-            • Düzenli güvenlik denetimleri
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. Çerezler ve Takip</Text>
-          <Text style={styles.paragraph}>
-            Uygulama, kullanıcı deneyimini iyileştirmek için çerezler ve benzeri teknolojiler
-            kullanabilir. iOS cihazlarda App Tracking Transparency (ATT) izninizi
-            isteyeceğiz.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>9. Çocukların Gizliliği</Text>
-          <Text style={styles.paragraph}>
-            Uygulamamız 13 yaş altı çocuklara yönelik değildir. 13 yaş altı kullanıcılardan
-            bilerek veri toplamayız.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>10. İletişim</Text>
-          <Text style={styles.paragraph}>
-            KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:{'\n'}
-            E-posta: kvkk@amedspor.com{'\n'}
-            Adres: [Şirket Adresi]{'\n'}
-            Telefon: [İletişim Numarası]
-          </Text>
-        </View>
+        {sections.map((sectionKey) => (
+          <View key={sectionKey} style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              {t(`privacy.sections.${sectionKey}.title`)}
+            </Text>
+            {sectionKey === 'collectedData' ? (
+              <Text style={styles.paragraph}>
+                <Text style={styles.bold}>
+                  {t('privacy.sections.collectedData.requiredLabel')}
+                </Text>
+                {'\n'}
+                {t('privacy.sections.collectedData.requiredContent')}
+                {'\n\n'}
+                <Text style={styles.bold}>
+                  {t('privacy.sections.collectedData.optionalLabel')}
+                </Text>
+                {'\n'}
+                {t('privacy.sections.collectedData.optionalContent')}
+              </Text>
+            ) : (
+              <Text style={styles.paragraph}>
+                {t(`privacy.sections.${sectionKey}.content`)}
+              </Text>
+            )}
+          </View>
+        ))}
 
         <View style={styles.footer}>
           <View style={styles.badge}>
             <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
-            <Text style={styles.badgeText}>KVKK & GDPR Uyumlu</Text>
+            <Text style={styles.badgeText}>{t('privacy.badge')}</Text>
           </View>
           <Text style={styles.footerText}>
-            © 2026 Amedspor Tribün. Tüm hakları saklıdır.
+            {t('privacy.footer')}
           </Text>
         </View>
       </ScrollView>

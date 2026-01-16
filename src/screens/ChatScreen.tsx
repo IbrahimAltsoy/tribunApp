@@ -147,7 +147,7 @@ const ChatScreen: React.FC = () => {
       const message: Message = {
         id: incoming.id,
         text: incoming.message,
-        sender: incoming.username || "Anonymous",
+        sender: incoming.username || t("chat.anonymous"),
         timestamp: formatTimestamp(incoming.createdAt),
         isMine: incoming.username === nicknameRef.current,
       };
@@ -192,7 +192,7 @@ const ChatScreen: React.FC = () => {
         const mapped = response.data.items.map((msg: ChatMessageDto) => ({
           id: msg.id,
           text: msg.message,
-          sender: msg.username || "Anonymous",
+          sender: msg.username || t("chat.anonymous"),
           timestamp: formatTimestamp(msg.createdAt),
           isMine: msg.username === nicknameRef.current,
         }));

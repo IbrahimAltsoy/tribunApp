@@ -16,6 +16,7 @@ import SplashScreen from "./components/SplashScreen";
 import { colors } from "./theme/colors";
 import { initSentry } from "./utils/sentry";
 import { notificationService } from "./services/notificationService";
+import { languageService } from "./utils/languageService";
 import "./i18n";
 
 // Keep the native splash screen visible while we load resources
@@ -36,6 +37,9 @@ const App: React.FC = () => {
   useEffect(() => {
     async function prepare() {
       try {
+        // Initialize language service (loads persisted language preference)
+        await languageService.initialize();
+
         // Initialize push notifications
         await notificationService.initialize();
 

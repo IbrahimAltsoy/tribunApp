@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import i18n, { availableLanguages } from "../i18n";
 import type { LanguageCode } from "../i18n";
+import { languageService, SupportedLanguage } from "../utils/languageService";
 import { colors } from "../theme/colors";
 import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -27,8 +28,9 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ onClose }) => {
       LanguageCode | undefined) || availableLanguages[0].code;
   const isRTL = I18nManager.isRTL;
 
-  const handleChange = (code: LanguageCode) => {
-    i18n.changeLanguage(code);
+  const handleChange = async (code: LanguageCode) => {
+    // Use languageService to change and persist language
+    await languageService.setLanguage(code as SupportedLanguage);
     onClose?.();
   };
 

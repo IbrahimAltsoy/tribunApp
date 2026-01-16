@@ -135,7 +135,8 @@
     "placeholder": "Write a message...",
     "nicknamePlaceholder": "Nickname",
     "closedTitle": "Chat is currently closed",
-    "emptyState": "Be the first to drop a message and warm up the tribune."
+    "emptyState": "Be the first to drop a message and warm up the tribune.",
+    "anonymous": "Anonymous"
   },
   "like": "Like",
   "share": "Share",
@@ -286,7 +287,13 @@
     "time_ago": "{{time}} ago",
     "newsNotFound": "News not found",
     "no_news": "No news yet",
-    "no_news_in_category": "No news in this category yet"
+    "no_news_in_category": "No news in this category yet",
+    "defaultCategory": "News",
+    "timeUnits": {
+      "minutes": "minutes",
+      "hours": "hours",
+      "days": "days"
+    }
   },
   "team": {
     "title": "Team",
@@ -389,12 +396,94 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last Updated: {{date}}",
-    "accept": "I Accept"
+    "accept": "I Accept",
+    "sections": {
+      "scope": {
+        "title": "1. Service Scope",
+        "content": "Amedspor Tribun is a mobile platform where Amedspor fans can follow match scores, interact with the fan community, and receive news and updates."
+      },
+      "userObligations": {
+        "title": "2. User Obligations",
+        "content": "• Provide accurate and up-to-date information\n• Treat other users with respect\n• Not share content that violates laws or harms the community\n• Respect intellectual property rights"
+      },
+      "contentPolicy": {
+        "title": "3. Content Policy",
+        "content": "Content shared by users (photos, comments, moments) is the responsibility of the user. The platform reserves the right to remove content that violates laws, contains hate speech, or disturbs other users."
+      },
+      "intellectualProperty": {
+        "title": "4. Intellectual Property",
+        "content": "All designs, logos, content, and code in the application are protected by copyright. Users agree to license the usage rights of their shared content to the platform."
+      },
+      "disclaimer": {
+        "title": "5. Disclaimer",
+        "content": "The platform is provided \"as is\". No guarantee is given that the service will be uninterrupted or error-free. Users use the application at their own risk and responsibility."
+      },
+      "accountSuspension": {
+        "title": "6. Account Suspension",
+        "content": "Platform management reserves the right to suspend or terminate accounts that violate terms of use without prior warning."
+      },
+      "changes": {
+        "title": "7. Changes",
+        "content": "These terms of service may be updated from time to time. Important changes will be notified to users. Continuing to use the application after updates means you accept the new terms."
+      },
+      "contact": {
+        "title": "8. Contact",
+        "content": "For questions:\nEmail: support@amedspor.com\nWeb: www.amedspor.com"
+      }
+    },
+    "footer": "© 2026 Amedspor Tribun. All rights reserved."
   },
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last Updated: {{date}}",
-    "accept": "I Accept"
+    "accept": "I Accept",
+    "sections": {
+      "dataController": {
+        "title": "1. Data Controller",
+        "content": "In accordance with applicable data protection laws (GDPR/KVKK), Amedspor Tribun application is the data controller of your personal data."
+      },
+      "collectedData": {
+        "title": "2. Collected Data",
+        "requiredLabel": "Required Data:",
+        "requiredContent": "• Username and profile information\n• Device information (model, operating system)\n• Application usage data",
+        "optionalLabel": "Optional Data:",
+        "optionalContent": "• Photos and images\n• Location information (for sharing)\n• Communication preferences"
+      },
+      "dataUsage": {
+        "title": "3. Data Usage Purposes",
+        "content": "Your personal data is processed for the following purposes:\n• Providing application services\n• Improving user experience\n• Providing technical support\n• Security and fraud prevention\n• Statistical analysis (anonymous)"
+      },
+      "dataRetention": {
+        "title": "4. Data Retention Period",
+        "content": "Your personal data is retained for the appropriate period for the collection purpose and within legal retention requirements. When you delete your account, your data will be deleted from the system within 30 days."
+      },
+      "dataSharing": {
+        "title": "5. Data Sharing",
+        "content": "Your personal data is not shared with third parties except for legal obligations. Your data may be shared in the following cases:\n• Legal obligations\n• Ensuring user security\n• Service providers (cloud, analytics)"
+      },
+      "kvkkRights": {
+        "title": "6. Your Rights",
+        "content": "Under data protection laws, you have the following rights:\n• Learn whether your personal data is being processed\n• Request information about processed data\n• Request correction of data\n• Request deletion of data\n• Object to processing activities"
+      },
+      "security": {
+        "title": "7. Security Measures",
+        "content": "Technical and administrative measures have been taken for the security of your personal data:\n• Encrypted data transmission (SSL/TLS)\n• Secure data storage\n• Access control and authorization\n• Regular security audits"
+      },
+      "cookies": {
+        "title": "8. Cookies and Tracking",
+        "content": "The application may use cookies and similar technologies to improve user experience. On iOS devices, we will request your App Tracking Transparency (ATT) permission."
+      },
+      "childrenPrivacy": {
+        "title": "9. Children's Privacy",
+        "content": "Our application is not intended for children under 13 years of age. We do not knowingly collect data from users under 13."
+      },
+      "contact": {
+        "title": "10. Contact",
+        "content": "To exercise your rights or for privacy-related questions:\nEmail: privacy@amedspor.com"
+      }
+    },
+    "badge": "GDPR Compliant",
+    "footer": "© 2026 Amedspor Tribun. All rights reserved."
   },
   "settings": {
     "title": "Settings",
