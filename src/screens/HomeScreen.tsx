@@ -13,7 +13,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Alert,
-  RefreshControl,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -244,23 +243,45 @@ const HomeScreen: React.FC = () => {
             colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
             style={StyleSheet.absoluteFill}
           />
-          <BlurView
-            intensity={Platform.OS === "ios" ? 30 : 22}
-            tint="dark"
-            style={styles.supportContent}
-          >
-            <View style={styles.supportPillWrapper}>
-              <Ionicons name="storefront" size={14} color={colors.primary} />
-              <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+          {Platform.OS === "ios" ? (
+            <View style={styles.supportContentIOS}>
+              <View style={styles.supportPillWrapper}>
+                <Ionicons name="storefront" size={14} color={colors.primary} />
+                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+              </View>
+              <Text
+                style={styles.supportTitleIOS}
+                allowFontScaling={false}
+                numberOfLines={1}
+              >
+                {t("home.supportStore")}
+              </Text>
+              <Text style={styles.supportSubtitle}>
+                {t("home.supportSubtitle")}
+              </Text>
+              <View style={styles.supportArrowCircle}>
+                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              </View>
             </View>
-            <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
-            <Text style={styles.supportSubtitle}>
-              {t("home.supportSubtitle")}
-            </Text>
-            <View style={styles.supportArrowCircle}>
-              <Ionicons name="arrow-forward" size={20} color={colors.white} />
-            </View>
-          </BlurView>
+          ) : (
+            <BlurView
+              intensity={22}
+              tint="dark"
+              style={styles.supportContent}
+            >
+              <View style={styles.supportPillWrapper}>
+                <Ionicons name="storefront" size={14} color={colors.primary} />
+                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
+              </View>
+              <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
+              <Text style={styles.supportSubtitle}>
+                {t("home.supportSubtitle")}
+              </Text>
+              <View style={styles.supportArrowCircle}>
+                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              </View>
+            </BlurView>
+          )}
         </ImageBackground>
       </Pressable>
     </View>
@@ -736,6 +757,21 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(19, 30, 19, 0.5)",
     overflow: "hidden",
   },
+  supportContentIOS: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    backgroundColor: "rgba(19, 30, 19, 0.85)",
+  },
+  supportTitleIOS: {
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 24,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
   supportPillWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -762,6 +798,8 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.8)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+    flexShrink: 0,
+    width: "100%",
   },
   supportSubtitle: {
     color: colors.textSecondary,

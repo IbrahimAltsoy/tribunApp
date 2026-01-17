@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Modal, View, StyleSheet } from "react-native";
+import { Modal, View, StyleSheet, Platform, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import MarsScreen from "../screens/MarsScreen";
 import ArchiveScreen from "../screens/ArchiveScreen";
 import PlayersScreen from "../screens/PlayersScreen";
@@ -18,6 +19,13 @@ import { typography } from "../theme/typography";
 
 const Stack = createNativeStackNavigator<MarsStackParamList>();
 
+// iOS için özel geri butonu komponenti
+const CustomBackButton = ({ onPress }: { onPress: () => void }) => (
+  <TouchableOpacity onPress={onPress} style={{ marginLeft: -8, padding: 8 }}>
+    <Ionicons name="chevron-back" size={28} color={colors.text} />
+  </TouchableOpacity>
+);
+
 const screenOptions = {
   headerShown: true,
   headerTransparent: true,
@@ -27,6 +35,7 @@ const screenOptions = {
     fontSize: 18,
   },
   headerTintColor: colors.text,
+  headerBackTitleVisible: false,
   contentStyle: {
     backgroundColor: colors.background,
   },
@@ -41,29 +50,59 @@ const MarsStack: React.FC = () => {
         <Stack.Screen
           name="MarsHome"
           component={MarsScreen}
-          options={{ headerShown: false }}
+          options={{
+            headerShown: false,
+          }}
         />
         <Stack.Screen
           name="Archive"
           component={ArchiveScreen}
-          options={{ title: "" }}
+          options={({ navigation }) => ({
+            title: "",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
         />
         <Stack.Screen
           name="Players"
           component={PlayersScreen}
-          options={{ title: "" }}
+          options={({ navigation }) => ({
+            title: "",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
         />
         <Stack.Screen
           name="Kits"
           component={KitsScreen}
-          options={{ title: "" }}
+          options={({ navigation }) => ({
+            title: "",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
         />
         <Stack.Screen
           name="Team"
           component={TeamScreen}
-          options={{ title: "" }}
+          options={({ navigation }) => ({
+            title: "",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
         />
-        <Stack.Screen name="Settings" options={{ title: "" }}>
+        <Stack.Screen
+          name="Settings"
+          options={({ navigation }) => ({
+            title: "",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
+        >
           {({ navigation }) => (
             <SettingsScreen
               onViewTerms={() => setModalView('terms')}
@@ -77,7 +116,12 @@ const MarsStack: React.FC = () => {
         <Stack.Screen
           name="NotificationTest"
           component={NotificationTestScreen}
-          options={{ title: "Notification Test" }}
+          options={({ navigation }) => ({
+            title: "Notification Test",
+            ...(Platform.OS === "ios" && {
+              headerLeft: () => <CustomBackButton onPress={() => navigation.goBack()} />,
+            }),
+          })}
         />
       </Stack.Navigator>
 

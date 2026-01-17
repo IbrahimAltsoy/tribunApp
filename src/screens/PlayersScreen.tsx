@@ -201,7 +201,7 @@ const Meta = ({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: stri
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl },
+  container: { padding: spacing.lg, paddingTop: spacing.xl + spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl },
 
   screenTitle: { color: colors.text, fontSize: fontSizes.xl, fontFamily: typography.bold },
   screenSubtitle: { color: colors.mutedText, fontSize: fontSizes.md, marginBottom: spacing.sm },

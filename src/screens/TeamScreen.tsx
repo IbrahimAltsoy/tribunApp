@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl + spacing.lg,
     paddingBottom: spacing.md,
   },
   title: {

@@ -194,12 +194,6 @@ const MarsScreen: React.FC = () => {
     hideValue?: boolean;
   }[] = [
     {
-      label: t("archive.sectionArchive"),
-      value: t("archive.since1932"),
-      meta: t("archive.clubMemory"),
-      route: "Archive",
-    },
-    {
       label: t("team.title"),
       value: "", // Squad size - value fetched from API
       meta: t("team.subtitle"),

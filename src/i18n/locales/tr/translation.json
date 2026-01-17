@@ -26,18 +26,6 @@
     "chat": "Sohbet",
     "mars": "Amed"
   },
-  "fixture": {
-    "title": "Maç Merkezi",
-    "subtitle": "Canlı skor, fikstür ve puan durumu",
-    "tableTitle": "Puan Durumu",
-    "tableTeam": "Takım",
-    "upcomingTitle": "Yaklaşan Maçlar",
-    "home": "İç Saha",
-    "away": "Deplasman",
-    "guest": "Konuk",
-    "vs": "{{home}} vs {{away}}",
-    "vsDash": "{{home}} - {{away}}"
-  },
   "archive": {
     "heroTitle": "Arşiv & Duyurular",
     "heroSubtitle": "Tarihçe, efsaneler, forma hatıraları ve organizasyon listeleri tek ekranda.",
@@ -231,6 +219,16 @@
     "noteTooLong": "Not en fazla 1000 karakter olabilir"
   },
   "fixture": {
+    "title": "Maç Merkezi",
+    "subtitle": "Canlı skor, fikstür ve puan durumu",
+    "tableTitle": "Puan Durumu",
+    "tableTeam": "Takım",
+    "upcomingTitle": "Yaklaşan Maçlar",
+    "home": "İç Saha",
+    "away": "Deplasman",
+    "guest": "Konuk",
+    "vs": "{{home}} vs {{away}}",
+    "vsDash": "{{home}} - {{away}}",
     "liveTickerTitle": "Anlık Gol / Pozisyon",
     "liveTickerSubtitle": "Canlı maçlardan gol, kart ve pozisyon akışı",
     "genderSelector": {

@@ -156,13 +156,10 @@ class ApiError extends Error {
 class ApiService {
   private baseUrl: string;
   private timeout: number;
-  private useMockData: boolean;
 
   constructor() {
-    // Use environment variable or fallback to mock data
     this.baseUrl = getApiBaseUrl();
     this.timeout = API_CONFIG.TIMEOUT;
-    this.useMockData = !this.baseUrl; // Use mock data if no API URL configured
   }
 
   private buildUrl(path: string): string {
@@ -176,11 +173,6 @@ class ApiService {
     endpoint: string,
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
-    if (this.useMockData) {
-      logger.warn('API: Using mock data (no API URL configured)');
-      throw new Error('Mock data mode - use specific methods');
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
@@ -238,26 +230,12 @@ class ApiService {
     }
   }
 
-  /**
-   * Simulate network delay for mock data (realistic UX)
-   */
-  private async simulateDelay(ms: number = 300): Promise<void> {
-    if (__DEV__) {
-      await new Promise((resolve) => setTimeout(resolve, ms));
-    }
-  }
-
   // ========== NEWS ==========
 
   /**
    * Get all news articles (paginated)
    */
   async getNews(pageNumber: number = 1, pageSize: number = 10, isPublished: boolean = true): Promise<ApiResponse<NewsItem[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: newsData };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/news?pageNumber=${pageNumber}&pageSize=${pageSize}&isPublished=${isPublished}`), {
         method: 'GET',
@@ -293,11 +271,6 @@ class ApiService {
    * Get latest news (limited count)
    */
   async getLatestNews(count: number = 5): Promise<ApiResponse<NewsItem[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: newsData.slice(0, count) };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/news/latest?count=${count}`), {
         method: 'GET',
@@ -332,15 +305,6 @@ class ApiService {
    * Get news by ID
    */
   async getNewsById(id: string): Promise<ApiResponse<NewsItem>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      const news = newsData.find((n) => n.id === id);
-      if (!news) {
-        return { success: false, error: 'News not found' };
-      }
-      return { success: true, data: news };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/news/${id}`), {
         method: 'GET',
@@ -375,12 +339,6 @@ class ApiService {
    * Get news by category slug
    */
   async getNewsByCategory(categorySlug: string, pageNumber: number = 1, pageSize: number = 10): Promise<ApiResponse<NewsItem[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      const filtered = newsData.filter((n) => n.category?.slug === categorySlug);
-      return { success: true, data: filtered };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/news/category/${categorySlug}?pageNumber=${pageNumber}&pageSize=${pageSize}`), {
         method: 'GET',
@@ -417,10 +375,6 @@ class ApiService {
    * Get all fixtures
    */
   async getFixtures(): Promise<ApiResponse<FixtureItem[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: fixtureData };
-    }
     return this.fetch<FixtureItem[]>('/fixtures');
   }
 
@@ -428,10 +382,6 @@ class ApiService {
    * Get standings
    */
   async getStandings(): Promise<ApiResponse<StandingRow[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: standings };
-    }
     return this.fetch<StandingRow[]>('/standings');
   }
 
@@ -446,11 +396,6 @@ class ApiService {
     status: string = 'Approved',
     sessionId?: string
   ): Promise<ApiResponse<FanMoment[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: fanMoments };
-    }
-
     try {
       let url = this.buildUrl(`/api/fanmoments?pageNumber=${pageNumber}&pageSize=${pageSize}`);
       if (status) {
@@ -500,22 +445,6 @@ class ApiService {
     source?: string;
     sessionId: string;
   }): Promise<ApiResponse<FanMoment>> {
-    if (this.useMockData) {
-      await this.simulateDelay(500);
-      const newMoment: FanMoment = {
-        id: `moment-${Date.now()}`,
-        userId: request.sessionId,
-        userName: request.nickname,
-        caption: request.caption,
-        imageUrl: request.imageUrl,
-        location: request.city,
-        likeCount: 0,
-        commentCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      return { success: true, data: newMoment };
-    }
-
     try {
       const response = await fetch(this.buildUrl('/api/fanmoments'), {
         method: 'POST',
@@ -551,11 +480,6 @@ class ApiService {
    * Like a fan moment
    */
   async likeFanMoment(id: string, sessionId: string): Promise<ApiResponse<boolean>> {
-    if (this.useMockData) {
-      await this.simulateDelay(200);
-      return { success: true, data: true };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/fanmoments/${id}/like`), {
         method: 'POST',
@@ -593,11 +517,6 @@ class ApiService {
    * Get active poll (backend returns single active poll)
    */
   async getActivePoll(): Promise<ApiResponse<Poll>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: polls[0] };
-    }
-
     try {
       const response = await fetch(this.buildUrl('/api/polls/active'), {
         method: 'GET',
@@ -634,11 +553,6 @@ class ApiService {
    * Get all polls (for backward compatibility, returns array)
    */
   async getPolls(): Promise<ApiResponse<Poll[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: polls };
-    }
-
     // Get active poll and return as array
     const response = await this.getActivePoll();
     if (response.success && response.data) {
@@ -651,15 +565,6 @@ class ApiService {
    * Submit poll vote
    */
   async votePoll(pollOptionId: string, sessionId: string): Promise<ApiResponse<Poll>> {
-    if (this.useMockData) {
-      await this.simulateDelay(300);
-      const poll = polls[0];
-      if (!poll) {
-        return { success: false, error: 'Poll not found' };
-      }
-      return { success: true, data: poll };
-    }
-
     try {
       const response = await fetch(this.buildUrl('/api/polls/vote'), {
         method: 'POST',
@@ -695,11 +600,6 @@ class ApiService {
    * Check if user has already voted on a poll
    */
   async getVotedOption(pollId: string, sessionId: string): Promise<ApiResponse<string | null>> {
-    if (this.useMockData) {
-      await this.simulateDelay(200);
-      return { success: true, data: null };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/polls/voted-option?pollId=${pollId}&sessionId=${sessionId}`), {
         method: 'GET',
@@ -735,13 +635,6 @@ class ApiService {
    * Get announcements (only approved ones by default)
    */
   async getAnnouncements(status: 'Pending' | 'Approved' | 'Rejected' = 'Approved'): Promise<ApiResponse<Announcement[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      // Filter by status if specified
-      const filtered = status ? announcements.filter(a => a.status === status) : announcements;
-      return { success: true, data: filtered };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/announcements?status=${status}`), {
         method: 'GET',
@@ -786,22 +679,6 @@ class ApiService {
       note?: string;
     }>;
   }): Promise<ApiResponse<Announcement>> {
-    if (this.useMockData) {
-      await this.simulateDelay(500);
-      const newAnnouncement: Announcement = {
-        id: `announcement-${Date.now()}`,
-        title: announcement.translations[0]?.title || '',
-        note: announcement.translations[0]?.note,
-        city: announcement.city,
-        location: announcement.location,
-        eventDate: announcement.eventDate,
-        contact: announcement.contact,
-        status: 'Pending',
-        createdAt: new Date().toISOString(),
-      };
-      return { success: true, data: newAnnouncement };
-    }
-
     try {
       const response = await fetch(this.buildUrl('/api/announcements'), {
         method: 'POST',
@@ -839,11 +716,6 @@ class ApiService {
    * Get all players by team type
    */
   async getPlayers(teamType: 'Mens' | 'Womens' = 'Mens', position?: string): Promise<ApiResponse<Player[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: players };
-    }
-
     try {
       let url = this.buildUrl(`/api/players?teamType=${teamType}`);
       if (position) {
@@ -882,15 +754,6 @@ class ApiService {
    * Get player by ID
    */
   async getPlayerById(id: string): Promise<ApiResponse<Player>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      const player = players.find((p) => p.id === id);
-      if (!player) {
-        return { success: false, error: 'Player not found' };
-      }
-      return { success: true, data: player };
-    }
-
     try {
       const response = await fetch(this.buildUrl(`/api/players/${id}`), {
         method: 'GET',
@@ -926,10 +789,6 @@ class ApiService {
    * Get all kits
    */
   async getKits(): Promise<ApiResponse<KitItem[]>> {
-    if (this.useMockData) {
-      await this.simulateDelay();
-      return { success: true, data: kits };
-    }
     return this.fetch<KitItem[]>('/kits');
   }
 }

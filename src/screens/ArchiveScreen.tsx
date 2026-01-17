@@ -197,6 +197,7 @@ const ArchiveScreen = () => {
   const listContainer = useMemo(
     () => ({
       padding: spacing.lg,
+      paddingTop: spacing.xl + spacing.lg,
       paddingBottom: spacing.xl * 2,
       gap: spacing.xl,
     }),

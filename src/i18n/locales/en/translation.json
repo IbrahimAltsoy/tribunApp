@@ -26,18 +26,6 @@
     "chat": "Chat",
     "mars": "Amed"
   },
-  "fixture": {
-    "title": "Match Center",
-    "subtitle": "Live score, fixtures and standings",
-    "tableTitle": "Standings",
-    "tableTeam": "Team",
-    "upcomingTitle": "Upcoming Matches",
-    "home": "Home",
-    "away": "Away",
-    "guest": "Guest",
-    "vs": "{{home}} vs {{away}}",
-    "vsDash": "{{home}} - {{away}}"
-  },
   "archive": {
     "heroTitle": "Archive & Announcements",
     "heroSubtitle": "History, legends, kit memories and organization lists in one screen.",

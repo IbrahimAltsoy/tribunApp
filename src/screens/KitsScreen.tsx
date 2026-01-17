@@ -190,7 +190,7 @@ const KitArt = ({
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl * 1.5 },
+  container: { padding: spacing.lg, paddingTop: spacing.xl + spacing.lg, gap: spacing.lg, paddingBottom: spacing.xl * 1.5 },
 
   title: {
     color: colors.text,
