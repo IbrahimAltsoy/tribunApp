@@ -30,6 +30,7 @@ type Props = {
   onSelectMoment: (moment: FanMomentDto) => void;
   onEditMoment?: (moment: FanMomentDto) => void;
   onDeleteMoment?: (moment: FanMomentDto) => void;
+  onShareMoment?: (moment: FanMomentDto) => void;
   slot?: React.ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -40,6 +41,7 @@ const AnimatedMomentCard: React.FC<{
   onPress: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onShare?: () => void;
   activeAudioMomentId: string | null;
   activeMomentId: string | null;
   setActiveAudioMomentId: (id: string | null) => void;
@@ -49,6 +51,7 @@ const AnimatedMomentCard: React.FC<{
     onPress,
     onEdit,
     onDelete,
+    onShare,
     activeAudioMomentId,
     activeMomentId,
     setActiveAudioMomentId,
@@ -151,8 +154,28 @@ const AnimatedMomentCard: React.FC<{
             imageStyle={styles.momentImageStyle}
           >
             {/* Owner Actions - Top Right Corner */}
-            {moment.isOwnMoment && (onEdit || onDelete) && (
+            {moment.isOwnMoment && (onEdit || onDelete || onShare) && (
               <View style={styles.ownerActions}>
+                {onShare && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onShare();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="share-outline" size={16} color={colors.white} />
+                    </BlurView>
+                  </Pressable>
+                )}
                 {onEdit && (
                   <Pressable
                     onPress={(e) => {
@@ -234,9 +257,29 @@ const AnimatedMomentCard: React.FC<{
                 color={colors.white}
               />
             </Pressable>
-            {/* Owner Actions - Top Right Corner (for non-image moments) */}
-            {moment.isOwnMoment && (onEdit || onDelete) && (
+            {/* Owner Actions - Top Right Corner (for video moments) */}
+            {moment.isOwnMoment && (onEdit || onDelete || onShare) && (
               <View style={styles.ownerActions}>
+                {onShare && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onShare();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="share-outline" size={16} color={colors.white} />
+                    </BlurView>
+                  </Pressable>
+                )}
                 {onEdit && (
                   <Pressable
                     onPress={(e) => {
@@ -286,9 +329,29 @@ const AnimatedMomentCard: React.FC<{
           </View>
         ) : (
           <View style={[styles.momentImage, styles.momentFallback]}>
-            {/* Owner Actions - Top Right Corner (for non-image moments) */}
-            {moment.isOwnMoment && (onEdit || onDelete) && (
+            {/* Owner Actions - Top Right Corner (for fallback moments) */}
+            {moment.isOwnMoment && (onEdit || onDelete || onShare) && (
               <View style={styles.ownerActions}>
+                {onShare && (
+                  <Pressable
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onShare();
+                    }}
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      pressed && styles.actionButtonPressed,
+                    ]}
+                  >
+                    <BlurView
+                      intensity={IS_IOS ? 25 : 18}
+                      tint="dark"
+                      style={styles.actionButtonBlur}
+                    >
+                      <Ionicons name="share-outline" size={16} color={colors.white} />
+                    </BlurView>
+                  </Pressable>
+                )}
                 {onEdit && (
                   <Pressable
                     onPress={(e) => {
@@ -371,6 +434,7 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   onSelectMoment,
   onEditMoment,
   onDeleteMoment,
+  onShareMoment,
   slot,
   refreshing = false,
   onRefresh,
@@ -565,6 +629,7 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
             onPress={() => onSelectMoment(item)}
             onEdit={onEditMoment ? () => onEditMoment(item) : undefined}
             onDelete={onDeleteMoment ? () => onDeleteMoment(item) : undefined}
+            onShare={onShareMoment ? () => onShareMoment(item) : undefined}
             activeAudioMomentId={activeAudioMomentId}
             activeMomentId={activeMomentId}
             setActiveAudioMomentId={setActiveAudioMomentId}

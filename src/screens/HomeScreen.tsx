@@ -34,6 +34,8 @@ import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { useShareMomentForm } from "../hooks/useShareMomentForm";
+import { useShareMoment } from "../hooks/useShareMoment";
+import ShareableMomentCard from "../components/home/ShareableMomentCard";
 import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
 import { fanMomentService } from "../services/fanMomentService";
@@ -76,6 +78,14 @@ const HomeScreen: React.FC = () => {
     setCaption: setNewCaption,
     submit,
   } = useShareMomentForm();
+
+  // Share moment hook
+  const {
+    shareCardRef,
+    momentToShare,
+    isSharing,
+    shareMoment,
+  } = useShareMoment();
 
   // Load all data function (used for initial load and refresh)
   const loadAllData = useCallback(async () => {
@@ -423,6 +433,7 @@ const HomeScreen: React.FC = () => {
           onSelectMoment={handleOpenDetail}
           onEditMoment={handleEditMoment}
           onDeleteMoment={handleDeleteMoment}
+          onShareMoment={shareMoment}
           slot={smartSlot}
           refreshing={refreshing}
           onRefresh={onRefresh}
@@ -703,6 +714,14 @@ const HomeScreen: React.FC = () => {
           </BlurView>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* Hidden shareable card for capture */}
+      {momentToShare && (
+        <ShareableMomentCard
+          ref={shareCardRef}
+          moment={momentToShare}
+        />
+      )}
     </SafeAreaView>
   );
 };
