@@ -19,6 +19,7 @@ import { fontSizes, typography } from "../theme/typography";
 import { footballService } from "../services/footballService";
 import { goalNotificationService } from "../services/goalNotificationService";
 import { GoalCelebration } from "../components/GoalCelebration";
+import { useLiveMatchPolling } from "../hooks/useLiveMatchPolling";
 import { logger } from "../utils/logger";
 import type {
   StandingTableDto,
@@ -91,15 +92,6 @@ const FixtureScreen = () => {
   // Top scorers state
   const [topScorers, setTopScorers] = useState<TopScorerDataDto[]>([]);
 
-  // Live match state
-  const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
-  const [previousGoalIds, setPreviousGoalIds] = useState<Set<number>>(
-    new Set()
-  );
-  const [previousMatchState, setPreviousMatchState] = useState<number | null>(
-    null
-  );
-
   // Goal celebration state
   const [showGoalCelebration, setShowGoalCelebration] = useState(false);
   const [goalCelebrationData, setGoalCelebrationData] = useState<{
@@ -107,6 +99,16 @@ const FixtureScreen = () => {
     playerName: string;
     minute: number;
   } | null>(null);
+
+  // Smart live match polling with automatic notifications
+  const { liveMatch } = useLiveMatchPolling({
+    teamType: selectedGender === "mens" ? "Mens" : "Womens",
+    enabled: true,
+    onGoalCelebration: (teamName, playerName, minute) => {
+      setGoalCelebrationData({ teamName, playerName, minute });
+      setShowGoalCelebration(true);
+    },
+  });
 
   // Pull-to-refresh state
   const [refreshing, setRefreshing] = useState(false);
@@ -167,11 +169,10 @@ const FixtureScreen = () => {
       const teamId = selectedGender === "mens" ? 3570 : 261209;
 
       // Load all data in parallel for faster refresh
-      const [standingsResponse, scheduleResponse, scorersResponse, liveResponse] = await Promise.all([
+      const [standingsResponse, scheduleResponse, scorersResponse] = await Promise.all([
         footballService.getStandingsTable(seasonId),
         footballService.getTeamSchedule(teamId),
         standingsView === "scorers" ? footballService.getTopScorers(seasonId) : Promise.resolve(null),
-        selectedGender === "mens" ? footballService.getLiveScores() : Promise.resolve(null),
       ]);
 
       // Process standings
@@ -193,19 +194,7 @@ const FixtureScreen = () => {
       if (scorersResponse && scorersResponse.success && scorersResponse.data) {
         setTopScorers(scorersResponse.data.data);
       }
-
-      // Process live match (only for men's team)
-      if (liveResponse && liveResponse.success && liveResponse.data) {
-        // Filter for Amedspor men's team (Team ID: 3570)
-        const amedMatch = liveResponse.data.find(
-          (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
-        );
-        if (amedMatch && amedMatch.stateId !== 5) {
-          setLiveMatch(amedMatch);
-        } else {
-          setLiveMatch(null);
-        }
-      }
+      // Live match is now handled by useLiveMatchPolling hook
     } catch (error) {
       logger.error('Failed to refresh fixture data:', error);
     }
@@ -436,129 +425,6 @@ const FixtureScreen = () => {
           ourTeam: ourTeamName,
         };
   }, [selectedGender, currentWeekFromBackend, currentPastResults]);
-
-  // Load live scores only during match time (smarter polling) - ONLY FOR MEN'S TEAM
-  useEffect(() => {
-    // Only run for men's team
-    if (selectedGender !== "mens") {
-      setLiveMatch(null);
-      return;
-    }
-
-    const loadLiveScores = async () => {
-      const response = await footballService.getLiveScores();
-
-      if (response.success && response.data) {
-        // Filter for Amedspor men's team only (Team ID: 3570)
-        const amedMatch = response.data.find(
-          (match) => match.homeTeamId === 3570 || match.awayTeamId === 3570
-        );
-
-        // Only log when there's a live match
-        if (amedMatch) {
-          logger.log("🔴 CANLI MAÇ:", amedMatch);
-        }
-
-        // Detect new goals and match state changes
-        if (amedMatch) {
-          const currentGoals = amedMatch.events.filter((e) => {
-            const isGoal =
-              e.typeId === 14 || e.typeId === 80 || e.typeId === 82; // Goal, Own Goal, Penalty Scored
-            return isGoal && !e.rescinded;
-          });
-
-          const currentGoalIds = new Set(currentGoals.map((g) => g.id));
-          const currentStateId = amedMatch.stateId;
-
-          // Only check for new goals if we have previous data (not first load)
-          if (previousGoalIds.size > 0) {
-            // Check for new goals
-            currentGoals.forEach((goal) => {
-              if (!previousGoalIds.has(goal.id)) {
-                // New goal detected!
-                const scoringTeam = amedMatch.participants.find(
-                  (p) => p.id === goal.participantId
-                );
-
-                const teamName =
-                  scoringTeam?.name || t("fixture.scorers.defaultTeam");
-                const playerName =
-                  goal.playerName || t("fixture.scorers.defaultPlayer");
-                const minute = goal.minute || 0;
-
-                // Trigger all celebration effects
-                goalNotificationService.celebrateGoal(
-                  teamName,
-                  playerName,
-                  minute
-                );
-
-                // Show goal animation overlay
-                setGoalCelebrationData({ teamName, playerName, minute });
-                setShowGoalCelebration(true);
-              }
-            });
-
-            // Check if match just finished (state changed to finished)
-            if (
-              previousMatchState !== null &&
-              previousMatchState !== 5 &&
-              currentStateId === 5
-            ) {
-              // Match just finished
-              const homeTeam = amedMatch.participants.find(
-                (p) => p.location === "home"
-              );
-              const awayTeam = amedMatch.participants.find(
-                (p) => p.location === "away"
-              );
-
-              goalNotificationService.showGoalNotification(
-                t("fixture.notifications.matchFinished"),
-                `${homeTeam?.name || ""} vs ${awayTeam?.name || ""}`,
-                90
-              );
-            }
-          }
-
-          setPreviousGoalIds(currentGoalIds);
-          setPreviousMatchState(currentStateId || null);
-
-          // If match is finished (stateId 5), don't update live match anymore
-          if (currentStateId === 5) {
-            setLiveMatch(null);
-          } else {
-            setLiveMatch(amedMatch);
-          }
-        } else {
-          // No match found, reset state
-          setPreviousGoalIds(new Set());
-          setPreviousMatchState(null);
-          setLiveMatch(null);
-        }
-      } else {
-        logger.log("❌ Live scores error:", response.error);
-        setLiveMatch(null);
-      }
-    };
-
-    // Load live scores initially
-    loadLiveScores();
-
-    // Poll every 15 seconds for real-time updates (optimized from 2s), but stop if match is finished
-    const interval = setInterval(async () => {
-      // Check if match is finished before polling
-      if (previousMatchState === 5) {
-        clearInterval(interval);
-        logger.log("⏹️ Match finished, stopping polling");
-        return;
-      }
-      logger.log("⚡ Polling live scores... (15sec interval)");
-      loadLiveScores();
-    }, 1500000); // 15 seconds - balanced between real-time updates and performance ⚡
-
-    return () => clearInterval(interval);
-  }, [selectedGender, previousMatchState]);
 
   // Get available weeks for past results (last 5 weeks)
   const pastWeeks = useMemo(() => {
