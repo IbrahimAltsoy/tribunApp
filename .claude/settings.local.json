@@ -100,7 +100,9 @@
       "Bash(do:*)",
       "Bash(npx react-native:*)",
       "Bash(wc:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(dotnet user-secrets:*)",
+      "Bash(git show:*)"
     ],
     "additionalDirectories": [
       "d:\\Tribun\\tribunApi\\src\\TribunApp.Application\\Services"

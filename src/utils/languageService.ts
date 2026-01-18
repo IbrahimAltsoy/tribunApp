@@ -206,6 +206,7 @@ syncWithI18n();
 export const languageService = {
   initialize,
   getLanguage,
+  getCurrentLanguage: getLanguage, // Alias for notificationService compatibility
   setLanguage,
   getRequestHeaders,
   getLanguageQueryParam,

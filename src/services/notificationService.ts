@@ -247,8 +247,10 @@ const getExpoPushToken = async (): Promise<string | null> => {
 /**
  * Register push token with backend
  */
-const registerPushToken = async (token: string): Promise<boolean> => {
+const registerPushToken = async (token: string, language?: string): Promise<boolean> => {
   try {
+    const currentLanguage = language || languageService.getCurrentLanguage();
+
     const response = await fetch(joinUrl(API_BASE_URL, "/api/notifications/register"), {
       method: 'POST',
       headers: {
@@ -260,6 +262,7 @@ const registerPushToken = async (token: string): Promise<boolean> => {
         platform: Platform.OS,
         deviceId: Device.osInternalBuildId || 'unknown',
         deviceName: Device.deviceName || 'unknown',
+        preferredLanguage: currentLanguage,
       }),
     });
 
@@ -273,6 +276,26 @@ const registerPushToken = async (token: string): Promise<boolean> => {
     return true;
   } catch (error) {
     logger.error('Failed to register push token:', error);
+    return false;
+  }
+};
+
+/**
+ * Update preferred language for push notifications
+ * Call this when the user changes their language preference
+ */
+const updatePreferredLanguage = async (language: string): Promise<boolean> => {
+  try {
+    const token = await getStoredPushToken();
+    if (!token) {
+      logger.warn('No push token found, cannot update language preference');
+      return false;
+    }
+
+    // Re-register the token with the new language
+    return await registerPushToken(token, language);
+  } catch (error) {
+    logger.error('Failed to update preferred language:', error);
     return false;
   }
 };
@@ -452,13 +475,40 @@ const syncPreferencesWithBackend = async (
   preferences: NotificationPreferences
 ): Promise<void> => {
   try {
-    await fetch(joinUrl(API_BASE_URL, "/api/notifications/preferences"), {
+    const pushToken = await getStoredPushToken();
+    const deviceId = Device.osInternalBuildId || 'unknown';
+
+    if (!pushToken && !deviceId) {
+      logger.warn('No push token or device ID available for syncing preferences');
+      return;
+    }
+
+    const payload = {
+      deviceId: pushToken || deviceId, // Push token'ı deviceId olarak kullan (backend'de böyle eşleşiyor)
+      preferences: {
+        enabled: preferences.enabled,
+        chatRooms: preferences.chatRooms,
+        liveMatches: preferences.liveMatches,
+        matchGoals: preferences.matchGoals,
+        news: preferences.news,
+        announcements: preferences.announcements,
+        polls: preferences.polls,
+      },
+    };
+
+    const response = await fetch(joinUrl(API_BASE_URL, "/api/notifications/preferences"), {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...languageService.getRequestHeaders(),
       },
-      body: JSON.stringify(preferences),
+      body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error('Failed to sync preferences:', response.status, errorText);
+    }
   } catch (error) {
     logger.error('Failed to sync preferences with backend:', error);
   }
@@ -647,6 +697,9 @@ export const notificationService = {
   // Preferences
   getPreferences,
   savePreferences,
+
+  // Language
+  updatePreferredLanguage,
 
   // API calls
   getNotifications,

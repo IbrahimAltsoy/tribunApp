@@ -43,12 +43,21 @@ const App: React.FC = () => {
         // Initialize push notifications
         await notificationService.initialize();
 
+        // Subscribe to language changes to update notification preferences
+        const unsubscribe = languageService.onLanguageChange((newLanguage) => {
+          // Update notification language preference when user changes language
+          notificationService.updatePreferredLanguage(newLanguage);
+        });
+
         // Wait for fonts to load
         if (fontsLoaded) {
           // Add a small delay for smooth transition
           await new Promise(resolve => setTimeout(resolve, 1000));
           setAppIsReady(true);
         }
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
       } catch (e) {
         console.warn(e);
       }
