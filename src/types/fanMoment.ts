@@ -16,6 +16,7 @@ export interface FanMomentDto {
   likeCount: number;
   createdAt: string; // ISO string
   isOwnMoment?: boolean; // Indicates if current session owns this moment
+  creatorSessionId?: string; // Session ID of the content creator
 }
 
 /**

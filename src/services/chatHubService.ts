@@ -7,6 +7,7 @@ export type ChatHubMessage = {
   username: string;
   message: string;
   createdAt: string;
+  sessionId?: string;
 };
 
 export type ChatScheduleUpdate = {

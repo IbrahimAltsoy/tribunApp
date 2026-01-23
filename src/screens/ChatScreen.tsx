@@ -16,6 +16,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import ChatBubble, { Message } from "../components/ChatBubble";
+import EulaModal from "../components/EulaModal";
+import ReportBlockModal from "../components/ReportBlockModal";
 import { colors } from "../theme/colors";
 import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -23,6 +25,7 @@ import { generateAmedNickname } from "../utils/amedNameGenerator";
 import { initializeSession, updateNickname, UserSession } from "../utils/sessionManager";
 import { chatService, type ChatMessageDto, type ChatRoomDto, type ChatScheduleDto } from "../services/chatService";
 import { chatHubService } from "../services/chatHubService";
+import { userSafetyService } from "../services/userSafetyService";
 import { useTranslation } from "react-i18next";
 
 const IS_IOS = Platform.OS === "ios";
@@ -55,6 +58,11 @@ const ChatScreen: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState(0);
 
+  // User Safety States
+  const [showEulaModal, setShowEulaModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
   const flatListRef = useRef<FlatList<Message>>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
   const onlineUsersAnim = useRef(new Animated.Value(0)).current;
@@ -67,6 +75,15 @@ const ChatScreen: React.FC = () => {
       const userSession = await initializeSession();
       setSession(userSession);
       setNickname(userSession.nickname);
+
+      // Check EULA status
+      const needsEula = await userSafetyService.needsEulaAcceptance(userSession.sessionId);
+      if (needsEula) {
+        setShowEulaModal(true);
+      }
+
+      // Load blocked sessions for filtering
+      await userSafetyService.refreshBlockedSessions(userSession.sessionId);
     };
     loadSession();
   }, []);
@@ -144,12 +161,17 @@ const ChatScreen: React.FC = () => {
       if (incoming.roomId !== selectedRoomRef.current) {
         return;
       }
+      // Filter out messages from blocked users
+      if (incoming.sessionId && userSafetyService.isSessionBlocked(incoming.sessionId)) {
+        return;
+      }
       const message: Message = {
         id: incoming.id,
         text: incoming.message,
         sender: incoming.username || t("chat.anonymous"),
         timestamp: formatTimestamp(incoming.createdAt),
         isMine: incoming.username === nicknameRef.current,
+        sessionId: incoming.sessionId,
       };
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
@@ -189,13 +211,16 @@ const ChatScreen: React.FC = () => {
       if (!isActive) return;
 
       if (response.success && response.data?.items) {
-        const mapped = response.data.items.map((msg: ChatMessageDto) => ({
-          id: msg.id,
-          text: msg.message,
-          sender: msg.username || t("chat.anonymous"),
-          timestamp: formatTimestamp(msg.createdAt),
-          isMine: msg.username === nicknameRef.current,
-        }));
+        const mapped = response.data.items
+          .filter((msg: ChatMessageDto) => !userSafetyService.isSessionBlocked(msg.sessionId || ''))
+          .map((msg: ChatMessageDto) => ({
+            id: msg.id,
+            text: msg.message,
+            sender: msg.username || t("chat.anonymous"),
+            timestamp: formatTimestamp(msg.createdAt),
+            isMine: msg.username === nicknameRef.current,
+            sessionId: msg.sessionId,
+          }));
         setMessages(mapped);
         setTimeout(scrollToBottom, 80);
       } else {
@@ -294,9 +319,35 @@ const ChatScreen: React.FC = () => {
     [isChatOpen, nickname, scrollToBottom, selectedRoom, session]
   );
 
+  const handleMessageLongPress = useCallback((message: Message) => {
+    // Don't show report modal for own messages
+    if (message.isMine) return;
+    setSelectedMessage(message);
+    setShowReportModal(true);
+  }, []);
+
+  const handleReportModalClose = useCallback(() => {
+    setShowReportModal(false);
+    setSelectedMessage(null);
+  }, []);
+
+  const handleBlockSuccess = useCallback(() => {
+    // Filter out messages from blocked user
+    if (selectedMessage?.sessionId) {
+      setMessages((prev) =>
+        prev.filter((msg) => msg.sessionId !== selectedMessage.sessionId)
+      );
+    }
+  }, [selectedMessage]);
+
   const renderMessage = useCallback(
-    ({ item }: { item: Message }) => <ChatBubble message={item} />,
-    []
+    ({ item }: { item: Message }) => (
+      <ChatBubble
+        message={item}
+        onLongPress={() => handleMessageLongPress(item)}
+      />
+    ),
+    [handleMessageLongPress]
   );
 
   const keyExtractor = useCallback((item: Message) => item.id, []);
@@ -511,6 +562,29 @@ const ChatScreen: React.FC = () => {
           </BlurView>
         </View>
       </SafeAreaView>
+
+      {/* EULA Modal */}
+      {session && (
+        <EulaModal
+          visible={showEulaModal}
+          sessionId={session.sessionId}
+          onAccept={() => setShowEulaModal(false)}
+        />
+      )}
+
+      {/* Report/Block Modal */}
+      {session && selectedMessage && (
+        <ReportBlockModal
+          visible={showReportModal}
+          onClose={handleReportModalClose}
+          sessionId={session.sessionId}
+          targetSessionId={selectedMessage.sessionId || ''}
+          contentType="ChatMessage"
+          contentId={selectedMessage.id}
+          showBlockOption={!!selectedMessage.sessionId}
+          onBlockSuccess={handleBlockSuccess}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };

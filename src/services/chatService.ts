@@ -18,6 +18,7 @@ export type ChatMessageDto = {
   username: string;
   message: string;
   createdAt: string;
+  sessionId?: string;
 };
 
 export type ChatScheduleDto = {

@@ -42,6 +42,7 @@ import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
 import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
+import { initializeSession, UserSession } from "../utils/sessionManager";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
 
@@ -50,6 +51,7 @@ const storeImage = require("../assets/footboll/1.jpg");
 const HomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
 
+  const [session, setSession] = useState<UserSession | null>(null);
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -86,6 +88,15 @@ const HomeScreen: React.FC = () => {
     isSharing,
     shareMoment,
   } = useShareMoment();
+
+  // Initialize session on mount
+  useEffect(() => {
+    const loadSession = async () => {
+      const userSession = await initializeSession();
+      setSession(userSession);
+    };
+    loadSession();
+  }, []);
 
   // Load all data function (used for initial load and refresh)
   const loadAllData = useCallback(async () => {
@@ -455,6 +466,7 @@ const HomeScreen: React.FC = () => {
         visible={detailModalVisible}
         moment={selectedMoment}
         onClose={() => setDetailModalVisible(false)}
+        sessionId={session?.sessionId}
       />
 
       <AllMomentsModal
