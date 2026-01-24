@@ -31,6 +31,12 @@ const POLLING_INTERVALS = {
   NO_MATCH: 0, // No polling when no match
 } as const;
 
+// Team IDs from SportMonks API
+const TEAM_IDS = {
+  MENS: 3570,
+  WOMENS: 261209,
+} as const;
+
 type MatchEvent = {
   type:
     | "goal"
@@ -422,12 +428,6 @@ export const useLiveMatchPolling = ({
 
   // Fetch live scores
   const fetchLiveScores = useCallback(async () => {
-    // Only fetch for mens team currently (API limitation)
-    if (teamType !== "Mens") {
-      setLiveMatch(null);
-      return null;
-    }
-
     try {
       setError(null);
       const response = await footballService.getLiveScores();
@@ -435,15 +435,16 @@ export const useLiveMatchPolling = ({
       if (response.success && response.data && Array.isArray(response.data)) {
         logger.log("🔴 Live scores data:", response.data.length, "matches");
 
-        // Find Amedspor match
+        // Get the correct team ID based on teamType
+        const targetTeamId = teamType === "Mens" ? TEAM_IDS.MENS : TEAM_IDS.WOMENS;
+
+        // Find match for the specific team (men's or women's)
         const amedMatch = response.data.find((match: LiveScoreDto) =>
-          match.participants?.some((p) =>
-            p.name?.toLowerCase().includes("amed"),
-          ),
+          match.participants?.some((p) => p.id === targetTeamId),
         );
 
         if (amedMatch) {
-          logger.log("🏟️ Amedspor match found, state:", amedMatch.stateId);
+          logger.log(`🏟️ ${teamType} team match found, state:`, amedMatch.stateId);
 
           // Detect events if we have previous state
           if (previousStateRef.current !== null) {

@@ -35,7 +35,7 @@
         "EXPO_PUBLIC_API_URL": "https://api.bihevra.com/"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       },
       "ios": {
         "buildConfiguration": "Release"
