@@ -380,6 +380,30 @@ const NotificationList: React.FC<NotificationListProps> = ({
             thumbColor={colors.white}
           />
         </View>
+
+        {/* Live Matches */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: '#EF444420' }]}>
+              <Ionicons name="football" size={20} color="#EF4444" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.liveMatches') || 'Live Matches'}
+              </Text>
+              <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.liveMatchesDescription') || 'Get notified for match events (goals, red cards, etc.)'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={preferences.liveMatches}
+            onValueChange={(value) => handlePreferenceToggle('liveMatches', value)}
+            disabled={!preferences.enabled}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.white}
+          />
+        </View>
       </View>
 
       {/* Legal Footer */}

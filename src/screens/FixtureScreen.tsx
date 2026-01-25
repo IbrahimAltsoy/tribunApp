@@ -420,7 +420,7 @@ const FixtureScreen = () => {
           ourTeam: ourTeamName,
         }
       : {
-          name: "TFF Kadınlar 2.Lig 2025-2026",
+          name: "TFF Kadınlar 1.Lig 2025-2026",
           week: latestWeek,
           ourTeam: ourTeamName,
         };

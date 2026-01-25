@@ -16,11 +16,14 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 import { VALIDATION_LIMITS } from "../../constants/app";
 import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
+
+type MediaType = "image" | "video" | null;
 
 type Props = {
   visible: boolean;
@@ -28,7 +31,7 @@ type Props = {
   newCaption: string;
   onChangeCity: (text: string) => void;
   onChangeCaption: (text: string) => void;
-  onSubmit: (imageUri?: string) => void;
+  onSubmit: (mediaUri?: string, mediaType?: "image" | "video") => void;
   onClose: () => void;
 };
 
@@ -44,14 +47,22 @@ const ShareMomentModal: React.FC<Props> = ({
   const { t } = useTranslation();
   const [cityError, setCityError] = useState<string | null>(null);
   const [captionError, setCaptionError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
+  const [selectedMediaType, setSelectedMediaType] = useState<MediaType>(null);
 
-  // Reset errors and image when modal closes
+  // Video player for preview
+  const videoPlayer = useVideoPlayer(selectedMediaType === "video" ? selectedMedia : null, (player) => {
+    player.loop = true;
+    player.muted = true;
+  });
+
+  // Reset errors and media when modal closes
   useEffect(() => {
     if (!visible) {
       setCityError(null);
       setCaptionError(null);
-      setSelectedImage(null);
+      setSelectedMedia(null);
+      setSelectedMediaType(null);
     }
   }, [visible]);
 
@@ -99,8 +110,8 @@ const ShareMomentModal: React.FC<Props> = ({
     return true;
   };
 
-  // Pick image from gallery
-  const pickImageFromGallery = async () => {
+  // Pick image or video from gallery
+  const pickMediaFromGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
@@ -112,14 +123,17 @@ const ShareMomentModal: React.FC<Props> = ({
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
+      mediaTypes: ["images", "videos"],
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
+      videoMaxDuration: 60, // Max 60 seconds
     });
 
     if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
+      const asset = result.assets[0];
+      setSelectedMedia(asset.uri);
+      setSelectedMediaType(asset.type === "video" ? "video" : "image");
     }
   };
 
@@ -142,23 +156,56 @@ const ShareMomentModal: React.FC<Props> = ({
     });
 
     if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
+      const asset = result.assets[0];
+      setSelectedMedia(asset.uri);
+      setSelectedMediaType(asset.type === "video" ? "video" : "image");
     }
   };
 
-  // Show image source selection
-  const selectImageSource = () => {
+  // Record video with camera
+  const recordVideoWithCamera = async () => {
+    const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+    const micStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (cameraStatus.status !== "granted") {
+      Alert.alert(
+        t("shareMoment.permissionDenied"),
+        t("shareMoment.cameraPermissionMessage")
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["videos"],
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+      videoMaxDuration: 60, // Max 60 seconds
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setSelectedMedia(result.assets[0].uri);
+      setSelectedMediaType("video");
+    }
+  };
+
+  // Show media source selection
+  const selectMediaSource = () => {
     Alert.alert(
-      t("shareMoment.selectImageSource"),
+      t("shareMoment.selectMediaSource") || t("shareMoment.selectImageSource"),
       "",
       [
         {
-          text: t("shareMoment.camera"),
+          text: t("shareMoment.takePhoto") || t("shareMoment.camera"),
           onPress: takePhotoWithCamera,
         },
         {
+          text: t("shareMoment.recordVideo") || "Video Çek",
+          onPress: recordVideoWithCamera,
+        },
+        {
           text: t("shareMoment.gallery"),
-          onPress: pickImageFromGallery,
+          onPress: pickMediaFromGallery,
         },
         {
           text: t("cancel"),
@@ -199,7 +246,13 @@ const ShareMomentModal: React.FC<Props> = ({
       return;
     }
 
-    onSubmit(selectedImage || undefined);
+    onSubmit(selectedMedia || undefined, selectedMediaType || undefined);
+  };
+
+  // Clear selected media
+  const clearSelectedMedia = () => {
+    setSelectedMedia(null);
+    setSelectedMediaType(null);
   };
 
   return (
@@ -288,22 +341,37 @@ const ShareMomentModal: React.FC<Props> = ({
             )}
           </View>
 
-          {/* Image Selection */}
+          {/* Media Selection (Photo/Video) */}
           <View>
             <Text style={styles.sectionLabel}>
-              {t("shareMoment.addPhoto")} ({t("shareMoment.optional")})
+              {t("shareMoment.addMedia") || t("shareMoment.addPhoto")} ({t("shareMoment.optional")})
             </Text>
 
-            {selectedImage ? (
+            {selectedMedia ? (
               <View style={styles.previewBox}>
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={styles.previewImage}
-                  resizeMode="cover"
-                />
+                {selectedMediaType === "video" ? (
+                  <View style={styles.videoPreviewContainer}>
+                    <VideoView
+                      player={videoPlayer}
+                      style={styles.previewVideo}
+                      contentFit="cover"
+                      nativeControls={false}
+                    />
+                    <View style={styles.videoIndicator}>
+                      <Ionicons name="videocam" size={20} color={colors.white} />
+                      <Text style={styles.videoIndicatorText}>Video</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Image
+                    source={{ uri: selectedMedia }}
+                    style={styles.previewImage}
+                    resizeMode="cover"
+                  />
+                )}
                 <TouchableOpacity
                   style={styles.removeImageBtn}
-                  onPress={() => setSelectedImage(null)}
+                  onPress={clearSelectedMedia}
                 >
                   <Ionicons name="close-circle" size={28} color={colors.error} />
                 </TouchableOpacity>
@@ -311,11 +379,11 @@ const ShareMomentModal: React.FC<Props> = ({
             ) : (
               <TouchableOpacity
                 style={styles.imagePickerButton}
-                onPress={selectImageSource}
+                onPress={selectMediaSource}
               >
                 <Ionicons name="camera-outline" size={32} color={colors.primary} />
                 <Text style={styles.imagePickerText}>
-                  {t("shareMoment.selectPhoto")}
+                  {t("shareMoment.selectMedia") || t("shareMoment.selectPhoto")}
                 </Text>
               </TouchableOpacity>
             )}
@@ -450,6 +518,32 @@ const styles = StyleSheet.create({
   previewImage: {
     width: "100%",
     height: 160,
+  },
+  videoPreviewContainer: {
+    width: "100%",
+    height: 160,
+    position: "relative",
+  },
+  previewVideo: {
+    width: "100%",
+    height: "100%",
+  },
+  videoIndicator: {
+    position: "absolute",
+    bottom: spacing.xs,
+    left: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: 8,
+  },
+  videoIndicatorText: {
+    color: colors.white,
+    fontSize: fontSizes.xs,
+    fontFamily: typography.medium,
   },
   removeImageBtn: {
     position: "absolute",

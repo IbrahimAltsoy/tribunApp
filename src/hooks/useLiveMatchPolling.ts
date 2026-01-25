@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import * as Notifications from "expo-notifications";
 import * as Haptics from "expo-haptics";
 import { footballService } from "../services/footballService";
+import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
 import type { LiveScoreDto } from "../types/football";
 
@@ -28,6 +29,7 @@ const POLLING_INTERVALS = {
   PRE_MATCH: 30000, // 30 seconds before match starts
   LIVE: 3000, // 3 seconds during live match
   HALF_TIME: 30000, // 30 seconds during half-time
+  BACKGROUND_CHECK: 300000, // 5 minutes when no match (to check if match started)
   NO_MATCH: 0, // No polling when no match
 } as const;
 
@@ -143,6 +145,13 @@ export const useLiveMatchPolling = ({
   // Send push notification for match events
   const sendEventNotification = useCallback(
     async (event: MatchEvent, match: LiveScoreDto) => {
+      // Check if live match notifications are enabled
+      const preferences = await notificationService.getPreferences();
+      if (!preferences.enabled || !preferences.liveMatches) {
+        logger.log("🔕 Live match notifications disabled, skipping");
+        return;
+      }
+
       const teams = getTeamNames(match);
       const score = getScoreFromMatch(match);
       let title = "";
@@ -521,7 +530,7 @@ export const useLiveMatchPolling = ({
     [fetchLiveScores],
   );
 
-  // Main effect - simpler and more reliable
+  // Main effect - smart polling based on match state
   useEffect(() => {
     if (!enabled) {
       setIsPolling(false);
@@ -538,15 +547,33 @@ export const useLiveMatchPolling = ({
 
     logger.log("🏟️ useLiveMatchPolling: Starting for", teamType);
 
-    // Initial fetch
-    fetchLiveScores();
+    // Initial fetch and smart interval setup
+    const initializePolling = async () => {
+      const match = await fetchLiveScores();
 
-    // Always poll every 3 seconds during potential match time for simplicity
-    // The calculatePollingInterval will handle no-match cases
-    intervalRef.current = setInterval(() => {
-      fetchLiveScores();
-    }, POLLING_INTERVALS.LIVE);
-    setIsPolling(true);
+      // Calculate appropriate interval based on match state
+      const interval = match
+        ? calculatePollingInterval(match)
+        : POLLING_INTERVALS.BACKGROUND_CHECK;
+
+      if (interval > 0) {
+        logger.log(`⚡ Polling interval set to ${interval / 1000}s`);
+        intervalRef.current = setInterval(() => {
+          fetchLiveScores();
+        }, interval);
+        setIsPolling(true);
+        setPollingInterval(interval);
+      } else {
+        logger.log("⏸️ No active match, using background check interval");
+        intervalRef.current = setInterval(() => {
+          fetchLiveScores();
+        }, POLLING_INTERVALS.BACKGROUND_CHECK);
+        setIsPolling(false);
+        setPollingInterval(POLLING_INTERVALS.BACKGROUND_CHECK);
+      }
+    };
+
+    initializePolling();
 
     return () => {
       logger.log("🏟️ useLiveMatchPolling: Cleaning up");
@@ -559,19 +586,21 @@ export const useLiveMatchPolling = ({
         checkIntervalRef.current = null;
       }
     };
-  }, [enabled, teamType]);
+  }, [enabled, teamType, fetchLiveScores, calculatePollingInterval]);
 
-  // React to match state changes - adjust polling if needed
+  // React to match state changes - adjust polling dynamically
   useEffect(() => {
-    if (!liveMatch || !enabled) return;
+    if (!enabled) return;
 
-    const newInterval = calculatePollingInterval(liveMatch);
+    const newInterval = liveMatch
+      ? calculatePollingInterval(liveMatch)
+      : POLLING_INTERVALS.BACKGROUND_CHECK;
 
-    if (newInterval !== pollingInterval) {
+    if (newInterval !== pollingInterval && newInterval > 0) {
       updatePolling(newInterval);
       setPollingInterval(newInterval);
     }
-  }, [liveMatch?.stateId]);
+  }, [liveMatch?.stateId, liveMatch, enabled, calculatePollingInterval, updatePolling, pollingInterval]);
 
   return {
     liveMatch,
