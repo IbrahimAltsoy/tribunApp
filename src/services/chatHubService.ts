@@ -25,6 +25,12 @@ export enum ConnectionStatus {
   Failed = "Failed",
 }
 
+export type BanNotification = {
+  reason?: string;
+  expiresAt?: string;
+  isPermanent?: boolean;
+};
+
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const HUB_URL = joinUrl(API_BASE_URL, "/hubs/chat");
 
@@ -42,6 +48,7 @@ class ChatHubService {
   private onConnectionStatusCallback:
     | ((status: ConnectionStatus) => void)
     | null = null;
+  private onBanCallback: ((ban: BanNotification) => void) | null = null;
 
   async start(): Promise<void> {
     if (this.isManuallyDisconnected) {
@@ -129,8 +136,10 @@ class ChatHubService {
         message,
         username: username || "",
       });
-    } catch {
-      throw new Error("Send failed");
+    } catch (error: any) {
+      // Preserve error message which might contain ban info
+      const errorMessage = error?.message || "Send failed";
+      throw new Error(errorMessage);
     }
   }
 
@@ -148,6 +157,10 @@ class ChatHubService {
 
   onConnectionStatus(callback: (status: ConnectionStatus) => void): void {
     this.onConnectionStatusCallback = callback;
+  }
+
+  onBan(callback: (ban: BanNotification) => void): void {
+    this.onBanCallback = callback;
   }
 
   async stop(): Promise<void> {
@@ -208,6 +221,13 @@ class ChatHubService {
     this.connection.on("ChatStatusChanged", (status: ChatScheduleUpdate) => {
       if (this.onStatusCallback) {
         this.onStatusCallback(status);
+      }
+    });
+
+    // Handle ban notification from server
+    this.connection.on("UserBanned", (ban: BanNotification) => {
+      if (this.onBanCallback) {
+        this.onBanCallback(ban);
       }
     });
   }

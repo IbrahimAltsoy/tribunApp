@@ -127,7 +127,8 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
         contentType,
         contentId,
         selectedCategory,
-        description || undefined
+        description || undefined,
+        targetSessionId || undefined
       );
 
       if (response.success) {

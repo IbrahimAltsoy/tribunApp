@@ -37,6 +37,7 @@ const FeedScreen: React.FC = () => {
   const [news, setNews] = useState<NewsDto[]>([]);
   const [activeNews, setActiveNews] = useState<NewsDto | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   // Load categories
   const loadCategories = useCallback(async () => {
@@ -141,6 +142,27 @@ const FeedScreen: React.FC = () => {
     }
   };
 
+  // Handle news card press - fetch detail and increment view count
+  const handleNewsPress = useCallback(async (newsItem: NewsDto) => {
+    setLoadingDetail(true);
+    setActiveNews(newsItem); // Show immediately with list data
+
+    // Fetch full detail (this also increments view count on backend)
+    const response = await newsService.getNewsById(newsItem.id);
+    if (response.success && response.data) {
+      setActiveNews(response.data);
+      // Update view count in the list as well
+      setNews(prevNews =>
+        prevNews.map(n =>
+          n.id === newsItem.id
+            ? { ...n, viewCount: response.data!.viewCount }
+            : n
+        )
+      );
+    }
+    setLoadingDetail(false);
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -229,7 +251,7 @@ const FeedScreen: React.FC = () => {
               return (
                 <Pressable
                   key={newsItem.id}
-                  onPress={() => setActiveNews(newsItem)}
+                  onPress={() => handleNewsPress(newsItem)}
                   style={styles.card}
                 >
                   {(newsItem.imageUrl || newsItem.thumbnailUrl) && (
@@ -398,7 +420,12 @@ const FeedScreen: React.FC = () => {
                 </View>
               )}
 
-              {activeNews.content ? (
+              {loadingDetail ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.loadingText}>{t("feed.loading")}</Text>
+                </View>
+              ) : activeNews.content ? (
                 <Text style={styles.detailBody}>{activeNews.content}</Text>
               ) : (
                 <Text style={styles.detailBody}>{activeNews.summary}</Text>
@@ -596,6 +623,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.medium,
     lineHeight: 24,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  loadingText: {
+    color: colors.mutedText,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
 });
 

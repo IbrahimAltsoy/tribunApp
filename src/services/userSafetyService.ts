@@ -11,6 +11,7 @@ const STORAGE_KEYS = {
   BLOCKED_SESSIONS: '@tribun_blocked_sessions',
   EULA_ACCEPTED: '@tribun_eula_accepted',
   EULA_VERSION: '@tribun_eula_version',
+  BAN_STATUS: '@tribun_ban_status',
 };
 
 // Types
@@ -60,6 +61,24 @@ export type ReportCategory =
 
 export type ContentType = 'FanMoment' | 'ChatMessage';
 
+// Ban check types
+export interface BanCheckResult {
+  isBanned: boolean;
+  reason?: string;
+  expiresAt?: string;
+  category?: string;
+  isPermanent?: boolean;
+}
+
+export interface BanStatus {
+  isBanned: boolean;
+  reason?: string;
+  expiresAt?: string;
+  category?: string;
+  isPermanent?: boolean;
+  checkedAt: string;
+}
+
 type ApiResponse<T> = {
   success: boolean;
   data?: T;
@@ -69,10 +88,12 @@ type ApiResponse<T> = {
 class UserSafetyService {
   private baseUrl: string;
   private blockedSessionsCache: Set<string> = new Set();
+  private banStatusCache: BanStatus | null = null;
 
   constructor() {
     this.baseUrl = getApiBaseUrl();
     this.loadBlockedSessionsFromCache();
+    this.loadBanStatusFromCache();
   }
 
   private buildUrl(path: string): string {
@@ -254,7 +275,8 @@ class UserSafetyService {
     contentType: ContentType,
     contentId: string,
     category: ReportCategory,
-    description?: string
+    description?: string,
+    creatorSessionId?: string
   ): Promise<ApiResponse<ContentReportDto>> {
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/report'), {
@@ -269,6 +291,7 @@ class UserSafetyService {
           contentId,
           category,
           description,
+          creatorSessionId,
         }),
       });
 
@@ -410,6 +433,149 @@ class UserSafetyService {
    */
   async refreshBlockedSessions(sessionId: string): Promise<void> {
     await this.getBlockedSessionIds(sessionId);
+  }
+
+  // ============ PLATFORM BAN ============
+
+  /**
+   * Check if user is banned from the platform
+   */
+  async checkBanStatus(
+    sessionId: string,
+    deviceId?: string
+  ): Promise<ApiResponse<BanCheckResult>> {
+    try {
+      let url = this.buildUrl(`/api/Ban/check?sessionId=${sessionId}`);
+      if (deviceId) {
+        url += `&deviceId=${encodeURIComponent(deviceId)}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to check ban status: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // Update local cache
+        const banStatus: BanStatus = {
+          ...result.data,
+          checkedAt: new Date().toISOString(),
+        };
+        this.banStatusCache = banStatus;
+        await this.saveBanStatusToCache(banStatus);
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('UserSafety: Failed to check ban status', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Get cached ban status (for quick UI checks)
+   */
+  getCachedBanStatus(): BanStatus | null {
+    return this.banStatusCache;
+  }
+
+  /**
+   * Check if user is currently banned (uses cache)
+   */
+  isBanned(): boolean {
+    if (!this.banStatusCache) return false;
+
+    // Check if ban has expired
+    if (!this.banStatusCache.isPermanent && this.banStatusCache.expiresAt) {
+      const expiresAt = new Date(this.banStatusCache.expiresAt);
+      if (expiresAt < new Date()) {
+        // Ban has expired, clear cache
+        this.banStatusCache = null;
+        this.clearBanStatusCache();
+        return false;
+      }
+    }
+
+    return this.banStatusCache.isBanned;
+  }
+
+  /**
+   * Get ban reason for display
+   */
+  getBanReason(): string | undefined {
+    return this.banStatusCache?.reason;
+  }
+
+  /**
+   * Load ban status from local cache
+   */
+  private async loadBanStatusFromCache(): Promise<void> {
+    try {
+      const cached = await AsyncStorage.getItem(STORAGE_KEYS.BAN_STATUS);
+      if (cached) {
+        const banStatus = JSON.parse(cached) as BanStatus;
+
+        // Check if ban has expired
+        if (!banStatus.isPermanent && banStatus.expiresAt) {
+          const expiresAt = new Date(banStatus.expiresAt);
+          if (expiresAt < new Date()) {
+            // Ban has expired, don't load
+            await this.clearBanStatusCache();
+            return;
+          }
+        }
+
+        this.banStatusCache = banStatus;
+      }
+    } catch (error) {
+      logger.error('UserSafety: Failed to load ban status cache', error);
+    }
+  }
+
+  /**
+   * Save ban status to local cache
+   */
+  private async saveBanStatusToCache(banStatus: BanStatus): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.BAN_STATUS, JSON.stringify(banStatus));
+    } catch (error) {
+      logger.error('UserSafety: Failed to save ban status cache', error);
+    }
+  }
+
+  /**
+   * Clear ban status cache
+   */
+  private async clearBanStatusCache(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.BAN_STATUS);
+      this.banStatusCache = null;
+    } catch (error) {
+      logger.error('UserSafety: Failed to clear ban status cache', error);
+    }
+  }
+
+  /**
+   * Handle ban error from API response
+   * Returns true if the error is a ban-related error
+   */
+  handleBanError(error: string): boolean {
+    const banKeywords = ['banned', 'yasakli', 'yasaklı', 'ban', 'engellendi'];
+    const lowerError = error.toLowerCase();
+    return banKeywords.some(keyword => lowerError.includes(keyword));
   }
 }
 

@@ -281,7 +281,8 @@
       "minutes": "minutes",
       "hours": "hours",
       "days": "days"
-    }
+    },
+    "loading": "Loading..."
   },
   "team": {
     "title": "Team",

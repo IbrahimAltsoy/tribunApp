@@ -105,7 +105,7 @@
       "Bash(git show:*)"
     ],
     "additionalDirectories": [
-      "d:\\Tribun\\tribunApi\\src\\TribunApp.Application\\Services"
+      "d:\\Tribun\\tribunApi\\src\\TribunApp.Infrastructure\\Repositories"
     ]
   }
 }

@@ -24,8 +24,9 @@ import { fontSizes, typography } from "../theme/typography";
 import { generateAmedNickname } from "../utils/amedNameGenerator";
 import { initializeSession, updateNickname, UserSession } from "../utils/sessionManager";
 import { chatService, type ChatMessageDto, type ChatRoomDto, type ChatScheduleDto } from "../services/chatService";
-import { chatHubService } from "../services/chatHubService";
+import { chatHubService, BanNotification } from "../services/chatHubService";
 import { userSafetyService } from "../services/userSafetyService";
+import { useBanStatus, handlePossibleBanError } from "../hooks/useBanStatus";
 import { useTranslation } from "react-i18next";
 
 const IS_IOS = Platform.OS === "ios";
@@ -62,6 +63,9 @@ const ChatScreen: React.FC = () => {
   const [showEulaModal, setShowEulaModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+
+  // Ban status
+  const { isBanned, banInfo, checkBanStatus, showBanAlert } = useBanStatus();
 
   const flatListRef = useRef<FlatList<Message>>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
@@ -190,6 +194,12 @@ const ChatScreen: React.FC = () => {
       setIsChatOpen(isScheduleOpen(status));
     });
 
+    // Handle ban notification from server
+    chatHubService.onBan((ban: BanNotification) => {
+      // Refresh ban status from server
+      checkBanStatus();
+    });
+
     chatHubService.start();
 
     return () => {
@@ -246,6 +256,19 @@ const ChatScreen: React.FC = () => {
     const trimmed = inputText.trim();
     if (!trimmed || !session || !selectedRoom || !isChatOpen) return;
 
+    // Check ban status before sending
+    if (isBanned) {
+      showBanAlert();
+      return;
+    }
+
+    // Verify with server
+    const currentlyBanned = await checkBanStatus();
+    if (currentlyBanned) {
+      showBanAlert();
+      return;
+    }
+
     Animated.sequence([
       Animated.spring(sendButtonScale, {
         toValue: 0.85,
@@ -263,7 +286,13 @@ const ChatScreen: React.FC = () => {
 
     try {
       await chatHubService.sendMessage(selectedRoom.id, trimmed, nickname);
-    } catch {
+    } catch (error: any) {
+      // Check if it's a ban error
+      if (error?.message && handlePossibleBanError(error.message)) {
+        await checkBanStatus();
+        return;
+      }
+
       const response = await chatService.sendMessage(selectedRoom.id, {
         username: nickname,
         message: trimmed,
@@ -277,6 +306,9 @@ const ChatScreen: React.FC = () => {
           isMine: response.data.username === nickname,
         };
         setMessages((prev) => [...prev, message]);
+      } else if (response.error && handlePossibleBanError(response.error)) {
+        await checkBanStatus();
+        return;
       }
     }
 
@@ -289,16 +321,32 @@ const ChatScreen: React.FC = () => {
     session,
     selectedRoom,
     isChatOpen,
+    isBanned,
     sendButtonScale,
     scrollToBottom,
+    showBanAlert,
+    checkBanStatus,
   ]);
 
   const handleQuickReaction = useCallback(
     async (emoji: string) => {
       if (!session || !selectedRoom || !isChatOpen) return;
+
+      // Check ban status before sending reaction
+      if (isBanned) {
+        showBanAlert();
+        return;
+      }
+
       try {
         await chatHubService.sendMessage(selectedRoom.id, emoji, nickname);
-      } catch {
+      } catch (error: any) {
+        // Check if it's a ban error
+        if (error?.message && handlePossibleBanError(error.message)) {
+          await checkBanStatus();
+          return;
+        }
+
         const response = await chatService.sendMessage(selectedRoom.id, {
           username: nickname,
           message: emoji,
@@ -312,11 +360,14 @@ const ChatScreen: React.FC = () => {
             isMine: response.data.username === nickname,
           };
           setMessages((prev) => [...prev, message]);
+        } else if (response.error && handlePossibleBanError(response.error)) {
+          await checkBanStatus();
+          return;
         }
       }
       setTimeout(scrollToBottom, 80);
     },
-    [isChatOpen, nickname, scrollToBottom, selectedRoom, session]
+    [isChatOpen, isBanned, nickname, scrollToBottom, selectedRoom, session, showBanAlert, checkBanStatus]
   );
 
   const handleMessageLongPress = useCallback((message: Message) => {

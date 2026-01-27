@@ -313,7 +313,8 @@
       "minutes": "dakika",
       "hours": "saat",
       "days": "gün"
-    }
+    },
+    "loading": "Yükleniyor..."
   },
   "team": {
     "title": "Takım",

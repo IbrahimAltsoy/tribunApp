@@ -121,11 +121,24 @@ const createFanMoment = async (
       body: JSON.stringify(requestWithSession),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const json = await response.json();
+
+    // Check for ban error (403 Forbidden)
+    if (response.status === 403) {
+      const errorMessage = json.message || json.error || 'banned';
+      return {
+        success: false,
+        error: errorMessage,
+      };
     }
 
-    const json = await response.json();
+    if (!response.ok) {
+      const errorMessage = json.message || json.error || `HTTP error! status: ${response.status}`;
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
 
     // Backend returns {success: true, data: FanMomentDto}
     const moment: FanMomentDto = json.data || json;

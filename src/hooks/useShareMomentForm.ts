@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import { Alert } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { FanMomentDto } from "../types/fanMoment";
 import { fanMomentService } from "../services/fanMomentService";
 import { mediaService } from "../services/mediaService";
 import { getSession } from "../utils/sessionManager";
+import { handlePossibleBanError } from "./useBanStatus";
 import { logger } from "../utils/logger";
 
 type ShareMomentFormState = {
@@ -107,19 +109,43 @@ export const useShareMomentForm = () => {
         };
       } else {
         logger.error("❌ Failed to create moment:", response.error);
-        // Fallback to local moment on error
-        const localMoment = buildMoment(imageUri);
+
+        // Check if this is a ban error
+        if (response.error && handlePossibleBanError(response.error)) {
+          reset();
+          setVisible(false);
+          return null;
+        }
+
+        // Show generic error for other failures
+        Alert.alert(
+          t("error"),
+          response.error || t("home.createMomentFailed"),
+          [{ text: t("ok") }]
+        );
         reset();
         setVisible(false);
-        return localMoment;
+        return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       logger.error("❌ Error creating moment:", error);
-      // Fallback to local moment on error
-      const localMoment = buildMoment(imageUri);
+
+      // Check if this is a ban error
+      if (error?.message && handlePossibleBanError(error.message)) {
+        reset();
+        setVisible(false);
+        return null;
+      }
+
+      // Show generic error for other failures
+      Alert.alert(
+        t("error"),
+        t("home.createMomentFailed"),
+        [{ text: t("ok") }]
+      );
       reset();
       setVisible(false);
-      return localMoment;
+      return null;
     }
   }, [form, buildMoment, reset, t]);
 

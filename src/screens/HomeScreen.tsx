@@ -43,6 +43,7 @@ import { pollService } from "../services/pollService";
 import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
 import { initializeSession, UserSession } from "../utils/sessionManager";
+import { useBanStatus, checkBanBeforeAction } from "../hooks/useBanStatus";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
 
@@ -80,6 +81,9 @@ const HomeScreen: React.FC = () => {
     setCaption: setNewCaption,
     submit,
   } = useShareMomentForm();
+
+  // Ban status for preventing banned users from creating content
+  const { isBanned, showBanAlert } = useBanStatus();
 
   // Share moment hook
   const {
@@ -186,6 +190,23 @@ const HomeScreen: React.FC = () => {
     setSelectedMoment(moment);
     setDetailModalVisible(true);
   }, []);
+
+  // Wrap openShareModal with ban check
+  const handleOpenShareModal = useCallback(async () => {
+    // Quick check from local state
+    if (isBanned) {
+      showBanAlert();
+      return;
+    }
+
+    // Verify with server before allowing creation
+    const canProceed = await checkBanBeforeAction();
+    if (!canProceed) {
+      return;
+    }
+
+    openShareModal();
+  }, [isBanned, showBanAlert, openShareModal]);
 
   const handleAddMoment = useCallback(
     async (imageUri?: string) => {
@@ -439,7 +460,7 @@ const HomeScreen: React.FC = () => {
 
         <FanMomentsSection
           moments={momentList}
-          onPressAdd={openShareModal}
+          onPressAdd={handleOpenShareModal}
           onPressMore={() => setAllMomentsVisible(true)}
           onSelectMoment={handleOpenDetail}
           onEditMoment={handleEditMoment}
