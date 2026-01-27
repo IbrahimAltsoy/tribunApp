@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Amedspor Tribün",
+    "name": "Bihevra",
     "slug": "tribunapplication",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "amedspor",
+    "scheme": "bihevra",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -23,7 +23,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.amedspor.tribun",
+      "bundleIdentifier": "com.bihevra.tribun",
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Taraftar anınızı fotoğrafla paylaşabilmeniz için kamera iznine ihtiyacımız var.",
@@ -40,7 +40,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.amedspor.tribun",
+      "package": "com.bihevra.tribun",
       "versionCode": 1,
       "permissions": [
         "CAMERA",
