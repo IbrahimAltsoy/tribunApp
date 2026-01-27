@@ -102,7 +102,8 @@
       "Bash(wc:*)",
       "Bash(python3:*)",
       "Bash(dotnet user-secrets:*)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(eas:*)"
     ],
     "additionalDirectories": [
       "d:\\Tribun\\tribunApi\\src\\TribunApp.Infrastructure\\Repositories"
