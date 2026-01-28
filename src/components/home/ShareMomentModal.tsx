@@ -124,7 +124,7 @@ const ShareMomentModal: React.FC<Props> = ({
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      allowsEditing: true,
+      allowsEditing: Platform.OS === "ios",
       aspect: [16, 9],
       quality: 0.8,
       videoMaxDuration: 60, // Max 60 seconds
@@ -150,7 +150,7 @@ const ShareMomentModal: React.FC<Props> = ({
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
+      allowsEditing: Platform.OS === "ios",
       aspect: [16, 9],
       quality: 0.8,
     });
@@ -177,7 +177,7 @@ const ShareMomentModal: React.FC<Props> = ({
 
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["videos"],
-      allowsEditing: true,
+      allowsEditing: Platform.OS === "ios",
       aspect: [16, 9],
       quality: 0.8,
       videoMaxDuration: 60, // Max 60 seconds
