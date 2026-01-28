@@ -103,7 +103,8 @@
       "Bash(python3:*)",
       "Bash(dotnet user-secrets:*)",
       "Bash(git show:*)",
-      "Bash(eas:*)"
+      "Bash(eas:*)",
+      "Bash(EXPO_APPLE_ID=\"i.altsoy@gmail.com\" EXPO_APPLE_PASSWORD=\"nkgd-fiqt-bvac-jdgm\" eas build:*)"
     ],
     "additionalDirectories": [
       "d:\\Tribun\\tribunApi\\src\\TribunApp.Infrastructure\\Repositories"
