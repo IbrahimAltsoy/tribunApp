@@ -58,13 +58,13 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "^15.15.1",
     "react-native-view-shot": "^4.0.3",
-    "react-native-worklets-core": "^1.6.2"
+    "react-native-worklets-core": "^1.6.2",
+    "babel-plugin-transform-remove-console": "^6.9.4"
   },
   "private": true,
   "devDependencies": {
     "@types/react": "~19.1.10",
     "@types/react-native": "^0.72.8",
-    "babel-plugin-transform-remove-console": "^6.9.4",
     "expo-module-scripts": "^5.0.8",
     "typescript": "^5.9.3"
   }
