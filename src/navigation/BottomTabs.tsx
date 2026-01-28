@@ -107,19 +107,14 @@ const BottomTabs: React.FC = () => {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontFamily: undefined,
-          fontSize: 10,
-          marginTop: 2,
-        },
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: colors.card,
-          borderTopColor: colors.border,
+          borderTopColor: colors.borderLight,
           borderTopWidth: 1,
-          height: Platform.OS === "ios" ? 88 : 65,
-          paddingBottom: Platform.OS === "ios" ? 24 : 8,
-          paddingTop: 8,
+          height: Platform.OS === "ios" ? 88 : 56,
+          paddingBottom: Platform.OS === "ios" ? 24 : 4,
+          paddingTop: 4,
           elevation: 8,
           shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: -4 },
@@ -158,11 +153,11 @@ const BottomTabs: React.FC = () => {
           ) : undefined,
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: "Ana Sayfa" }} />
-      <Tab.Screen name="Fixture" component={FixtureScreen} options={{ tabBarLabel: "Fikstür" }} />
-      <Tab.Screen name="Feed" component={FeedScreen} options={{ tabBarLabel: "Haberler" }} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ tabBarLabel: "Sohbet" }} />
-      <Tab.Screen name="Mars" component={MarsStack} options={{ tabBarLabel: "Tribün" }} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Fixture" component={FixtureScreen} />
+      <Tab.Screen name="Feed" component={FeedScreen} />
+      <Tab.Screen name="Chat" component={ChatScreen} />
+      <Tab.Screen name="Mars" component={MarsStack} />
     </Tab.Navigator>
   );
 };

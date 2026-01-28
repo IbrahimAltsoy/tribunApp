@@ -48,7 +48,7 @@
         "READ_MEDIA_VIDEO",
         "NOTIFICATIONS"
       ],
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png",
