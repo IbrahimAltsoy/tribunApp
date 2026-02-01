@@ -95,7 +95,7 @@ const PostCard: React.FC<PostCardProps> = ({
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await Share.share({
         message: `${post.author}: ${post.content}`,
-        title: "AMEDSPOR Paylaşımı",
+        title: "Bihevra Paylaşımı",
       });
       onShare?.(post.id);
     } catch (error) {

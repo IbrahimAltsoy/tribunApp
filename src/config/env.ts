@@ -44,15 +44,15 @@ export const ENV = {
   IS_PRODUCTION: getEnv('EXPO_PUBLIC_ENV') === 'production',
 
   // API Configuration
-  API_URL: getEnv('EXPO_PUBLIC_API_URL', 'https://api.amedspor.com/api'),
+  API_URL: getEnv('EXPO_PUBLIC_API_URL', 'https://api.bihevra.com/api'),
 
   // SignalR Hub URLs
-  CHAT_HUB_URL: getEnv('EXPO_PUBLIC_CHAT_HUB_URL', 'https://api.amedspor.com/chathub'),
-  POLL_HUB_URL: getEnv('EXPO_PUBLIC_POLL_HUB_URL', 'https://api.amedspor.com/pollhub'),
-  GOAL_HUB_URL: getEnv('EXPO_PUBLIC_GOAL_HUB_URL', 'https://api.amedspor.com/goalhub'),
+  CHAT_HUB_URL: getEnv('EXPO_PUBLIC_CHAT_HUB_URL', 'https://api.bihevra.com/chathub'),
+  POLL_HUB_URL: getEnv('EXPO_PUBLIC_POLL_HUB_URL', 'https://api.bihevra.com/pollhub'),
+  GOAL_HUB_URL: getEnv('EXPO_PUBLIC_GOAL_HUB_URL', 'https://api.bihevra.com/goalhub'),
 
   // Media Upload
-  MEDIA_UPLOAD_URL: getEnv('EXPO_PUBLIC_MEDIA_UPLOAD_URL', 'https://api.amedspor.com/api/media/upload'),
+  MEDIA_UPLOAD_URL: getEnv('EXPO_PUBLIC_MEDIA_UPLOAD_URL', 'https://api.bihevra.com/api/media/upload'),
 
   // Error Tracking
   SENTRY_DSN: getEnv('EXPO_PUBLIC_SENTRY_DSN'),

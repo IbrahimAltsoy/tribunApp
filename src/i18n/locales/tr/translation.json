@@ -148,7 +148,7 @@
     "updateFailed": "Güncelleme başarısız oldu"
   },
   "chat": {
-    "title": "Amedspor Tribün",
+    "title": "Bihevra Sohbet",
     "subtitle": "Tribün sohbeti: Maç heyecanını paylaş, destek ol, sorularını sor.",
     "placeholder": "Mesajını yaz...",
     "nicknamePlaceholder": "Takma ad",
@@ -299,7 +299,7 @@
   },
   "feed": {
     "title": "Haberler",
-    "subtitle": "Amedspor'dan son dakika haberleri ve gelişmeler",
+    "subtitle": "Son dakika haberleri ve gelişmeler",
     "category_all": "Tüm",
     "mock_reads": "Mock okuma",
     "reads": "okunma",
@@ -362,7 +362,7 @@
     "next": "İleri",
     "getStarted": "Başla",
     "welcome": {
-      "title": "Amedspor Tribün'e Hoş Geldiniz",
+      "title": "Bihevra'ya Hoş Geldiniz",
       "description": "Takımınızla bağlantıda kalın, anları paylaşın ve taraftar topluluğuna katılın"
     },
     "features": {
@@ -421,7 +421,7 @@
     "sections": {
       "scope": {
         "title": "1. Hizmet Kapsamı",
-        "content": "Amedspor Tribün uygulaması, Amedspor taraftarlarının maç skorlarını takip edebileceği, taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği bir mobil platformdur."
+        "content": "Bihevra, taraftarların maç skorlarını takip edebileceği, taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği bir mobil platformdur."
       },
       "userObligations": {
         "title": "2. Kullanıcı Yükümlülükleri",
@@ -449,10 +449,10 @@
       },
       "contact": {
         "title": "8. İletişim",
-        "content": "Sorularınız için:\nE-posta: destek@amedspor.com\nWeb: www.amedspor.com"
+        "content": "Sorularınız için:\nE-posta: bihevra.app@gmail.com"
       }
     },
-    "footer": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
+    "footer": "© 2026 Bihevra. Tüm hakları saklıdır."
   },
   "privacy": {
     "title": "Gizlilik Politikası",
@@ -461,7 +461,7 @@
     "sections": {
       "dataController": {
         "title": "1. Veri Sorumlusu",
-        "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin veri sorumlusu Amedspor Tribün uygulamasıdır."
+        "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin veri sorumlusu Bihevra uygulamasıdır."
       },
       "collectedData": {
         "title": "2. Toplanan Veriler",
@@ -500,11 +500,11 @@
       },
       "contact": {
         "title": "10. İletişim",
-        "content": "KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:\nE-posta: kvkk@amedspor.com"
+        "content": "KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:\nE-posta: bihevra.app@gmail.com"
       }
     },
     "badge": "KVKK & GDPR Uyumlu",
-    "footer": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
+    "footer": "© 2026 Bihevra. Tüm hakları saklıdır."
   },
   "settings": {
     "title": "Ayarlar",
@@ -561,7 +561,7 @@
     },
     "footer": {
       "version": "Sürüm {{version}}",
-      "copyright": "© 2026 Amedspor Tribün. Tüm hakları saklıdır."
+      "copyright": "© 2026 Bihevra. Tüm hakları saklıdır."
     },
     "resetOnboarding": {
       "title": "Onboarding Sıfırla",

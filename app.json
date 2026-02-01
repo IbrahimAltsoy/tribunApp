@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bihevra",
     "slug": "tribunapplication",
-    "version": "1.0.0",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,7 +17,7 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/ee031be9-ba0f-407c-bd0f-9f8c65041939"
     },
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": "1.0.6",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -41,7 +41,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.bihevra.tribun",
-      "versionCode": 1,
+      "versionCode": 6,
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES",

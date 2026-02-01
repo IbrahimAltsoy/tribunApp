@@ -448,7 +448,7 @@ const NotificationList: React.FC<NotificationListProps> = ({
           </Pressable>
         </View>
         <Text style={styles.legalFooterText}>
-          {t('settings.footer.copyright') || '© 2026 Amedspor Tribün. All rights reserved.'}
+          {t('settings.footer.copyright') || '© 2026 Bihevra. All rights reserved.'}
         </Text>
       </View>
     </ScrollView>

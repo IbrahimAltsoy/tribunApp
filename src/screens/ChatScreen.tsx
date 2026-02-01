@@ -441,7 +441,7 @@ const ChatScreen: React.FC = () => {
                 </LinearGradient>
               </View>
               <View>
-                <Text style={styles.heroTitle}>Tribün</Text>
+                <Text style={styles.heroTitle}>Bihevra</Text>
                 <Text style={styles.heroSub}>{t("chat.subtitle")}</Text>
               </View>
             </View>

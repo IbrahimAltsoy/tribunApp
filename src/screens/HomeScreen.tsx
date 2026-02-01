@@ -27,7 +27,6 @@ import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
-import AllMomentsModal from "../components/home/AllMomentsModal";
 import LanguageSwitcher from "../components/LanguageSwitcher";
 import NotificationList from "../components/NotificationList";
 import { colors } from "../theme/colors";
@@ -56,7 +55,6 @@ const HomeScreen: React.FC = () => {
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [allMomentsVisible, setAllMomentsVisible] = useState(false);
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -70,6 +68,9 @@ const HomeScreen: React.FC = () => {
   const [editCaption, setEditCaption] = useState("");
   const [editImage, setEditImage] = useState<string | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreMoments, setHasMoreMoments] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const {
     visible: shareModalVisible,
@@ -102,14 +103,19 @@ const HomeScreen: React.FC = () => {
     loadSession();
   }, []);
 
+  const PAGE_SIZE = 10;
+
   // Load all data function (used for initial load and refresh)
   const loadAllData = useCallback(async () => {
-    // Load moments
-    const momentsResponse = await fanMomentService.getFanMoments(1, 10, "Approved");
+    // Load moments (reset to page 1)
+    const momentsResponse = await fanMomentService.getFanMoments(1, PAGE_SIZE, "Approved");
     if (momentsResponse.success && momentsResponse.data) {
       setMoments(momentsResponse.data);
+      setCurrentPage(1);
+      setHasMoreMoments(momentsResponse.data.length >= PAGE_SIZE);
     } else {
       setMoments([]);
+      setHasMoreMoments(false);
     }
 
     // Load poll
@@ -135,6 +141,22 @@ const HomeScreen: React.FC = () => {
       logger.error('Failed to load notification count:', error);
     }
   }, []);
+
+  // Load more moments (infinite scroll)
+  const loadMoreMoments = useCallback(async () => {
+    if (loadingMore || !hasMoreMoments) return;
+    setLoadingMore(true);
+    const nextPage = currentPage + 1;
+    const response = await fanMomentService.getFanMoments(nextPage, PAGE_SIZE, "Approved");
+    if (response.success && response.data && response.data.length > 0) {
+      setMoments((prev) => [...prev, ...response.data!]);
+      setCurrentPage(nextPage);
+      setHasMoreMoments(response.data.length >= PAGE_SIZE);
+    } else {
+      setHasMoreMoments(false);
+    }
+    setLoadingMore(false);
+  }, [currentPage, loadingMore, hasMoreMoments]);
 
   // Pull-to-refresh handler
   const onRefresh = useCallback(async () => {
@@ -461,7 +483,6 @@ const HomeScreen: React.FC = () => {
         <FanMomentsSection
           moments={momentList}
           onPressAdd={handleOpenShareModal}
-          onPressMore={() => setAllMomentsVisible(true)}
           onSelectMoment={handleOpenDetail}
           onEditMoment={handleEditMoment}
           onDeleteMoment={handleDeleteMoment}
@@ -469,6 +490,9 @@ const HomeScreen: React.FC = () => {
           slot={smartSlot}
           refreshing={refreshing}
           onRefresh={onRefresh}
+          onLoadMore={loadMoreMoments}
+          loadingMore={loadingMore}
+          hasMore={hasMoreMoments}
         />
       </View>
 
@@ -488,17 +512,6 @@ const HomeScreen: React.FC = () => {
         moment={selectedMoment}
         onClose={() => setDetailModalVisible(false)}
         sessionId={session?.sessionId}
-      />
-
-      <AllMomentsModal
-        visible={allMomentsVisible}
-        moments={momentList}
-        onClose={() => setAllMomentsVisible(false)}
-        onSelect={(moment) => {
-          setSelectedMoment(moment);
-          setAllMomentsVisible(false);
-          setDetailModalVisible(true);
-        }}
       />
 
       <Modal

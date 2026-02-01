@@ -146,7 +146,7 @@ const ShareableMomentCard = forwardRef<ShareableMomentCardRef, ShareableMomentCa
             <View style={styles.footer}>
               <View style={styles.tribunBadge}>
                 <Ionicons name="football" size={14} color={colors.white} style={{ marginRight: 4 }} />
-                <Text style={styles.tribunText}>Tribün App</Text>
+                <Text style={styles.tribunText}>Bihevra</Text>
               </View>
               <Text style={styles.tagline}>Taraftar Platformu</Text>
             </View>

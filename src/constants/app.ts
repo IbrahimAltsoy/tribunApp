@@ -120,19 +120,19 @@ export const STORAGE_KEYS = {
  */
 export const EXTERNAL_LINKS = {
   STORE: 'https://amedstore.com',
-  OFFICIAL_WEBSITE: 'https://amedspor.com',
-  TWITTER: 'https://twitter.com/amedspor',
-  INSTAGRAM: 'https://instagram.com/amedspor',
-  YOUTUBE: 'https://youtube.com/@amedspor',
-  FACEBOOK: 'https://facebook.com/amedspor',
+  OFFICIAL_WEBSITE: 'https://bihevra.com',
+  TWITTER: 'https://twitter.com/bihevra',
+  INSTAGRAM: 'https://instagram.com/bihevra',
+  YOUTUBE: 'https://youtube.com/@bihevra',
+  FACEBOOK: 'https://facebook.com/bihevra',
 } as const;
 
 /**
  * App metadata
  */
 export const APP_METADATA = {
-  NAME: 'Amedspor Tribün',
+  NAME: 'Bihevra',
   VERSION: '1.0.0',
   BUILD_NUMBER: 1,
-  BUNDLE_ID: 'com.amedspor.tribun',
+  BUNDLE_ID: 'com.bihevra.tribun',
 } as const;

@@ -108,8 +108,8 @@ const SplashScreen: React.FC = () => {
           </View>
 
           {/* App Name */}
-          <Text style={styles.appName}>Amedspor</Text>
-          <Text style={styles.tagline}>Tribün</Text>
+          <Text style={styles.appName}>Bihevra</Text>
+          <Text style={styles.tagline}>Amed</Text>
         </View>
 
         {/* Loading Indicator */}

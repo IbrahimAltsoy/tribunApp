@@ -113,7 +113,7 @@
     "more": "More"
   },
   "chat": {
-    "title": "Amedspor Tribun",
+    "title": "Bihevra Chat",
     "subtitle": "Share the match hype, cheer together, ask quick questions.",
     "placeholder": "Write a message...",
     "nicknamePlaceholder": "Nickname",
@@ -267,7 +267,7 @@
   },
   "feed": {
     "title": "News",
-    "subtitle": "Breaking news and updates from Amedspor",
+    "subtitle": "Breaking news and updates",
     "category_all": "All",
     "mock_reads": "Mock reads",
     "reads": "reads",
@@ -330,7 +330,7 @@
     "next": "Next",
     "getStarted": "Get Started",
     "welcome": {
-      "title": "Welcome to Amedspor Tribun",
+      "title": "Welcome to Bihevra",
       "description": "Stay connected with your team, share moments, and join the fan community"
     },
     "features": {
@@ -389,7 +389,7 @@
     "sections": {
       "scope": {
         "title": "1. Service Scope",
-        "content": "Amedspor Tribun is a mobile platform where Amedspor fans can follow match scores, interact with the fan community, and receive news and updates."
+        "content": "Bihevra is a mobile platform where fans can follow match scores, interact with the fan community, and receive news and updates."
       },
       "userObligations": {
         "title": "2. User Obligations",
@@ -417,10 +417,10 @@
       },
       "contact": {
         "title": "8. Contact",
-        "content": "For questions:\nEmail: support@amedspor.com\nWeb: www.amedspor.com"
+        "content": "For questions:\nEmail: bihevra.app@gmail.com"
       }
     },
-    "footer": "© 2026 Amedspor Tribun. All rights reserved."
+    "footer": "© 2026 Bihevra. All rights reserved."
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -429,7 +429,7 @@
     "sections": {
       "dataController": {
         "title": "1. Data Controller",
-        "content": "In accordance with applicable data protection laws (GDPR/KVKK), Amedspor Tribun application is the data controller of your personal data."
+        "content": "In accordance with applicable data protection laws (GDPR/KVKK), Bihevra application is the data controller of your personal data."
       },
       "collectedData": {
         "title": "2. Collected Data",
@@ -468,11 +468,11 @@
       },
       "contact": {
         "title": "10. Contact",
-        "content": "To exercise your rights or for privacy-related questions:\nEmail: privacy@amedspor.com"
+        "content": "To exercise your rights or for privacy-related questions:\nEmail: bihevra.app@gmail.com"
       }
     },
     "badge": "GDPR Compliant",
-    "footer": "© 2026 Amedspor Tribun. All rights reserved."
+    "footer": "© 2026 Bihevra. All rights reserved."
   },
   "settings": {
     "title": "Settings",
@@ -529,7 +529,7 @@
     },
     "footer": {
       "version": "Version {{version}}",
-      "copyright": "© 2026 Amedspor Tribün. All rights reserved."
+      "copyright": "© 2026 Bihevra. All rights reserved."
     },
     "resetOnboarding": {
       "title": "Reset Onboarding",

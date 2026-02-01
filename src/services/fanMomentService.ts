@@ -45,7 +45,7 @@ const getFanMoments = async (
   pageNumber: number = 1,
   pageSize: number = 10,
   status?: 'Pending' | 'Approved' | 'Rejected'
-): Promise<{ success: boolean; data?: FanMomentDto[]; error?: string }> => {
+): Promise<{ success: boolean; data?: FanMomentDto[]; totalCount?: number; error?: string }> => {
   try {
     const sessionId = await getSessionId();
 
@@ -74,12 +74,14 @@ const getFanMoments = async (
 
     const json = await response.json();
 
-    // Backend returns paginated response with items array
+    // Backend returns paginated response with items array and totalCount
     const data: FanMomentDto[] = json.data?.items || json.items || json;
+    const totalCount: number = json.data?.totalCount ?? json.totalCount ?? data.length;
 
     return {
       success: true,
       data: data,
+      totalCount,
     };
   } catch (error) {
     // Silent error - app continues working with empty data

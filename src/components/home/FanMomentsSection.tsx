@@ -26,7 +26,6 @@ const IS_IOS = Platform.OS === "ios";
 type Props = {
   moments: FanMomentDto[];
   onPressAdd: () => void;
-  onPressMore: () => void;
   onSelectMoment: (moment: FanMomentDto) => void;
   onEditMoment?: (moment: FanMomentDto) => void;
   onDeleteMoment?: (moment: FanMomentDto) => void;
@@ -34,6 +33,9 @@ type Props = {
   slot?: React.ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
+  onLoadMore?: () => void;
+  loadingMore?: boolean;
+  hasMore?: boolean;
 };
 
 const AnimatedMomentCard: React.FC<{
@@ -430,7 +432,6 @@ const AnimatedMomentCard: React.FC<{
 const FanMomentsSection: React.FC<Props> = React.memo(({
   moments,
   onPressAdd,
-  onPressMore,
   onSelectMoment,
   onEditMoment,
   onDeleteMoment,
@@ -438,12 +439,13 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   slot,
   refreshing = false,
   onRefresh,
+  onLoadMore,
+  loadingMore = false,
+  hasMore = true,
 }) => {
   const { t } = useTranslation();
-  const visibleMoments = (moments || []).slice(0, 10);
 
   const addCardScale = useRef(new Animated.Value(1)).current;
-  const moreCardScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [activeAudioMomentId, setActiveAudioMomentId] = useState<string | null>(null);
   const [activeMomentId, setActiveMomentId] = useState<string | null>(null);
@@ -499,27 +501,9 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
     }).start();
   };
 
-  const handleMorePressIn = () => {
-    Animated.spring(moreCardScale, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      tension: 300,
-      friction: 10,
-    }).start();
-  };
-
-  const handleMorePressOut = () => {
-    Animated.spring(moreCardScale, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 300,
-      friction: 10,
-    }).start();
-  };
-
   return (
     <FlatList
-      data={visibleMoments}
+      data={moments}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.momentsColumn}
       showsVerticalScrollIndicator={false}
@@ -580,46 +564,19 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
               </Animated.View>
             </Animated.View>
           </Pressable>
-          {slot && visibleMoments.length < 3 && (
+          {slot && moments.length < 3 && (
             <View style={styles.slotContainer}>{slot}</View>
           )}
           <View style={styles.listSeparator} />
         </>
       }
+      onEndReached={hasMore ? onLoadMore : undefined}
+      onEndReachedThreshold={0.5}
       ListFooterComponent={
-        moments.length > 10 ? (
-          <Pressable
-            onPress={onPressMore}
-            onPressIn={handleMorePressIn}
-            onPressOut={handleMorePressOut}
-          >
-            <Animated.View
-              style={[
-                styles.momentMoreCard,
-                { transform: [{ scale: moreCardScale }] },
-              ]}
-            >
-              <BlurView
-                intensity={IS_IOS ? 25 : 20}
-                tint="dark"
-                style={styles.momentMoreBlur}
-              >
-                <View style={styles.momentMoreIconWrapper}>
-                  <Ionicons
-                    name="albums-outline"
-                    size={28}
-                    color={colors.primary}
-                  />
-                </View>
-                <Text style={styles.momentMoreTitle}>
-                  {t("home.moreMomentsTitle")}
-                </Text>
-                <Text style={styles.momentMoreCount}>
-                  +{moments.length - 10} {t("home.more")}
-                </Text>
-              </BlurView>
-            </Animated.View>
-          </Pressable>
+        loadingMore ? (
+          <View style={styles.loadingMoreContainer}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
         ) : null
       }
       renderItem={({ item, index }) => (
@@ -860,58 +817,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 191, 71, 0.1)",
   },
 
-  // More Card Styles
-  momentMoreCard: {
-    width: "100%",
-    height: 140,
-    borderRadius: radii.xl,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.shadowSoft,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-  momentMoreBlur: {
-    flex: 1,
-    padding: spacing.lg,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    backgroundColor: "rgba(19, 30, 19, 0.6)",
-  },
-  momentMoreIconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: radii.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
+  // Loading More Indicator
+  loadingMoreContainer: {
+    paddingVertical: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 191, 71, 0.1)",
-    marginBottom: spacing.xs,
-  },
-  momentMoreTitle: {
-    color: colors.white,
-    fontFamily: typography.bold,
-    fontSize: fontSizes.md,
-    textAlign: "center",
-  },
-  momentMoreCount: {
-    color: colors.primary,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.sm,
-    textAlign: "center",
   },
 });
 
