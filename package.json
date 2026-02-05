@@ -68,6 +68,7 @@
     "@types/react": "~19.1.10",
     "@types/react-native": "^0.72.8",
     "expo-module-scripts": "^5.0.8",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3"
   }
 }

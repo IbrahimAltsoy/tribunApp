@@ -1502,12 +1502,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
     backgroundColor: "rgba(11, 17, 28, 0.5)",
     overflow: "hidden",
+    gap: spacing.sm,
   },
   modalClose: {
-    paddingRight: spacing.sm,
+    paddingRight: spacing.xs,
     paddingVertical: spacing.xs,
   },
   modalTitle: {
+    flex: 1,
     color: colors.text,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.lg,

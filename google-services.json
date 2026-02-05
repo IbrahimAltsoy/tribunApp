@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "768357338287",
+    "project_id": "tribunapp-ba68b",
+    "storage_bucket": "tribunapp-ba68b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768357338287:android:58b24d796710505bca585a",
+        "android_client_info": {
+          "package_name": "com.bihevra.tribun"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtMsYwBnS7NS6oQHjPLMplsiA4juLq0B4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -104,7 +104,15 @@
       "Bash(dotnet user-secrets:*)",
       "Bash(git show:*)",
       "Bash(eas:*)",
-      "Bash(EXPO_APPLE_ID=\"i.altsoy@gmail.com\" EXPO_APPLE_PASSWORD=\"nkgd-fiqt-bvac-jdgm\" eas build:*)"
+      "Bash(EXPO_APPLE_ID=\"i.altsoy@gmail.com\" EXPO_APPLE_PASSWORD=\"nkgd-fiqt-bvac-jdgm\" eas build:*)",
+      "Bash(ssh -o ConnectTimeout=10 root@46.224.152.93 \"systemctl restart sshd && echo ''SSH restarted successfully''\")",
+      "Bash(ssh -o ConnectTimeout=10 root@46.224.152.93 \"systemctl restart ssh && echo ''SSH restarted successfully''\")",
+      "Bash(ssh -o ConnectTimeout=10 root@46.224.152.93 \"echo ''=== MEMORY ==='' && free -h && echo ''=== DISK ==='' && df -h / && echo ''=== DOCKER ==='' && docker stats --no-stream --format ''table {{.Name}}\\\\t{{.MemUsage}}\\\\t{{.CPUPerc}}''\")",
+      "Bash(ssh -o ConnectTimeout=10 root@46.224.152.93 \"echo ''Connected'' && free -h && df -h / && docker ps --format ''table {{.Names}}\\\\t{{.Status}}''\")",
+      "Bash(magick identify:*)",
+      "Bash(npx sharp-cli:*)",
+      "Bash(node:*)",
+      "Bash(npx eas build:*)"
     ],
     "additionalDirectories": [
       "d:\\Tribun\\tribunApi\\src\\TribunApp.Infrastructure\\Repositories"
