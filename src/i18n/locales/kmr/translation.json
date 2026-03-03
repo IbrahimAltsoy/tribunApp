@@ -303,7 +303,10 @@
     "save": "Tomar bike",
     "cancel": "Betal bike",
     "deleteFailed": "Jêbirin bi ser neket",
-    "updateFailed": "Nûvekirin bi ser neket"
+    "updateFailed": "Nûvekirin bi ser neket",
+    "deleteConfirmTitle": "Bûyerê Jê Bibe",
+    "deleteConfirmMessage": "Ma hûn dixwazin vê bûyerê jê bibin? Ev çalak nayê vegerandin.",
+    "deleteConfirm": "Jê Bibe"
   },
   "chat": {
     "title": "GS Tribün Sohbet",

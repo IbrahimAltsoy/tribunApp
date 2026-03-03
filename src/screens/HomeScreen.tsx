@@ -30,6 +30,7 @@ import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
 import UserProfileModal from "../components/home/UserProfileModal";
 import ReportBlockModal from "../components/ReportBlockModal";
+import ConfirmModal from "../components/shared/ConfirmModal";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
 import NotificationList from "../components/NotificationList";
@@ -77,6 +78,8 @@ const HomeScreen: React.FC = () => {
   const [selectedAuthor, setSelectedAuthor] = useState<{ userId: string; username: string } | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [momentToReport, setMomentToReport] = useState<FanMomentDto | null>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [momentToDelete, setMomentToDelete] = useState<FanMomentDto | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreMoments, setHasMoreMoments] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -409,20 +412,29 @@ const HomeScreen: React.FC = () => {
   }, [t]);
 
   const handleDeleteMoment = useCallback(
-    async (moment: FanMomentDto) => {
-      try {
-        const response = await fanMomentService.deleteOwnFanMoment(moment.id);
-        if (response.success) {
-          setMoments((prev) => prev.filter((m) => m.id !== moment.id));
-        } else {
-          alert(t("home.deleteFailed"));
-        }
-      } catch (error) {
-        alert(t("home.deleteFailed"));
-      }
+    (moment: FanMomentDto) => {
+      setMomentToDelete(moment);
+      setDeleteConfirmVisible(true);
     },
-    [t]
+    []
   );
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!momentToDelete) return;
+    setDeleteConfirmVisible(false);
+    try {
+      const response = await fanMomentService.deleteOwnFanMoment(momentToDelete.id);
+      if (response.success) {
+        setMoments((prev) => prev.filter((m) => m.id !== momentToDelete.id));
+      } else {
+        Alert.alert(t("home.deleteFailed"));
+      }
+    } catch {
+      Alert.alert(t("home.deleteFailed"));
+    } finally {
+      setMomentToDelete(null);
+    }
+  }, [momentToDelete, t]);
 
   const handleLikeMoment = useCallback(
     async (moment: FanMomentDto) => {
@@ -582,6 +594,18 @@ const HomeScreen: React.FC = () => {
           onReportSuccess={() => { setReportModalVisible(false); setMomentToReport(null); }}
         />
       )}
+
+      {/* Silme Onay Modalı */}
+      <ConfirmModal
+        visible={deleteConfirmVisible}
+        title={t("home.deleteConfirmTitle")}
+        message={t("home.deleteConfirmMessage")}
+        confirmText={t("home.deleteConfirm")}
+        cancelText={t("home.cancel")}
+        type="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => { setDeleteConfirmVisible(false); setMomentToDelete(null); }}
+      />
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
       <ShareMomentModal
