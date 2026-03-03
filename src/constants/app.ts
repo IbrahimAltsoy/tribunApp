@@ -108,7 +108,6 @@ export const VALIDATION_PATTERNS = {
  * Storage keys for AsyncStorage
  */
 export const STORAGE_KEYS = {
-  LANGUAGE: '@amedspor:language',
   USER_NICKNAME: '@amedspor:nickname',
   THEME_MODE: '@amedspor:theme',
   ONBOARDING_COMPLETE: '@amedspor:onboarding',
@@ -119,20 +118,20 @@ export const STORAGE_KEYS = {
  * External links
  */
 export const EXTERNAL_LINKS = {
-  STORE: 'https://amedstore.com',
-  OFFICIAL_WEBSITE: 'https://bihevra.com',
-  TWITTER: 'https://twitter.com/bihevra',
-  INSTAGRAM: 'https://instagram.com/bihevra',
-  YOUTUBE: 'https://youtube.com/@bihevra',
-  FACEBOOK: 'https://facebook.com/bihevra',
+  STORE: 'https://store.galatasaray.org',
+  OFFICIAL_WEBSITE: 'https://galatasaray.org',
+  TWITTER: 'https://twitter.com/Galatasaray',
+  INSTAGRAM: 'https://instagram.com/galatasaray',
+  YOUTUBE: 'https://youtube.com/@Galatasaray',
+  FACEBOOK: 'https://facebook.com/Galatasaray',
 } as const;
 
 /**
  * App metadata
  */
 export const APP_METADATA = {
-  NAME: 'Bihevra',
+  NAME: 'GS Tribün',
   VERSION: '1.0.0',
   BUILD_NUMBER: 1,
-  BUNDLE_ID: 'com.bihevra.tribun',
+  BUNDLE_ID: 'com.gstribun.app',
 } as const;

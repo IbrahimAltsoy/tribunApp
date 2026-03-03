@@ -1,5 +1,6 @@
 import * as SignalR from "@microsoft/signalr";
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
+import { getAccessToken } from "./authService";
 
 export type ChatHubMessage = {
   id: string;
@@ -8,6 +9,7 @@ export type ChatHubMessage = {
   message: string;
   createdAt: string;
   sessionId?: string;
+  userId?: string;
 };
 
 export type ChatScheduleUpdate = {
@@ -66,6 +68,7 @@ class ChatHubService {
       .withUrl(HUB_URL, {
         skipNegotiation: true,
         transport: SignalR.HttpTransportType.WebSockets,
+        accessTokenFactory: async () => (await getAccessToken()) ?? "",
       })
       .withAutomaticReconnect({
         nextRetryDelayInMilliseconds: (retryContext) => {

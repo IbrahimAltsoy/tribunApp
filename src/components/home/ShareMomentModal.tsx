@@ -15,6 +15,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
@@ -397,8 +398,17 @@ const ShareMomentModal: React.FC<Props> = ({
                     ]}
                     onPress={handleSubmit}
                     disabled={!!(cityError || captionError)}
+                    activeOpacity={0.85}
                   >
-                    <Text style={styles.modalButtonText}>{t("shareMoment.submit")}</Text>
+                    <LinearGradient
+                      colors={[colors.primary, '#C40E16']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.modalButtonGradient}
+                    >
+                      <Ionicons name="share-social-outline" size={18} color={colors.white} />
+                      <Text style={styles.modalButtonText}>{t("shareMoment.submit")}</Text>
+                    </LinearGradient>
                   </TouchableOpacity>
                 </ScrollView>
               </View>
@@ -553,20 +563,29 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   modalButton: {
-    backgroundColor: colors.primary,
     borderRadius: 14,
-    paddingVertical: spacing.md,
-    alignItems: "center",
+    overflow: 'hidden',
     marginTop: spacing.sm,
+    ...Platform.select({
+      ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 },
+      android: { elevation: 6 },
+    }),
+  },
+  modalButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    gap: spacing.sm,
   },
   modalButtonDisabled: {
-    backgroundColor: colors.mutedText,
-    opacity: 0.5,
+    opacity: 0.4,
   },
   modalButtonText: {
-    color: colors.text,
+    color: colors.white,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.md,
+    letterSpacing: 0.3,
   },
 });
 

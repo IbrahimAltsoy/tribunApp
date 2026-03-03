@@ -10,8 +10,8 @@ type BihevraTextProps = {
 };
 
 /**
- * Bihevra stilize text logosu
- * "Bi" yeşil, "hevra" beyaz
+ * GS Tribün stilize text logosu
+ * "GS" sarı, "Tribün" beyaz
  */
 const BihevraText: React.FC<BihevraTextProps> = ({
   fontSize = 24,
@@ -32,16 +32,16 @@ const BihevraText: React.FC<BihevraTextProps> = ({
   const getShadow = () => {
     if (variant === "watermark") {
       return {
-        textShadowColor: "rgba(0, 0, 0, 0.75)",
+        textShadowColor: "rgba(0, 0, 0, 0.8)",
         textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 3,
+        textShadowRadius: 4,
       };
     }
     if (variant === "splash") {
       return {
-        textShadowColor: "rgba(15, 169, 88, 0.5)",
+        textShadowColor: "rgba(255, 199, 44, 0.5)",
         textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 8,
+        textShadowRadius: 10,
       };
     }
     return {};
@@ -52,11 +52,11 @@ const BihevraText: React.FC<BihevraTextProps> = ({
       <Text
         style={[
           styles.text,
-          { fontSize, color: colors.primary },
+          { fontSize, color: colors.accent },
           getShadow(),
         ]}
       >
-        Bi
+        GS{" "}
       </Text>
       <Text
         style={[
@@ -65,7 +65,7 @@ const BihevraText: React.FC<BihevraTextProps> = ({
           getShadow(),
         ]}
       >
-        hevra
+        Tribün
       </Text>
     </View>
   );

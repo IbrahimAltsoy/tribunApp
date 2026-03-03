@@ -1,5 +1,5 @@
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
+import { getAuthHeaders } from './authService';
 
 export type ChatRoomDto = {
   id: string;
@@ -19,6 +19,7 @@ export type ChatMessageDto = {
   message: string;
   createdAt: string;
   sessionId?: string;
+  userId?: string;
 };
 
 export type ChatScheduleDto = {
@@ -46,7 +47,7 @@ const getRooms = async (): Promise<{
   try {
     const response = await fetch(`${API_URL}/rooms`, {
       method: "GET",
-      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -79,7 +80,7 @@ const getRoomMessages = async (
       `${API_URL}/rooms/${roomId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`,
       {
         method: "GET",
-        headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
+        headers: { "Content-Type": "application/json" },
       }
     );
 
@@ -100,16 +101,18 @@ const getRoomMessages = async (
 
 const sendMessage = async (
   roomId: string,
-  payload: { username: string; message: string }
+  payload: { username: string; message: string; sessionId?: string; deviceId?: string }
 ): Promise<{
   success: boolean;
   data?: ChatMessageDto;
   error?: string;
 }> => {
   try {
+    const authHeaders = await getAuthHeaders();
+
     const response = await fetch(`${API_URL}/rooms/${roomId}/messages`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
+      headers: { "Content-Type": "application/json", ...authHeaders },
       body: JSON.stringify(payload),
     });
 
@@ -139,7 +142,7 @@ const getChatStatus = async (): Promise<{
   try {
     const response = await fetch(`${API_URL}/status`, {
       method: "GET",
-      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {
@@ -167,7 +170,7 @@ const reportMessage = async (
   try {
     const response = await fetch(`${API_URL}/messages/${messageId}/report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...languageService.getRequestHeaders() },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 

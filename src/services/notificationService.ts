@@ -9,7 +9,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logger } from '../utils/logger';
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
+import { authService } from './authService';
 
 // Lazy load notifications to avoid Expo Go errors
 let Notifications: typeof import('expo-notifications') | null = null;
@@ -247,22 +247,21 @@ const getExpoPushToken = async (): Promise<string | null> => {
 /**
  * Register push token with backend
  */
-const registerPushToken = async (token: string, language?: string): Promise<boolean> => {
+const registerPushToken = async (token: string): Promise<boolean> => {
   try {
-    const currentLanguage = language || languageService.getCurrentLanguage();
+    const authHeaders = await authService.getAuthHeaders();
 
     const response = await fetch(joinUrl(API_BASE_URL, "/api/notifications/register"), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
+        ...authHeaders,
       },
       body: JSON.stringify({
         token,
         platform: Platform.OS,
         deviceId: Device.osInternalBuildId || 'unknown',
         deviceName: Device.deviceName || 'unknown',
-        preferredLanguage: currentLanguage,
       }),
     });
 
@@ -280,25 +279,6 @@ const registerPushToken = async (token: string, language?: string): Promise<bool
   }
 };
 
-/**
- * Update preferred language for push notifications
- * Call this when the user changes their language preference
- */
-const updatePreferredLanguage = async (language: string): Promise<boolean> => {
-  try {
-    const token = await getStoredPushToken();
-    if (!token) {
-      logger.warn('No push token found, cannot update language preference');
-      return false;
-    }
-
-    // Re-register the token with the new language
-    return await registerPushToken(token, language);
-  } catch (error) {
-    logger.error('Failed to update preferred language:', error);
-    return false;
-  }
-};
 
 /**
  * Initialize push notifications
@@ -500,7 +480,6 @@ const syncPreferencesWithBackend = async (
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
       body: JSON.stringify(payload),
     });
@@ -582,7 +561,6 @@ const getNotifications = async (options?: {
     const fullUrl = `${joinUrl(NOTIFICATION_API_BASE_URL, "/api/notifications")}?${params}`;
     const response = await fetch(fullUrl, {
       headers: {
-        ...languageService.getRequestHeaders(),
       },
     });
     const result = await response.json();
@@ -605,7 +583,6 @@ const markAsRead = async (notificationId: string): Promise<boolean> => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -635,7 +612,6 @@ const markAllAsRead = async (): Promise<number> => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       }
     );
@@ -656,7 +632,6 @@ const deleteNotification = async (notificationId: string): Promise<boolean> => {
     const response = await fetch(joinUrl(NOTIFICATION_API_BASE_URL, `/api/notifications/${notificationId}`), {
       method: 'DELETE',
       headers: {
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -697,9 +672,6 @@ export const notificationService = {
   // Preferences
   getPreferences,
   savePreferences,
-
-  // Language
-  updatePreferredLanguage,
 
   // API calls
   getNotifications,

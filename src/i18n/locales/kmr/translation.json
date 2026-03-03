@@ -246,7 +246,7 @@
     },
     "footer": {
       "version": "Guherto {{version}}",
-      "copyright": "© 2026 Bihevra. Hemû maf parastî ne."
+      "copyright": "© 2026 GS Tribün. Hemû maf parastî ne."
     },
     "resetOnboarding": {
       "title": "Onboarding Sifirke",
@@ -306,7 +306,7 @@
     "updateFailed": "Nûvekirin bi ser neket"
   },
   "chat": {
-    "title": "Bihevra Sohbet",
+    "title": "GS Tribün Sohbet",
     "subtitle": "Sohbeta tribûnê: Heyecana lîstikê parve bike, piştgirî bide, pirsan bipirse.",
     "placeholder": "Peyama xwe binivîse...",
     "nicknamePlaceholder": "Navê taklit",
@@ -321,7 +321,7 @@
   "error": "Çewtî",
   "ok": "Temam",
   "cancel": "Betal bike",
-  "appSlogan": "Bihevra Amed",
+  "appSlogan": "GS Tribün",
   "errorBoundary": {
     "title": "Tiştek Şaş Bû",
     "message": "Bibore, çewtiyeke nexwestî rû da.\nJi kerema xwe hewl bide ku sepanê ji nû ve dest pê bikî.",
@@ -427,7 +427,7 @@
     "next": "Pêş",
     "getStarted": "Dest Pê Bike",
     "welcome": {
-      "title": "Bi Xêr Hatî Bihevra",
+      "title": "Bi Xêr Hatî GS Tribün",
       "description": "Bi tîma xwe re têkiliyê bigire, deman parve bike û tevlî civaka temaşevanan bibe"
     },
     "features": {
@@ -486,7 +486,7 @@
     "sections": {
       "scope": {
         "title": "1. Qada Karûbarê",
-        "content": "Bihevra platformek mobîl e ku temaşevan dikarin skorên lîstikê bişopînin, bi civaka temaşevanan re têkilî danîn û nûçe û nûvekirinan bistînin."
+        "content": "GS Tribün platformek mobîl e ku temaşevan dikarin skorên lîstikê bişopînin, bi civaka temaşevanan re têkilî danîn û nûçe û nûvekirinan bistînin."
       },
       "userObligations": {
         "title": "2. Berpirsiyariyên Bikarhêner",
@@ -517,7 +517,7 @@
         "content": "Ji bo pirsan:\nE-name: bihevra.app@gmail.com"
       }
     },
-    "footer": "© 2026 Bihevra. Hemû maf parastî ne."
+    "footer": "© 2026 GS Tribün. Hemû maf parastî ne."
   },
   "privacy": {
     "title": "Polîtîkaya Nepenîtiyê",
@@ -526,7 +526,7 @@
     "sections": {
       "dataController": {
         "title": "1. Berpirsiyarê Daneyan",
-        "content": "Li gorî yasayên parastina daneyan ên pêkan (GDPR/KVKK), sepana Bihevra berpirsiyarê daneyan ên daneyên te yên kesane ye."
+        "content": "Li gorî yasayên parastina daneyan ên pêkan (GDPR/KVKK), sepana GS Tribün berpirsiyarê daneyan ên daneyên te yên kesane ye."
       },
       "collectedData": {
         "title": "2. Daneyên Hatine Berhevkirin",
@@ -569,7 +569,7 @@
       }
     },
     "badge": "GDPR Hevgirtî",
-    "footer": "© 2026 Bihevra. Hemû maf parastî ne."
+    "footer": "© 2026 GS Tribün. Hemû maf parastî ne."
   },
   "success": "Serketî",
   "loading": "Tê barkirin...",

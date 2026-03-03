@@ -1,6 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/media");
@@ -63,7 +62,6 @@ const uploadImageAnonymous = async (
       method: 'POST',
       headers: {
         'X-Session-Id': sessionId,
-        ...languageService.getRequestHeaders(),
       },
       body: formData,
     });
@@ -120,7 +118,6 @@ const uploadImage = async (
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data',
-        ...languageService.getRequestHeaders(),
       },
       body: formData,
     });
@@ -157,7 +154,6 @@ const getSignedUrl = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 

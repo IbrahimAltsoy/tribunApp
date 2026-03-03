@@ -1,14 +1,16 @@
 /**
  * User Safety Service
  * Handles blocking, reporting, and EULA functionality
+ * Refactored: userId-based via JWT auth (sessionId removed from user-facing methods)
  */
 
 import { getApiBaseUrl, joinUrl } from '../utils/apiBaseUrl';
 import { logger } from '../utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuthHeaders } from './authService';
 
 const STORAGE_KEYS = {
-  BLOCKED_SESSIONS: '@tribun_blocked_sessions',
+  BLOCKED_USERS: '@tribun_blocked_users',
   EULA_ACCEPTED: '@tribun_eula_accepted',
   EULA_VERSION: '@tribun_eula_version',
   BAN_STATUS: '@tribun_ban_status',
@@ -17,8 +19,8 @@ const STORAGE_KEYS = {
 // Types
 export interface BlockedSessionDto {
   id: string;
-  blockerSessionId: string;
-  blockedSessionId: string;
+  blockerUserId?: string;
+  blockedUserId?: string;
   context: string;
   reason?: string;
   createdAt: string;
@@ -28,8 +30,8 @@ export interface ContentReportDto {
   id: string;
   contentType: string;
   contentId: string;
-  reporterSessionId: string;
-  creatorSessionId?: string;
+  reporterUserId?: string;
+  creatorUserId?: string;
   category: string;
   description?: string;
   status: string;
@@ -46,7 +48,7 @@ export interface EulaStatusDto {
 
 export interface EulaAcceptanceDto {
   id: string;
-  sessionId: string;
+  userId?: string;
   eulaVersion: string;
   acceptedAt: string;
 }
@@ -87,12 +89,12 @@ type ApiResponse<T> = {
 
 class UserSafetyService {
   private baseUrl: string;
-  private blockedSessionsCache: Set<string> = new Set();
+  private blockedUserIdsCache: Set<string> = new Set();
   private banStatusCache: BanStatus | null = null;
 
   constructor() {
     this.baseUrl = getApiBaseUrl();
-    this.loadBlockedSessionsFromCache();
+    this.loadBlockedUsersFromCache();
     this.loadBanStatusFromCache();
   }
 
@@ -100,30 +102,26 @@ class UserSafetyService {
     return joinUrl(this.baseUrl, path);
   }
 
+  private async buildHeaders(): Promise<Record<string, string>> {
+    const authHeaders = await getAuthHeaders();
+    return { 'Content-Type': 'application/json', Accept: 'application/json', ...authHeaders };
+  }
+
   // ============ BLOCKING ============
 
   /**
-   * Block a user by their session ID
+   * Block a user by their userId. Blocker identified via JWT.
    */
   async blockUser(
-    sessionId: string,
-    blockedSessionId: string,
-    context: ContentType = 'ChatMessage',
+    blockedUserId: string,
+    context: ContentType = 'FanMoment',
     reason?: string
   ): Promise<ApiResponse<BlockedSessionDto>> {
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/block'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          blockedSessionId,
-          context,
-          reason,
-        }),
+        headers: await this.buildHeaders(),
+        body: JSON.stringify({ blockedUserId, context, reason }),
       });
 
       if (!response.ok) {
@@ -133,40 +131,27 @@ class UserSafetyService {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Update local cache
-        this.blockedSessionsCache.add(blockedSessionId);
-        await this.saveBlockedSessionsToCache();
+        this.blockedUserIdsCache.add(blockedUserId.toLowerCase());
+        await this.saveBlockedUsersToCache();
         return { success: true, data: result.data };
       }
 
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to block user', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
   /**
-   * Unblock a user
+   * Unblock a user by their userId. Blocker identified via JWT.
    */
-  async unblockUser(
-    sessionId: string,
-    blockedSessionId: string
-  ): Promise<ApiResponse<boolean>> {
+  async unblockUser(blockedUserId: string): Promise<ApiResponse<boolean>> {
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/block'), {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          blockedSessionId,
-        }),
+        headers: await this.buildHeaders(),
+        body: JSON.stringify({ blockedUserId }),
       });
 
       if (!response.ok) {
@@ -176,122 +161,113 @@ class UserSafetyService {
       const result = await response.json();
 
       if (result.success) {
-        // Update local cache
-        this.blockedSessionsCache.delete(blockedSessionId);
-        await this.saveBlockedSessionsToCache();
+        this.blockedUserIdsCache.delete(blockedUserId.toLowerCase());
+        await this.saveBlockedUsersToCache();
         return { success: true, data: result.data };
       }
 
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to unblock user', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
   /**
-   * Get list of blocked session IDs for filtering
+   * Get list of blocked user IDs. Blocker identified via JWT.
    */
-  async getBlockedSessionIds(sessionId: string): Promise<ApiResponse<string[]>> {
+  async getBlockedUserIds(): Promise<ApiResponse<string[]>> {
     try {
-      const response = await fetch(
-        this.buildUrl(`/api/UserSafety/blocked/ids?sessionId=${sessionId}`),
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        }
-      );
+      const response = await fetch(this.buildUrl('/api/UserSafety/blocked/userids'), {
+        method: 'GET',
+        headers: await this.buildHeaders(),
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to get blocked sessions: ${response.statusText}`);
+        throw new Error(`Failed to get blocked user ids: ${response.statusText}`);
       }
 
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Update local cache
-        this.blockedSessionsCache = new Set(result.data);
-        await this.saveBlockedSessionsToCache();
+        this.blockedUserIdsCache = new Set(result.data.map((id: string) => id.toLowerCase()));
+        await this.saveBlockedUsersToCache();
         return { success: true, data: result.data };
       }
 
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
-      logger.error('UserSafety: Failed to get blocked sessions', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      logger.error('UserSafety: Failed to get blocked user ids', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
   /**
-   * Check if a session is blocked (uses local cache for performance)
+   * Check if an authenticated user is blocked by userId (local cache)
    */
-  isSessionBlocked(sessionId: string): boolean {
-    return this.blockedSessionsCache.has(sessionId);
+  isUserBlocked(userId: string): boolean {
+    return this.blockedUserIdsCache.has(userId.toLowerCase());
   }
 
   /**
-   * Load blocked sessions from local cache
+   * Unified block check — works for authenticated (userId) senders
    */
-  private async loadBlockedSessionsFromCache(): Promise<void> {
+  isBlocked(sessionId?: string, userId?: string): boolean {
+    if (userId && this.blockedUserIdsCache.has(userId.toLowerCase())) return true;
+    return false;
+  }
+
+  /**
+   * Refresh blocked user IDs from server
+   */
+  async refreshBlockedSessions(): Promise<void> {
+    await this.getBlockedUserIds();
+  }
+
+  private async loadBlockedUsersFromCache(): Promise<void> {
     try {
-      const cached = await AsyncStorage.getItem(STORAGE_KEYS.BLOCKED_SESSIONS);
-      if (cached) {
-        const ids = JSON.parse(cached) as string[];
-        this.blockedSessionsCache = new Set(ids);
+      const cachedUsers = await AsyncStorage.getItem(STORAGE_KEYS.BLOCKED_USERS);
+      if (cachedUsers) {
+        const ids = JSON.parse(cachedUsers) as string[];
+        this.blockedUserIdsCache = new Set(ids.map(id => id.toLowerCase()));
       }
     } catch (error) {
-      logger.error('UserSafety: Failed to load blocked sessions cache', error);
+      logger.error('UserSafety: Failed to load blocked users cache', error);
     }
   }
 
-  /**
-   * Save blocked sessions to local cache
-   */
-  private async saveBlockedSessionsToCache(): Promise<void> {
+  private async saveBlockedUsersToCache(): Promise<void> {
     try {
-      const ids = Array.from(this.blockedSessionsCache);
-      await AsyncStorage.setItem(STORAGE_KEYS.BLOCKED_SESSIONS, JSON.stringify(ids));
+      const ids = Array.from(this.blockedUserIdsCache);
+      await AsyncStorage.setItem(STORAGE_KEYS.BLOCKED_USERS, JSON.stringify(ids));
     } catch (error) {
-      logger.error('UserSafety: Failed to save blocked sessions cache', error);
+      logger.error('UserSafety: Failed to save blocked users cache', error);
     }
   }
 
   // ============ REPORTING ============
 
   /**
-   * Report content
+   * Report content. Reporter identified via JWT.
+   * creatorUserId is optional — backend auto-resolves from content if not provided.
    */
   async reportContent(
-    reporterSessionId: string,
     contentType: ContentType,
     contentId: string,
     category: ReportCategory,
     description?: string,
-    creatorSessionId?: string
+    creatorUserId?: string
   ): Promise<ApiResponse<ContentReportDto>> {
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/report'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: await this.buildHeaders(),
         body: JSON.stringify({
-          reporterSessionId,
           contentType,
           contentId,
           category,
           description,
-          creatorSessionId,
+          creatorUserId,
         }),
       });
 
@@ -308,30 +284,18 @@ class UserSafetyService {
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to report content', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
   // ============ EULA ============
 
-  /**
-   * Get EULA status for a session
-   */
-  async getEulaStatus(sessionId: string): Promise<ApiResponse<EulaStatusDto>> {
+  async getEulaStatus(): Promise<ApiResponse<EulaStatusDto>> {
     try {
-      const response = await fetch(
-        this.buildUrl(`/api/UserSafety/eula/status?sessionId=${sessionId}`),
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        }
-      );
+      const response = await fetch(this.buildUrl('/api/UserSafety/eula/status'), {
+        method: 'GET',
+        headers: await this.buildHeaders(),
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to get EULA status: ${response.statusText}`);
@@ -346,18 +310,11 @@ class UserSafetyService {
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to get EULA status', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
-  /**
-   * Accept EULA
-   */
   async acceptEula(
-    sessionId: string,
     eulaVersion: string,
     deviceInfo?: string,
     appVersion?: string
@@ -365,16 +322,8 @@ class UserSafetyService {
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/eula/accept'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          eulaVersion,
-          deviceInfo,
-          appVersion,
-        }),
+        headers: await this.buildHeaders(),
+        body: JSON.stringify({ eulaVersion, deviceInfo, appVersion }),
       });
 
       if (!response.ok) {
@@ -384,7 +333,6 @@ class UserSafetyService {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Save locally for offline access
         await AsyncStorage.setItem(STORAGE_KEYS.EULA_ACCEPTED, 'true');
         await AsyncStorage.setItem(STORAGE_KEYS.EULA_VERSION, eulaVersion);
         return { success: true, data: result.data };
@@ -393,34 +341,17 @@ class UserSafetyService {
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to accept EULA', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
-  /**
-   * Check if EULA needs to be shown (local check for quick response)
-   */
-  async needsEulaAcceptance(sessionId: string): Promise<boolean> {
+  async needsEulaAcceptance(): Promise<boolean> {
     try {
-      // First check local cache
       const accepted = await AsyncStorage.getItem(STORAGE_KEYS.EULA_ACCEPTED);
       const version = await AsyncStorage.getItem(STORAGE_KEYS.EULA_VERSION);
-
-      // If locally accepted current version, skip API call
-      if (accepted === 'true' && version === '1.0') {
-        return false;
-      }
-
-      // Otherwise check with API
-      const response = await this.getEulaStatus(sessionId);
-      if (response.success && response.data) {
-        return response.data.needsAcceptance;
-      }
-
-      // If API fails, show EULA to be safe
+      if (accepted === 'true' && version === '1.0') return false;
+      const response = await this.getEulaStatus();
+      if (response.success && response.data) return response.data.needsAcceptance;
       return true;
     } catch (error) {
       logger.error('UserSafety: Error checking EULA status', error);
@@ -428,34 +359,25 @@ class UserSafetyService {
     }
   }
 
-  /**
-   * Refresh blocked sessions from server
-   */
-  async refreshBlockedSessions(sessionId: string): Promise<void> {
-    await this.getBlockedSessionIds(sessionId);
-  }
-
   // ============ PLATFORM BAN ============
 
   /**
-   * Check if user is banned from the platform
+   * Check if user is banned. Uses JWT if available, sessionId as fallback for anonymous.
    */
   async checkBanStatus(
-    sessionId: string,
+    sessionId?: string,
     deviceId?: string
   ): Promise<ApiResponse<BanCheckResult>> {
     try {
-      let url = this.buildUrl(`/api/Ban/check?sessionId=${sessionId}`);
-      if (deviceId) {
-        url += `&deviceId=${encodeURIComponent(deviceId)}`;
-      }
+      let url = this.buildUrl('/api/Ban/check');
+      const params = new URLSearchParams();
+      if (sessionId) params.append('sessionId', sessionId);
+      if (deviceId) params.append('deviceId', deviceId);
+      if (params.toString()) url += `?${params.toString()}`;
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        headers: await this.buildHeaders(),
       });
 
       if (!response.ok) {
@@ -465,11 +387,7 @@ class UserSafetyService {
       const result = await response.json();
 
       if (result.success && result.data) {
-        // Update local cache
-        const banStatus: BanStatus = {
-          ...result.data,
-          checkedAt: new Date().toISOString(),
-        };
+        const banStatus: BanStatus = { ...result.data, checkedAt: new Date().toISOString() };
         this.banStatusCache = banStatus;
         await this.saveBanStatusToCache(banStatus);
         return { success: true, data: result.data };
@@ -478,66 +396,41 @@ class UserSafetyService {
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to check ban status', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
 
-  /**
-   * Get cached ban status (for quick UI checks)
-   */
   getCachedBanStatus(): BanStatus | null {
     return this.banStatusCache;
   }
 
-  /**
-   * Check if user is currently banned (uses cache)
-   */
   isBanned(): boolean {
     if (!this.banStatusCache) return false;
-
-    // Check if ban has expired
     if (!this.banStatusCache.isPermanent && this.banStatusCache.expiresAt) {
-      const expiresAt = new Date(this.banStatusCache.expiresAt);
-      if (expiresAt < new Date()) {
-        // Ban has expired, clear cache
+      if (new Date(this.banStatusCache.expiresAt) < new Date()) {
         this.banStatusCache = null;
         this.clearBanStatusCache();
         return false;
       }
     }
-
     return this.banStatusCache.isBanned;
   }
 
-  /**
-   * Get ban reason for display
-   */
   getBanReason(): string | undefined {
     return this.banStatusCache?.reason;
   }
 
-  /**
-   * Load ban status from local cache
-   */
   private async loadBanStatusFromCache(): Promise<void> {
     try {
       const cached = await AsyncStorage.getItem(STORAGE_KEYS.BAN_STATUS);
       if (cached) {
         const banStatus = JSON.parse(cached) as BanStatus;
-
-        // Check if ban has expired
         if (!banStatus.isPermanent && banStatus.expiresAt) {
-          const expiresAt = new Date(banStatus.expiresAt);
-          if (expiresAt < new Date()) {
-            // Ban has expired, don't load
+          if (new Date(banStatus.expiresAt) < new Date()) {
             await this.clearBanStatusCache();
             return;
           }
         }
-
         this.banStatusCache = banStatus;
       }
     } catch (error) {
@@ -545,9 +438,6 @@ class UserSafetyService {
     }
   }
 
-  /**
-   * Save ban status to local cache
-   */
   private async saveBanStatusToCache(banStatus: BanStatus): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.BAN_STATUS, JSON.stringify(banStatus));
@@ -556,9 +446,6 @@ class UserSafetyService {
     }
   }
 
-  /**
-   * Clear ban status cache
-   */
   private async clearBanStatusCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.BAN_STATUS);
@@ -568,16 +455,10 @@ class UserSafetyService {
     }
   }
 
-  /**
-   * Handle ban error from API response
-   * Returns true if the error is a ban-related error
-   */
   handleBanError(error: string): boolean {
     const banKeywords = ['banned', 'yasakli', 'yasaklı', 'ban', 'engellendi'];
-    const lowerError = error.toLowerCase();
-    return banKeywords.some(keyword => lowerError.includes(keyword));
+    return banKeywords.some(keyword => error.toLowerCase().includes(keyword));
   }
 }
 
-// Export singleton instance
 export const userSafetyService = new UserSafetyService();

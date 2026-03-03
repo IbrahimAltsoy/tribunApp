@@ -7,7 +7,6 @@
 import { API_CONFIG, ERROR_MESSAGES } from '../constants/app';
 import { logger } from '../utils/logger';
 import { getApiBaseUrl, joinUrl } from '../utils/apiBaseUrl';
-import { languageService } from '../utils/languageService';
 import { ImageSourcePropType } from 'react-native';
 
 /* ================= TYPE DEFINITIONS ================= */
@@ -78,6 +77,8 @@ export type Announcement = {
   city: string;
   location: string;
   date: string;
+  eventDate?: string;
+  link?: string;
   contact: string;
   note?: string;
   status: "Pending" | "Approved" | "Rejected";
@@ -182,7 +183,6 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
-          ...languageService.getRequestHeaders(),
           ...options?.headers,
         },
         signal: controller.signal,
@@ -242,7 +242,6 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       });
 
@@ -277,7 +276,6 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       });
 
@@ -311,7 +309,6 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       });
 
@@ -345,7 +342,6 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          ...languageService.getRequestHeaders(),
         },
       });
 

@@ -17,8 +17,8 @@ const BihevraLogo: React.FC<BihevraLogoProps> = ({ size = 'medium', style }) => 
   return (
     <View style={[styles.container, style]}>
       <Text style={[styles.text, { fontSize }]}>
-        <Text style={styles.bi}>Bi</Text>
-        <Text style={styles.hevra}>hevra</Text>
+        <Text style={styles.gs}>GS </Text>
+        <Text style={styles.tribun}>Tribün</Text>
       </Text>
     </View>
   );
@@ -31,13 +31,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   text: {
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
   },
-  bi: {
-    color: '#00A651', // Yeşil
+  gs: {
+    color: '#FFC72C', // Galatasaray sarı
   },
-  hevra: {
+  tribun: {
     color: '#FFFFFF', // Beyaz
   },
 });

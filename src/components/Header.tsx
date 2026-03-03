@@ -19,18 +19,15 @@ const IS_IOS = Platform.OS === "ios";
 
 type HeaderProps = {
   onPressNotifications?: () => void;
-  onPressLanguage?: () => void;
   notificationCount?: number;
 };
 
 const Header: React.FC<HeaderProps> = ({
   onPressNotifications,
-  onPressLanguage,
   notificationCount = 0,
 }) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const notificationScale = useRef(new Animated.Value(1)).current;
-  const languageScale = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const brandOpacity = useRef(new Animated.Value(0)).current;
   const brandTranslateY = useRef(new Animated.Value(-10)).current;
@@ -90,42 +87,19 @@ const Header: React.FC<HeaderProps> = ({
     }).start();
   };
 
-  const currentLanguage = i18n.language.toUpperCase();
-
   return (
     <View style={styles.container}>
       {/* Gradient Background */}
       <LinearGradient
-        colors={[colors.background, "rgba(19, 30, 19, 0.95)", colors.background]}
+        colors={[colors.background, "rgba(30, 10, 10, 0.95)", colors.background]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
 
       <View style={styles.content}>
-        {/* Left Action: Language Button */}
-        <Pressable
-          onPress={onPressLanguage}
-          onPressIn={() => handlePressIn(languageScale)}
-          onPressOut={() => handlePressOut(languageScale)}
-          style={styles.actionButton}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Animated.View
-            style={[
-              styles.actionButtonInner,
-              { transform: [{ scale: languageScale }] },
-            ]}
-          >
-            <BlurView
-              intensity={IS_IOS ? 25 : 20}
-              tint="dark"
-              style={styles.actionBlur}
-            >
-              <Text style={styles.languageText}>{currentLanguage}</Text>
-            </BlurView>
-          </Animated.View>
-        </Pressable>
+        {/* Left spacer — keeps brand centered */}
+        <View style={styles.actionSpacer} />
 
         {/* Center: Brand Name */}
         <Animated.View
@@ -138,8 +112,8 @@ const Header: React.FC<HeaderProps> = ({
           ]}
         >
           <Text style={styles.brandText}>
-            <Text style={styles.brandTextBi}>Bi</Text>
-            <Text style={styles.brandTextHevra}>hevra</Text>
+            <Text style={styles.brandTextGS}>GS </Text>
+            <Text style={styles.brandTextTribun}>Tribün</Text>
           </Text>
           <View style={styles.brandUnderline} />
           <Text style={styles.liveTag}>
@@ -198,11 +172,11 @@ const Header: React.FC<HeaderProps> = ({
       <View style={styles.dividerContainer}>
         <LinearGradient
           colors={[
-            "rgba(0, 191, 71, 0)",
-            "rgba(0, 191, 71, 0.3)",
+            "rgba(232, 17, 26, 0)",
+            "rgba(232, 17, 26, 0.4)",
             colors.primary,
-            "rgba(209, 14, 14, 0.6)",
-            "rgba(209, 14, 14, 0)",
+            "rgba(255, 199, 44, 0.6)",
+            "rgba(255, 199, 44, 0)",
           ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
@@ -240,19 +214,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     textAlign: "center",
   },
-  brandTextBi: {
+  brandTextGS: {
     fontFamily: Platform.select({
       ios: "System",
       android: "sans-serif-medium",
       default: "System",
     }),
-    fontWeight: "700",
-    color: colors.primary,
-    textShadowColor: colors.primaryGlow,
+    fontWeight: "800",
+    color: colors.accent,
+    textShadowColor: colors.accentGlow,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 12,
   },
-  brandTextHevra: {
+  brandTextTribun: {
     fontFamily: Platform.select({
       ios: "System",
       android: "sans-serif-light",
@@ -288,6 +262,12 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 
+  // Left spacer (keeps brand centered)
+  actionSpacer: {
+    width: 50,
+    height: 50,
+  },
+
   // Action Buttons (Left & Right)
   actionButton: {
     borderRadius: radii.xl,
@@ -317,12 +297,6 @@ const styles = StyleSheet.create({
         elevation: 5,
       },
     }),
-  },
-  languageText: {
-    fontSize: fontSizes.sm,
-    fontWeight: "700",
-    color: colors.primary,
-    letterSpacing: 0.5,
   },
 
   // Notification Badge

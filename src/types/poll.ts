@@ -22,11 +22,10 @@ export interface PollOptionDto {
 }
 
 /**
- * Vote Request
+ * Vote Request — SessionId kaldırıldı, JWT auth kullanılıyor
  */
 export interface VotePollRequest {
   pollOptionId: string;
-  sessionId: string;
 }
 
 /**

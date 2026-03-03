@@ -17,6 +17,7 @@ export type Message = {
   isMine: boolean;
   isRead?: boolean;
   sessionId?: string;
+  userId?: string;
 };
 
 type ChatBubbleProps = {

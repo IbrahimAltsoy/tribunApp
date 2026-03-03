@@ -16,12 +16,15 @@ const AnnouncementCard: React.FC<Props> = ({ announcement }) => {
   const { t, i18n } = useTranslation();
 
   // Format the event date
-  const formattedDate = announcement.date || new Date(announcement.eventDate).toLocaleDateString(i18n.language, {
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const formattedDate = announcement.date ||
+    (announcement.eventDate
+      ? new Date(announcement.eventDate).toLocaleDateString(i18n.language, {
+          day: 'numeric',
+          month: 'long',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '');
 
   const handleLinkPress = () => {
     openURLSafely(announcement.link, {

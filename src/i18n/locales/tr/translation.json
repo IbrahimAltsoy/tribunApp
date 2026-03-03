@@ -148,7 +148,7 @@
     "updateFailed": "Güncelleme başarısız oldu"
   },
   "chat": {
-    "title": "Bihevra Sohbet",
+    "title": "GS Tribün Sohbet",
     "subtitle": "Tribün sohbeti: Maç heyecanını paylaş, destek ol, sorularını sor.",
     "placeholder": "Mesajını yaz...",
     "nicknamePlaceholder": "Takma ad",
@@ -163,7 +163,7 @@
   "error": "Hata",
   "ok": "Tamam",
   "cancel": "İptal",
-  "appSlogan": "Bihevra Amed",
+  "appSlogan": "GS Tribün",
   "errorBoundary": {
     "title": "Bir Şeyler Yanlış Gitti",
     "message": "Üzgünüz, beklenmeyen bir hata oluştu.\nLütfen uygulamayı yeniden başlatmayı deneyin.",
@@ -362,7 +362,7 @@
     "next": "İleri",
     "getStarted": "Başla",
     "welcome": {
-      "title": "Bihevra'ya Hoş Geldiniz",
+      "title": "GS Tribün'e Hoş Geldiniz",
       "description": "Takımınızla bağlantıda kalın, anları paylaşın ve taraftar topluluğuna katılın"
     },
     "features": {
@@ -421,7 +421,7 @@
     "sections": {
       "scope": {
         "title": "1. Hizmet Kapsamı",
-        "content": "Bihevra, taraftarların maç skorlarını takip edebileceği, taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği bir mobil platformdur."
+        "content": "GS Tribün, taraftarların maç skorlarını takip edebileceği, taraftar topluluğuyla etkileşime geçebileceği, haber ve güncellemeleri alabileceği bir mobil platformdur."
       },
       "userObligations": {
         "title": "2. Kullanıcı Yükümlülükleri",
@@ -452,7 +452,7 @@
         "content": "Sorularınız için:\nE-posta: bihevra.app@gmail.com"
       }
     },
-    "footer": "© 2026 Bihevra. Tüm hakları saklıdır."
+    "footer": "© 2026 GS Tribün. Tüm hakları saklıdır."
   },
   "privacy": {
     "title": "Gizlilik Politikası",
@@ -461,7 +461,7 @@
     "sections": {
       "dataController": {
         "title": "1. Veri Sorumlusu",
-        "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin veri sorumlusu Bihevra uygulamasıdır."
+        "content": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") uyarınca, kişisel verilerinizin veri sorumlusu GS Tribün uygulamasıdır."
       },
       "collectedData": {
         "title": "2. Toplanan Veriler",
@@ -504,7 +504,7 @@
       }
     },
     "badge": "KVKK & GDPR Uyumlu",
-    "footer": "© 2026 Bihevra. Tüm hakları saklıdır."
+    "footer": "© 2026 GS Tribün. Tüm hakları saklıdır."
   },
   "settings": {
     "title": "Ayarlar",
@@ -561,7 +561,7 @@
     },
     "footer": {
       "version": "Sürüm {{version}}",
-      "copyright": "© 2026 Bihevra. Tüm hakları saklıdır."
+      "copyright": "© 2026 GS Tribün. Tüm hakları saklıdır."
     },
     "resetOnboarding": {
       "title": "Onboarding Sıfırla",

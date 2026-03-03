@@ -14,6 +14,9 @@ import {
   Keyboard,
   Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -25,9 +28,10 @@ import { mediaService } from "../services/mediaService";
 import Header from "../components/Header";
 import PollCard from "../components/home/PollCard";
 import FanMomentsSection from "../components/home/FanMomentsSection";
+import UserProfileModal from "../components/home/UserProfileModal";
+import ReportBlockModal from "../components/ReportBlockModal";
 import ShareMomentModal from "../components/home/ShareMomentModal";
 import MomentDetailModal from "../components/home/MomentDetailModal";
-import LanguageSwitcher from "../components/LanguageSwitcher";
 import NotificationList from "../components/NotificationList";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
@@ -40,8 +44,9 @@ import { EXTERNAL_LINKS } from "../constants/app";
 import { fanMomentService } from "../services/fanMomentService";
 import { pollService } from "../services/pollService";
 import { notificationService } from "../services/notificationService";
+import { userSafetyService } from "../services/userSafetyService";
 import { logger } from "../utils/logger";
-import { initializeSession, UserSession } from "../utils/sessionManager";
+import { useAuth } from "../contexts/AuthContext";
 import { useBanStatus, checkBanBeforeAction } from "../hooks/useBanStatus";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
@@ -49,13 +54,13 @@ import type { FanMomentDto } from "../types/fanMoment";
 const storeImage = require("../assets/footboll/1.jpg");
 
 const HomeScreen: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { authState } = useAuth();
 
-  const [session, setSession] = useState<UserSession | null>(null);
   const [moments, setMoments] = useState<FanMomentDto[]>([]);
   const [activePoll, setActivePoll] = useState<PollDto | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [selectedMoment, setSelectedMoment] = useState<
@@ -68,6 +73,10 @@ const HomeScreen: React.FC = () => {
   const [editCaption, setEditCaption] = useState("");
   const [editImage, setEditImage] = useState<string | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
+  const [authorProfileVisible, setAuthorProfileVisible] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState<{ userId: string; username: string } | null>(null);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [momentToReport, setMomentToReport] = useState<FanMomentDto | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMoreMoments, setHasMoreMoments] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -94,15 +103,6 @@ const HomeScreen: React.FC = () => {
     shareMoment,
   } = useShareMoment();
 
-  // Initialize session on mount
-  useEffect(() => {
-    const loadSession = async () => {
-      const userSession = await initializeSession();
-      setSession(userSession);
-    };
-    loadSession();
-  }, []);
-
   const PAGE_SIZE = 10;
 
   // Load all data function (used for initial load and refresh)
@@ -110,7 +110,10 @@ const HomeScreen: React.FC = () => {
     // Load moments (reset to page 1)
     const momentsResponse = await fanMomentService.getFanMoments(1, PAGE_SIZE, "Approved");
     if (momentsResponse.success && momentsResponse.data) {
-      setMoments(momentsResponse.data);
+      const filtered = momentsResponse.data.filter(
+        (m) => !userSafetyService.isBlocked(m.creatorSessionId, m.creatorUserId)
+      );
+      setMoments(filtered);
       setCurrentPage(1);
       setHasMoreMoments(momentsResponse.data.length >= PAGE_SIZE);
     } else {
@@ -149,7 +152,10 @@ const HomeScreen: React.FC = () => {
     const nextPage = currentPage + 1;
     const response = await fanMomentService.getFanMoments(nextPage, PAGE_SIZE, "Approved");
     if (response.success && response.data && response.data.length > 0) {
-      setMoments((prev) => [...prev, ...response.data!]);
+      const filtered = response.data.filter(
+        (m) => !userSafetyService.isBlocked(m.creatorSessionId, m.creatorUserId)
+      );
+      setMoments((prev) => [...prev, ...filtered]);
       setCurrentPage(nextPage);
       setHasMoreMoments(response.data.length >= PAGE_SIZE);
     } else {
@@ -172,19 +178,6 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
-
-  // Reload poll when language changes
-  useEffect(() => {
-    const loadPoll = async () => {
-      const response = await pollService.getActivePoll();
-      if (response.success && response.data) {
-        setActivePoll(response.data);
-      } else {
-        setActivePoll(null);
-      }
-    };
-    loadPoll();
-  }, [i18n.language]);
 
   // Auto-refresh notification count every 30 seconds
   useEffect(() => {
@@ -246,13 +239,30 @@ const HomeScreen: React.FC = () => {
     [submit]
   );
 
-  const handleLanguagePress = useCallback(() => {
-    setLanguageModalVisible(true);
-  }, []);
-
   const handleNotificationPress = useCallback(() => {
     setNotificationModalVisible(true);
   }, []);
+
+  const handlePressAuthor = useCallback((userId: string, username: string) => {
+    setSelectedAuthor({ userId, username });
+    setAuthorProfileVisible(true);
+  }, []);
+
+  const handleReportMoment = useCallback((moment: FanMomentDto) => {
+    setMomentToReport(moment);
+    setReportModalVisible(true);
+  }, []);
+
+  const handleReportBlockSuccess = useCallback(() => {
+    if (momentToReport?.creatorUserId) {
+      // Engellenen kullanıcının tüm paylaşımlarını listeden kaldır
+      setMoments((prev) =>
+        prev.filter((m) => m.creatorUserId !== momentToReport.creatorUserId)
+      );
+    }
+    setReportModalVisible(false);
+    setMomentToReport(null);
+  }, [momentToReport]);
 
   const handleNotificationModalClose = useCallback(async () => {
     setNotificationModalVisible(false);
@@ -287,6 +297,7 @@ const HomeScreen: React.FC = () => {
           <PollCard
             poll={activePoll}
             onVoteSuccess={(updatedPoll) => setActivePoll(updatedPoll)}
+            onAuthRequired={() => navigation.navigate('Auth')}
           />
         </>
       )}
@@ -413,6 +424,59 @@ const HomeScreen: React.FC = () => {
     [t]
   );
 
+  const handleLikeMoment = useCallback(
+    async (moment: FanMomentDto) => {
+      if (authState !== 'authenticated') {
+        navigation.navigate('Auth');
+        return;
+      }
+
+      // Optimistic update
+      setMoments((prev) =>
+        prev.map((m) =>
+          m.id === moment.id
+            ? {
+                ...m,
+                hasLiked: !m.hasLiked,
+                likeCount: m.hasLiked ? m.likeCount - 1 : m.likeCount + 1,
+              }
+            : m
+        )
+      );
+
+      const response = await fanMomentService.likeMoment(moment.id);
+
+      if (!response.success) {
+        // Revert optimistic update on failure
+        setMoments((prev) =>
+          prev.map((m) =>
+            m.id === moment.id
+              ? {
+                  ...m,
+                  hasLiked: moment.hasLiked,
+                  likeCount: moment.likeCount,
+                }
+              : m
+          )
+        );
+
+        if (response.error === 'unauthorized') {
+          navigation.navigate('Auth');
+        }
+      } else if (response.data) {
+        // Sync with backend response
+        setMoments((prev) =>
+          prev.map((m) =>
+            m.id === moment.id
+              ? { ...m, hasLiked: response.data!.liked, likeCount: response.data!.likeCount }
+              : m
+          )
+        );
+      }
+    },
+    [authState, navigation]
+  );
+
   const handleSaveEdit = useCallback(async () => {
     if (!momentToEdit) return;
 
@@ -475,7 +539,6 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.screenContent}>
         <Header
-          onPressLanguage={handleLanguagePress}
           onPressNotifications={handleNotificationPress}
           notificationCount={unreadNotificationCount}
         />
@@ -487,6 +550,9 @@ const HomeScreen: React.FC = () => {
           onEditMoment={handleEditMoment}
           onDeleteMoment={handleDeleteMoment}
           onShareMoment={shareMoment}
+          onLikeMoment={handleLikeMoment}
+          onPressAuthor={handlePressAuthor}
+          onReportMoment={handleReportMoment}
           slot={smartSlot}
           refreshing={refreshing}
           onRefresh={onRefresh}
@@ -495,6 +561,27 @@ const HomeScreen: React.FC = () => {
           hasMore={hasMoreMoments}
         />
       </View>
+
+      {/* Kullanıcı Profil Kartı */}
+      <UserProfileModal
+        visible={authorProfileVisible}
+        userId={selectedAuthor?.userId ?? null}
+        username={selectedAuthor?.username ?? ''}
+        onClose={() => setAuthorProfileVisible(false)}
+      />
+
+      {/* Şikayet / Engelleme Modalı */}
+      {momentToReport && (
+        <ReportBlockModal
+          visible={reportModalVisible}
+          onClose={() => { setReportModalVisible(false); setMomentToReport(null); }}
+          targetUserId={momentToReport.creatorUserId}
+          contentType="FanMoment"
+          contentId={momentToReport.id}
+          onBlockSuccess={handleReportBlockSuccess}
+          onReportSuccess={() => { setReportModalVisible(false); setMomentToReport(null); }}
+        />
+      )}
 
       {/* PAYLAŞ / DETAY / TÜM ANLAR MODALLARI (ESKİ HALİYLE) */}
       <ShareMomentModal
@@ -511,21 +598,7 @@ const HomeScreen: React.FC = () => {
         visible={detailModalVisible}
         moment={selectedMoment}
         onClose={() => setDetailModalVisible(false)}
-        sessionId={session?.sessionId}
       />
-
-      <Modal
-        visible={languageModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setLanguageModalVisible(false)}
-      >
-        <BlurView intensity={80} tint="dark" style={styles.modalOverlay}>
-          <View style={styles.languageModal}>
-            <LanguageSwitcher onClose={() => setLanguageModalVisible(false)} />
-          </View>
-        </BlurView>
-      </Modal>
 
       {/* Notification Modal */}
       <Modal
@@ -894,7 +967,6 @@ const styles = StyleSheet.create({
     }),
   },
 
-  // -------- Dil Modalı (premium tasarım) --------
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -902,28 +974,6 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     width: "100%",
-  },
-  languageModal: {
-    width: "100%",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    backgroundColor: "rgba(15, 20, 25, 0.98)",
-    padding: spacing.xl,
-    paddingBottom: Platform.OS === "ios" ? spacing.xxl + spacing.lg : spacing.xl,
-    gap: spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: -8 },
-        shadowOpacity: 0.5,
-        shadowRadius: 24,
-      },
-      android: {
-        elevation: 20,
-      },
-    }),
   },
   notificationModal: {
     width: "100%",

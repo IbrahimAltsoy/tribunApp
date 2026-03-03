@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bihevra",
+    "name": "GS Tribün",
     "slug": "tribunapplication",
     "version": "1.0.7",
     "orientation": "portrait",
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0B111C"
+      "backgroundColor": "#0A0A0A"
     },
     "updates": {
       "fallbackToCacheTimeout": 0,
@@ -80,7 +80,8 @@
       ],
       "expo-video",
       "expo-audio",
-      "expo-tracking-transparency"
+      "expo-tracking-transparency",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {

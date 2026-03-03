@@ -1,16 +1,12 @@
-export type MarsStackParamList = {
-  MarsHome: undefined;
-  Archive: undefined;
-  Players: undefined;
-  Kits: undefined;
-  Team: undefined;
+export type ProfileStackParamList = {
+  ProfileHome: undefined;
   Settings: undefined;
-  NotificationTest: undefined;
 };
 
 export type RootStackParamList = {
   MainTabs: undefined;
   Terms: undefined;
   Privacy: undefined;
+  Auth: undefined;
 };
 

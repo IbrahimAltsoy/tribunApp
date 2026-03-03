@@ -7,7 +7,6 @@ import type {
 } from '../types/football';
 
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/football");
@@ -27,7 +26,6 @@ const getStandingsTable = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -63,7 +61,6 @@ const getTeamSchedule = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -97,7 +94,6 @@ const getLiveScores = async (): Promise<{ success: boolean; data?: LiveScoreDto[
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -135,7 +131,6 @@ const getClipContents = async (): Promise<{
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -171,7 +166,6 @@ const getTopScorers = async (
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 

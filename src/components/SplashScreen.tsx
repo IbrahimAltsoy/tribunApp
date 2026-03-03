@@ -1,8 +1,3 @@
-/**
- * Premium Splash Screen Component
- * Modern, animated loading screen with responsive design
- */
-
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -13,81 +8,103 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
-import { wp, hp, moderateScale } from '../utils/responsive';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const SplashScreen: React.FC = () => {
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.3)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+  const shieldAnim = useRef(new Animated.Value(0)).current;
+  const textFadeAnim = useRef(new Animated.Value(0)).current;
+  const dot1Anim = useRef(new Animated.Value(0.3)).current;
+  const dot2Anim = useRef(new Animated.Value(0.3)).current;
+  const dot3Anim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    // Start animations
-    Animated.parallel([
-      // Fade in
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      // Scale up logo
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Phase 1: Shield bounces in
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      tension: 60,
+      friction: 6,
+      useNativeDriver: true,
+    }).start();
 
-    // Continuous pulse animation for loading indicator
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+
+    // Phase 2: Text fades in after shield
+    setTimeout(() => {
+      Animated.timing(textFadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
+    }, 300);
+
+    // Phase 3: Shield subtle glow pulse
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1000,
+        Animated.timing(shieldAnim, {
+          toValue: 1,
+          duration: 1800,
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
+        Animated.timing(shieldAnim, {
+          toValue: 0,
+          duration: 1800,
           useNativeDriver: true,
         }),
       ])
     ).start();
 
-    // Continuous rotation for spinner
-    Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 2000,
-        useNativeDriver: true,
-      })
-    ).start();
+    // Dots loading animation — staggered
+    const dotAnimation = (dot: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0.3,
+            duration: 400,
+            useNativeDriver: true,
+          }),
+          Animated.delay(800),
+        ])
+      );
+
+    dotAnimation(dot1Anim, 0).start();
+    dotAnimation(dot2Anim, 200).start();
+    dotAnimation(dot3Anim, 400).start();
   }, []);
 
-  const spin = rotateAnim.interpolate({
+  const shieldOpacity = shieldAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+    outputRange: [0.85, 1],
   });
 
   return (
-    <LinearGradient
-      colors={[
-        colors.background,
-        'rgba(0, 191, 71, 0.1)',
-        colors.background,
-      ]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      {/* Background gradient — dark with subtle red tint at top */}
+      <LinearGradient
+        colors={['rgba(232,17,26,0.18)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']}
+        locations={[0, 0.45, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Decorative top arc */}
+      <View style={styles.topArc} />
+
       <Animated.View
         style={[
           styles.content,
@@ -97,83 +114,83 @@ const SplashScreen: React.FC = () => {
           },
         ]}
       >
-        {/* Logo/Brand Area */}
-        <View style={styles.logoContainer}>
-          <View style={styles.iconWrapper}>
-            <MaterialCommunityIcons
-              name="shield-star"
-              size={moderateScale(80)}
-              color={colors.primary}
-            />
-          </View>
-
-          {/* App Name */}
-          <Text style={styles.appName}>Bihevra</Text>
-          <Text style={styles.tagline}>Amed</Text>
-        </View>
-
-        {/* Loading Indicator */}
-        <View style={styles.loadingContainer}>
-          <Animated.View
-            style={[
-              styles.spinner,
-              {
-                transform: [
-                  { rotate: spin },
-                  { scale: pulseAnim },
-                ],
-              },
-            ]}
+        {/* Shield Logo */}
+        <Animated.View style={[styles.shieldWrapper, { opacity: shieldOpacity }]}>
+          {/* Outer glow ring */}
+          <LinearGradient
+            colors={[colors.primary, colors.accent]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.shieldGlowRing}
+          />
+          {/* Inner shield */}
+          <LinearGradient
+            colors={['#1C1C1C', '#111111']}
+            style={styles.shieldInner}
           >
-            <MaterialCommunityIcons
-              name="loading"
-              size={moderateScale(32)}
+            <Ionicons
+              name="shield"
+              size={52}
               color={colors.primary}
+              style={styles.shieldIconBg}
             />
-          </Animated.View>
-          <Text style={styles.loadingText}>Yükleniyor...</Text>
-        </View>
+            <View style={styles.gsOverlay}>
+              <Text style={styles.gsOverlayText}>GS</Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Brand Text */}
+        <Animated.View style={[styles.brandRow, { opacity: textFadeAnim }]}>
+          <Text style={styles.brandGs}>GS </Text>
+          <Text style={styles.brandTribun}>Tribün</Text>
+        </Animated.View>
+
+        <Animated.Text style={[styles.tagline, { opacity: textFadeAnim }]}>
+          Galatasaray Taraftar Uygulaması
+        </Animated.Text>
       </Animated.View>
 
-      {/* Bottom Branding */}
-      <Animated.View
-        style={[
-          styles.footer,
-          {
-            opacity: fadeAnim,
-          },
-        ]}
-      >
-        <Text style={styles.footerText}>Taraftar Uygulaması</Text>
-        <View style={styles.versionBadge}>
-          <Text style={styles.versionText}>v1.0.0</Text>
+      {/* Loading dots */}
+      <Animated.View style={[styles.footer, { opacity: textFadeAnim }]}>
+        <View style={styles.dotsRow}>
+          <Animated.View style={[styles.dot, { opacity: dot1Anim }]} />
+          <Animated.View style={[styles.dot, styles.dotMid, { opacity: dot2Anim }]} />
+          <Animated.View style={[styles.dot, { opacity: dot3Anim }]} />
         </View>
+        <Text style={styles.versionText}>v1.0.0</Text>
       </Animated.View>
-    </LinearGradient>
+    </View>
   );
 };
+
+const SHIELD_SIZE = 110;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+  },
+  topArc: {
+    position: 'absolute',
+    top: -width * 0.3,
+    width: width * 1.4,
+    height: width * 0.8,
+    borderRadius: width * 0.7,
+    backgroundColor: 'rgba(232,17,26,0.07)',
+    alignSelf: 'center',
   },
   content: {
     alignItems: 'center',
-    justifyContent: 'center',
-    width: wp(80),
   },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: hp(8),
-  },
-  iconWrapper: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
-    backgroundColor: 'rgba(0, 191, 71, 0.1)',
+
+  // Shield
+  shieldWrapper: {
+    width: SHIELD_SIZE,
+    height: SHIELD_SIZE,
+    borderRadius: SHIELD_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
@@ -181,66 +198,104 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
+        shadowOpacity: 0.45,
+        shadowRadius: 20,
       },
-      android: {
-        elevation: 8,
+      android: { elevation: 12 },
+    }),
+  },
+  shieldGlowRing: {
+    position: 'absolute',
+    width: SHIELD_SIZE,
+    height: SHIELD_SIZE,
+    borderRadius: SHIELD_SIZE / 2,
+    opacity: 0.3,
+  },
+  shieldInner: {
+    width: SHIELD_SIZE - 8,
+    height: SHIELD_SIZE - 8,
+    borderRadius: (SHIELD_SIZE - 8) / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(232,17,26,0.4)',
+  },
+  shieldIconBg: {
+    position: 'absolute',
+    opacity: 0.15,
+  },
+  gsOverlay: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gsOverlayText: {
+    fontSize: 34,
+    fontFamily: typography.extraBold,
+    color: colors.accent,
+    letterSpacing: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.6,
+        shadowRadius: 8,
       },
     }),
   },
-  appName: {
+
+  // Brand text
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: spacing.sm,
+  },
+  brandGs: {
     fontSize: fontSizes.xxxl,
     fontFamily: typography.extraBold,
-    color: colors.text,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
+    color: colors.accent,
+    letterSpacing: 2,
+  },
+  brandTribun: {
+    fontSize: fontSizes.xxxl,
+    fontFamily: typography.extraBold,
+    color: colors.white,
     letterSpacing: 1,
   },
   tagline: {
-    fontSize: fontSizes.lg,
-    fontFamily: typography.medium,
-    color: colors.primary,
-    textAlign: 'center',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    marginTop: hp(4),
-  },
-  spinner: {
-    marginBottom: spacing.md,
-  },
-  loadingText: {
-    fontSize: fontSizes.md,
-    fontFamily: typography.medium,
-    color: colors.mutedText,
-    textAlign: 'center',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: hp(5),
-    alignItems: 'center',
-  },
-  footerText: {
     fontSize: fontSizes.sm,
     fontFamily: typography.medium,
     color: colors.mutedText,
-    marginBottom: spacing.sm,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginTop: spacing.xs / 2,
   },
-  versionBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    backgroundColor: 'rgba(0, 191, 71, 0.1)',
-    borderRadius: moderateScale(12),
-    borderWidth: 1,
-    borderColor: 'rgba(0, 191, 71, 0.2)',
+
+  // Footer / dots
+  footer: {
+    position: 'absolute',
+    bottom: 52,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  dotMid: {
+    backgroundColor: colors.accent,
   },
   versionText: {
     fontSize: fontSizes.xs,
-    fontFamily: typography.semiBold,
-    color: colors.primary,
+    fontFamily: typography.medium,
+    color: 'rgba(255,255,255,0.25)',
+    letterSpacing: 1,
   },
 });
 

@@ -21,6 +21,12 @@ import { fontSizes, typography } from "../../theme/typography";
 
 const IS_IOS = Platform.OS === "ios";
 
+type ClipData = {
+  embedUrl?: string;
+  url?: string;
+  platform?: "youtube" | "bein" | "trt" | "x" | "instagram";
+};
+
 type LiveEvent = {
   id: string;
   minute: number;
@@ -30,6 +36,7 @@ type LiveEvent = {
   detail: string;
   videoUrl?: string;
   thumbUrl?: string;
+  clip?: ClipData;
 };
 
 type AllVideosModalProps = {
@@ -46,11 +53,9 @@ const AllVideosModal: React.FC<AllVideosModalProps> = ({
   const { t } = useTranslation();
 
   const renderVideoItem = ({ item }: { item: LiveEvent }) => {
-    const thumb =
-      item.thumb ||
-      (item.thumbUrl
-        ? { uri: item.thumbUrl }
-        : require("../../assets/footboll/1.jpg"));
+    const thumb = item.thumbUrl
+      ? { uri: item.thumbUrl }
+      : require("../../assets/footboll/1.jpg");
     const clipUrl = item.clip?.embedUrl || item.clip?.url || item.videoUrl;
 
     const handleVideoPress = () => {

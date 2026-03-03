@@ -15,8 +15,18 @@ export interface FanMomentDto {
   status: 'Pending' | 'Approved' | 'Rejected';
   likeCount: number;
   createdAt: string; // ISO string
-  isOwnMoment?: boolean; // Indicates if current session owns this moment
-  creatorSessionId?: string; // Session ID of the content creator
+  isOwnMoment?: boolean; // True if current JWT user owns this moment
+  hasLiked?: boolean; // True if current JWT user has liked this moment
+  creatorUserId?: string; // UserId of authenticated creator (null for anonymous)
+  creatorSessionId?: string; // Session ID of anonymous creator (kept for backward compat)
+}
+
+/**
+ * Like toggle result from backend
+ */
+export interface LikeToggleResult {
+  liked: boolean; // true = liked, false = unliked
+  likeCount: number;
 }
 
 /**
@@ -29,24 +39,23 @@ export interface CreateFanMomentRequest {
   imageUrl?: string;
   videoUrl?: string;
   source?: string;
-  sessionId: string; // Anonymous user session ID
+  sessionId?: string; // Anonymous session ID (optional when authenticated)
 }
 
 /**
- * Update Own FanMoment Request (limited fields for users)
+ * Update Own FanMoment Request (JWT auth - no sessionId needed)
  */
 export interface UpdateOwnFanMomentRequest {
-  sessionId: string;
   caption?: string;
   imageUrl?: string;
   videoUrl?: string;
 }
 
 /**
- * Delete Own FanMoment Request
+ * Delete Own FanMoment Request (JWT auth - no body needed)
  */
 export interface DeleteOwnFanMomentRequest {
-  sessionId: string;
+  // No fields required — ownership verified via JWT
 }
 
 /**
@@ -64,7 +73,8 @@ export interface FanMoment {
   video?: string; // videoUrl
   likeCount: number;
   status: 'Pending' | 'Approved' | 'Rejected';
-  isOwnMoment?: boolean; // Indicates if current session owns this moment
+  isOwnMoment?: boolean;
+  hasLiked?: boolean;
 }
 
 /**

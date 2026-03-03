@@ -5,14 +5,14 @@ export const colors = {
   backgroundSubtle: "#0D0D0D",
   card: "#141414",
 
-  // Primary & Accent
-  primary: "#0FA958",
-  primaryLight: "#12C26A",
-  primaryDark: "#0D8A48",
-  primaryGlow: "rgba(15, 169, 88, 0.25)",
-  accent: "#D10E0E",
-  accentLight: "#E63939",
-  accentGlow: "rgba(209, 14, 14, 0.25)",
+  // Primary & Accent — GS Tribün
+  primary: "#E8111A",          // Galatasaray kırmızı
+  primaryLight: "#FF2D35",
+  primaryDark: "#C40E16",
+  primaryGlow: "rgba(232, 17, 26, 0.25)",
+  accent: "#FFC72C",           // Galatasaray sarı
+  accentLight: "#FFD45A",
+  accentGlow: "rgba(255, 199, 44, 0.25)",
 
   // Text colors (2025 Refined)
   white: "#FFFFFF",
@@ -51,11 +51,12 @@ export const colors = {
   overlayLight: "rgba(0, 0, 0, 0.3)",
 
   // Gradients (for LinearGradient) - as const for tuple type
-  gradientPrimary: ["#0FA958", "#12C26A"] as const,
+  gradientPrimary: ["#E8111A", "#C40E16"] as const,
+  gradientGS: ["#E8111A", "#FFC72C"] as const,
   gradientDark: ["#0D0D0D", "#0A0A0A", "#0D0D0D"] as const,
   gradientCard: ["rgba(255, 255, 255, 0.05)", "rgba(255, 255, 255, 0.02)"] as const,
-  gradientPrimarySubtle: ["rgba(15, 169, 88, 0.15)", "rgba(15, 169, 88, 0.05)"] as const,
-  gradientAccentSubtle: ["rgba(209, 14, 14, 0.15)", "rgba(15, 169, 88, 0.15)"] as const,
+  gradientPrimarySubtle: ["rgba(232, 17, 26, 0.15)", "rgba(232, 17, 26, 0.05)"] as const,
+  gradientAccentSubtle: ["rgba(232, 17, 26, 0.15)", "rgba(255, 199, 44, 0.10)"] as const,
   gradientHero: ["rgba(10, 10, 10, 0.3)", "rgba(10, 10, 10, 0.85)"] as const,
   gradientTextHero: ["#F5F5F5", "#A1A1A6"] as const,
 };

@@ -30,6 +30,9 @@ type Props = {
   onEditMoment?: (moment: FanMomentDto) => void;
   onDeleteMoment?: (moment: FanMomentDto) => void;
   onShareMoment?: (moment: FanMomentDto) => void;
+  onLikeMoment?: (moment: FanMomentDto) => void;
+  onPressAuthor?: (userId: string, username: string) => void;
+  onReportMoment?: (moment: FanMomentDto) => void;
   slot?: React.ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -44,6 +47,9 @@ const AnimatedMomentCard: React.FC<{
   onEdit?: () => void;
   onDelete?: () => void;
   onShare?: () => void;
+  onLike?: () => void;
+  onPressAuthor?: (userId: string, username: string) => void;
+  onReportMoment?: (moment: FanMomentDto) => void;
   activeAudioMomentId: string | null;
   activeMomentId: string | null;
   setActiveAudioMomentId: (id: string | null) => void;
@@ -54,6 +60,9 @@ const AnimatedMomentCard: React.FC<{
     onEdit,
     onDelete,
     onShare,
+    onLike,
+    onPressAuthor,
+    onReportMoment,
     activeAudioMomentId,
     activeMomentId,
     setActiveAudioMomentId,
@@ -405,23 +414,63 @@ const AnimatedMomentCard: React.FC<{
 
         <View style={styles.momentBody}>
           <View style={styles.momentMetaRow}>
-            <View style={styles.momentUserRow}>
-              <View style={styles.momentAvatar}>
+            <Pressable
+              onPress={(e) => {
+                e.stopPropagation();
+                if (onPressAuthor && moment.creatorUserId) {
+                  onPressAuthor(moment.creatorUserId, moment.username);
+                }
+              }}
+              style={({ pressed }) => [styles.momentUserRow, pressed && styles.authorPressed]}
+              disabled={!moment.creatorUserId}
+            >
+              <View style={[styles.momentAvatar, moment.creatorUserId && styles.momentAvatarClickable]}>
                 <Ionicons name="person" size={14} color={colors.text} />
               </View>
               <Text style={styles.momentLocation} numberOfLines={1}>
                 {moment.username}
               </Text>
+              {moment.creatorUserId && (
+                <Ionicons name="chevron-forward" size={12} color={colors.textTertiary} />
+              )}
+            </Pressable>
+            <View style={styles.metaRight}>
+              <Text style={styles.momentTime}>
+                {new Date(moment.createdAt).toLocaleDateString("tr-TR")}
+              </Text>
+              {!moment.isOwnMoment && onReportMoment && (
+                <Pressable
+                  onPress={(e) => { e.stopPropagation(); onReportMoment(moment); }}
+                  hitSlop={10}
+                  style={({ pressed }) => [styles.flagButton, pressed && styles.flagButtonPressed]}
+                >
+                  <Ionicons name="flag-outline" size={15} color={colors.textTertiary} />
+                </Pressable>
+              )}
             </View>
-            <Text style={styles.momentTime}>
-              {new Date(moment.createdAt).toLocaleDateString("tr-TR")}
-            </Text>
           </View>
           {!!moment.description && (
             <Text style={styles.momentCaption} numberOfLines={3}>
               {moment.description}
             </Text>
           )}
+          {/* Like Row */}
+          <View style={styles.likeRow}>
+            <Pressable
+              onPress={(e) => { e.stopPropagation(); onLike?.(); }}
+              style={({ pressed }) => [styles.likeButton, pressed && styles.likeButtonPressed]}
+              hitSlop={8}
+            >
+              <Ionicons
+                name={moment.hasLiked ? "heart" : "heart-outline"}
+                size={20}
+                color={moment.hasLiked ? colors.error : colors.textSecondary}
+              />
+              <Text style={[styles.likeCount, moment.hasLiked && styles.likeCountActive]}>
+                {moment.likeCount}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </Animated.View>
     </Pressable>
@@ -436,6 +485,9 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   onEditMoment,
   onDeleteMoment,
   onShareMoment,
+  onLikeMoment,
+  onPressAuthor,
+  onReportMoment,
   slot,
   refreshing = false,
   onRefresh,
@@ -587,6 +639,9 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
             onEdit={onEditMoment ? () => onEditMoment(item) : undefined}
             onDelete={onDeleteMoment ? () => onDeleteMoment(item) : undefined}
             onShare={onShareMoment ? () => onShareMoment(item) : undefined}
+            onLike={onLikeMoment ? () => onLikeMoment(item) : undefined}
+            onPressAuthor={onPressAuthor}
+            onReportMoment={onReportMoment}
             activeAudioMomentId={activeAudioMomentId}
             activeMomentId={activeMomentId}
             setActiveAudioMomentId={setActiveAudioMomentId}
@@ -666,6 +721,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xs,
     flex: 1,
+  },
+  authorPressed: {
+    opacity: 0.6,
+  },
+  metaRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  flagButton: {
+    padding: 3,
+  },
+  flagButtonPressed: {
+    opacity: 0.5,
+  },
+  momentAvatarClickable: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
   momentAvatar: {
     width: 26,
@@ -822,6 +895,34 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  // Like Button
+  likeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs / 2,
+  },
+  likeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs / 2,
+    paddingVertical: spacing.xs / 2,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radii.sm,
+  },
+  likeButtonPressed: {
+    opacity: 0.6,
+    transform: [{ scale: 0.95 }],
+  },
+  likeCount: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  likeCountActive: {
+    color: colors.error,
+    fontFamily: typography.semiBold,
   },
 });
 

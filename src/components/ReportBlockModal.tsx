@@ -28,8 +28,7 @@ const IS_IOS = Platform.OS === 'ios';
 interface ReportBlockModalProps {
   visible: boolean;
   onClose: () => void;
-  sessionId: string;
-  targetSessionId: string;
+  targetUserId?: string;
   contentType: ContentType;
   contentId: string;
   showBlockOption?: boolean;
@@ -55,14 +54,14 @@ const REPORT_CATEGORIES: ReportCategoryItem[] = [
 const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
   visible,
   onClose,
-  sessionId,
-  targetSessionId,
+  targetUserId,
   contentType,
   contentId,
-  showBlockOption = true,
+  showBlockOption,
   onBlockSuccess,
   onReportSuccess,
 }) => {
+  const canBlock = showBlockOption ?? !!targetUserId;
   const { t } = useTranslation();
   const [mode, setMode] = useState<'menu' | 'report' | 'block'>('menu');
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(
@@ -79,11 +78,11 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
   };
 
   const handleBlock = async () => {
+    if (!targetUserId) return;
     setIsLoading(true);
     try {
       const response = await userSafetyService.blockUser(
-        sessionId,
-        targetSessionId,
+        targetUserId,
         contentType,
         'Kullanici tarafindan engellendi'
       );
@@ -123,12 +122,11 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
     setIsLoading(true);
     try {
       const response = await userSafetyService.reportContent(
-        sessionId,
         contentType,
         contentId,
         selectedCategory,
         description || undefined,
-        targetSessionId || undefined
+        targetUserId
       );
 
       if (response.success) {
@@ -174,7 +172,7 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
         <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </Pressable>
 
-      {showBlockOption && (
+      {canBlock && (
         <Pressable
           style={styles.menuItem}
           onPress={() => setMode('block')}

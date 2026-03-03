@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { FanMomentDto } from "../types/fanMoment";
 import { fanMomentService } from "../services/fanMomentService";
 import { mediaService } from "../services/mediaService";
-import { getSession } from "../utils/sessionManager";
+import { useAuth } from "../contexts/AuthContext";
 import { handlePossibleBanError } from "./useBanStatus";
 import { logger } from "../utils/logger";
 
@@ -20,6 +20,7 @@ const initialState: ShareMomentFormState = {
 
 export const useShareMomentForm = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   const [form, setForm] = useState<ShareMomentFormState>(initialState);
 
@@ -71,9 +72,8 @@ export const useShareMomentForm = () => {
     }
 
     try {
-      // Get session for nickname
-      const session = await getSession();
-      const nickname = session?.nickname || t("home.momentDefaults.user");
+      // Use authenticated user's display name or fall back to default
+      const nickname = user?.displayName || user?.username || t("home.momentDefaults.user");
 
       // Upload image first if provided
       let uploadedImageUrl: string | undefined = undefined;
@@ -147,7 +147,7 @@ export const useShareMomentForm = () => {
       setVisible(false);
       return null;
     }
-  }, [form, buildMoment, reset, t]);
+  }, [form, buildMoment, reset, t, user]);
 
   const canSubmit = useMemo(
     () =>

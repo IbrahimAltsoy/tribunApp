@@ -81,13 +81,13 @@ const ChatScreen: React.FC = () => {
       setNickname(userSession.nickname);
 
       // Check EULA status
-      const needsEula = await userSafetyService.needsEulaAcceptance(userSession.sessionId);
+      const needsEula = await userSafetyService.needsEulaAcceptance();
       if (needsEula) {
         setShowEulaModal(true);
       }
 
-      // Load blocked sessions for filtering
-      await userSafetyService.refreshBlockedSessions(userSession.sessionId);
+      // Load blocked users for filtering
+      await userSafetyService.refreshBlockedSessions();
     };
     loadSession();
   }, []);
@@ -165,8 +165,8 @@ const ChatScreen: React.FC = () => {
       if (incoming.roomId !== selectedRoomRef.current) {
         return;
       }
-      // Filter out messages from blocked users
-      if (incoming.sessionId && userSafetyService.isSessionBlocked(incoming.sessionId)) {
+      // Filter out messages from blocked users (session-based or user-based)
+      if (userSafetyService.isBlocked(incoming.sessionId, incoming.userId)) {
         return;
       }
       const message: Message = {
@@ -176,6 +176,7 @@ const ChatScreen: React.FC = () => {
         timestamp: formatTimestamp(incoming.createdAt),
         isMine: incoming.username === nicknameRef.current,
         sessionId: incoming.sessionId,
+        userId: incoming.userId,
       };
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
@@ -222,7 +223,7 @@ const ChatScreen: React.FC = () => {
 
       if (response.success && response.data?.items) {
         const mapped = response.data.items
-          .filter((msg: ChatMessageDto) => !userSafetyService.isSessionBlocked(msg.sessionId || ''))
+          .filter((msg: ChatMessageDto) => !userSafetyService.isBlocked(msg.sessionId, msg.userId))
           .map((msg: ChatMessageDto) => ({
             id: msg.id,
             text: msg.message,
@@ -230,6 +231,7 @@ const ChatScreen: React.FC = () => {
             timestamp: formatTimestamp(msg.createdAt),
             isMine: msg.username === nicknameRef.current,
             sessionId: msg.sessionId,
+            userId: msg.userId,
           }));
         setMessages(mapped);
         setTimeout(scrollToBottom, 80);
@@ -383,12 +385,14 @@ const ChatScreen: React.FC = () => {
   }, []);
 
   const handleBlockSuccess = useCallback(() => {
-    // Filter out messages from blocked user
-    if (selectedMessage?.sessionId) {
-      setMessages((prev) =>
-        prev.filter((msg) => msg.sessionId !== selectedMessage.sessionId)
-      );
-    }
+    // Filter out messages from newly blocked user (match by sessionId or userId)
+    setMessages((prev) =>
+      prev.filter((msg) => {
+        if (selectedMessage?.userId && msg.userId === selectedMessage.userId) return false;
+        if (selectedMessage?.sessionId && msg.sessionId === selectedMessage.sessionId) return false;
+        return true;
+      })
+    );
   }, [selectedMessage]);
 
   const renderMessage = useCallback(
@@ -441,7 +445,7 @@ const ChatScreen: React.FC = () => {
                 </LinearGradient>
               </View>
               <View>
-                <Text style={styles.heroTitle}>Bihevra</Text>
+                <Text style={styles.heroTitle}>GS Tribün</Text>
                 <Text style={styles.heroSub}>{t("chat.subtitle")}</Text>
               </View>
             </View>
@@ -615,24 +619,19 @@ const ChatScreen: React.FC = () => {
       </SafeAreaView>
 
       {/* EULA Modal */}
-      {session && (
-        <EulaModal
-          visible={showEulaModal}
-          sessionId={session.sessionId}
-          onAccept={() => setShowEulaModal(false)}
-        />
-      )}
+      <EulaModal
+        visible={showEulaModal}
+        onAccept={() => setShowEulaModal(false)}
+      />
 
       {/* Report/Block Modal */}
-      {session && selectedMessage && (
+      {selectedMessage && (
         <ReportBlockModal
           visible={showReportModal}
           onClose={handleReportModalClose}
-          sessionId={session.sessionId}
-          targetSessionId={selectedMessage.sessionId || ''}
+          targetUserId={selectedMessage.userId}
           contentType="ChatMessage"
           contentId={selectedMessage.id}
-          showBlockOption={!!selectedMessage.sessionId}
           onBlockSuccess={handleBlockSuccess}
         />
       )}

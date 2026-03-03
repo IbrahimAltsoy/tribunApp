@@ -13,10 +13,10 @@ import { View } from "react-native";
 import RootNavigator from "./navigation/RootNavigator";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SplashScreen from "./components/SplashScreen";
+import { AuthProvider } from "./contexts/AuthContext";
 import { colors } from "./theme/colors";
 import { initSentry } from "./utils/sentry";
 import { notificationService } from "./services/notificationService";
-import { languageService } from "./utils/languageService";
 import "./i18n";
 
 // Keep the native splash screen visible while we load resources
@@ -37,17 +37,8 @@ const App: React.FC = () => {
   useEffect(() => {
     async function prepare() {
       try {
-        // Initialize language service (loads persisted language preference)
-        await languageService.initialize();
-
         // Initialize push notifications
         await notificationService.initialize();
-
-        // Subscribe to language changes to update notification preferences
-        const unsubscribe = languageService.onLanguageChange((newLanguage) => {
-          // Update notification language preference when user changes language
-          notificationService.updatePreferredLanguage(newLanguage);
-        });
 
         // Wait for fonts to load
         if (fontsLoaded) {
@@ -55,9 +46,6 @@ const App: React.FC = () => {
           await new Promise(resolve => setTimeout(resolve, 1000));
           setAppIsReady(true);
         }
-
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
       } catch (e) {
         console.warn(e);
       }
@@ -80,13 +68,15 @@ const App: React.FC = () => {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <StatusBar style="light" backgroundColor={colors.background} />
-        <View
-          style={{ flex: 1, backgroundColor: colors.background }}
-          onLayout={onLayoutRootView}
-        >
-          <RootNavigator />
-        </View>
+        <AuthProvider>
+          <StatusBar style="light" backgroundColor={colors.background} />
+          <View
+            style={{ flex: 1, backgroundColor: colors.background }}
+            onLayout={onLayoutRootView}
+          >
+            <RootNavigator />
+          </View>
+        </AuthProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );

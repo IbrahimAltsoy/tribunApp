@@ -1,5 +1,4 @@
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
 
 export type PlayerDto = {
   id: string;
@@ -32,7 +31,6 @@ const getPlayers = async (
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...languageService.getRequestHeaders(),
       },
     });
 

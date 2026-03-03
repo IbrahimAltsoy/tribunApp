@@ -10,48 +10,48 @@ type BihevraLogoProps = {
 };
 
 const BihevraLogo: React.FC<BihevraLogoProps> = ({
-  width = 150,
-  height = 40,
+  width = 180,
+  height = 44,
   fontSize = 28,
   variant = "default",
 }) => {
   const opacity = variant === "watermark" ? 0.85 : 1;
-
-  // Montserrat Bold benzeri ağırlık
-  const fontWeight = "700";
+  const fontWeight = "800";
 
   return (
     <View style={[styles.container, { width, height, opacity }]}>
-      <Svg width={width} height={height} viewBox="0 0 150 40">
+      <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
         <Defs>
-          <LinearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <Stop offset="0%" stopColor="#0FA958" />
-            <Stop offset="100%" stopColor="#14B85F" />
+          <LinearGradient id="gsGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor="#FFC72C" />
+            <Stop offset="100%" stopColor="#FFD45A" />
           </LinearGradient>
         </Defs>
 
-        {/* "Bi" - Yeşil gradient */}
+        {/* "GS" - Sarı gradient */}
         <Text
           x="0"
           y={fontSize + 4}
-          fill="url(#greenGradient)"
+          fill="url(#gsGradient)"
           fontSize={fontSize}
           fontWeight={fontWeight}
           fontFamily="Montserrat-Bold, Montserrat, sans-serif"
+          letterSpacing="1"
         >
-          Bi
+          GS
         </Text>
 
-        {/* "hevra" - Beyaz */}
+        {/* " Tribün" - Beyaz */}
         <Text
-          x={fontSize * 0.85}
+          x={fontSize * 1.55}
           y={fontSize + 4}
           fill="#FFFFFF"
           fontSize={fontSize}
           fontWeight={fontWeight}
           fontFamily="Montserrat-Bold, Montserrat, sans-serif"
+          letterSpacing="0.5"
         >
-          hevra
+          Tribün
         </Text>
       </Svg>
     </View>

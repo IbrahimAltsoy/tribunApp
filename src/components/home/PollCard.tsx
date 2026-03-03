@@ -10,13 +10,13 @@ import { pollService } from "../../services/pollService";
 import { pollSignalRService, ConnectionStatus } from "../../services/pollSignalRService";
 import type { PollDto } from "../../types/poll";
 import { logger } from "../../utils/logger";
-import { getApiBaseUrl, joinUrl } from "../../utils/apiBaseUrl";
 
 const IS_IOS = Platform.OS === "ios";
 
 type Props = {
   poll: PollDto;
   onVoteSuccess?: (updatedPoll: PollDto) => void;
+  onAuthRequired?: () => void;
 };
 
 const PollOption: React.FC<{
@@ -120,7 +120,7 @@ const PollOption: React.FC<{
   );
 };
 
-const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
+const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess, onAuthRequired }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [isVoting, setIsVoting] = useState(false);
@@ -141,21 +141,13 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
     setLocalPoll(poll);
   }, [poll]);
 
-  // Check if user has already voted (on mount) - poll-based check
+  // Check if user has already voted (on mount) - poll-based check via JWT
   useEffect(() => {
     const checkVoteStatus = async () => {
       try {
-        const sessionId = await pollService.getSessionId();
-
-        // Check if user voted for this poll (poll-based, not option-based)
-        const apiBaseUrl = getApiBaseUrl("http://localhost:5000");
-        const response = await fetch(
-          `${joinUrl(apiBaseUrl, "/api/polls/voted-option")}?pollId=${poll.id}&sessionId=${sessionId}`
-        );
-        const json = await response.json();
-
-        if (json.success && json.data) {
-          setVotedOptionId(json.data);
+        const result = await pollService.getVotedOptionId(poll.id);
+        if (result.success && result.data) {
+          setVotedOptionId(result.data);
         }
       } catch (error) {
         logger.error('Error checking vote status:', error);
@@ -238,28 +230,27 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess }) => {
       const response = await pollService.votePoll(optionId);
 
       if (response.success && response.data) {
-        // Update local poll with new vote counts
         setLocalPoll(response.data);
-
-        // Notify parent component
         if (onVoteSuccess) {
           onVoteSuccess(response.data);
         }
-
         logger.log('✅ Vote successful');
+      } else if (response.error === 'unauthorized') {
+        setVotedOptionId(null);
+        if (onAuthRequired) {
+          onAuthRequired();
+        }
       } else {
-        // Revert optimistic update on failure
         setVotedOptionId(null);
         logger.error('❌ Vote failed:', response.error);
       }
     } catch (error) {
-      // Revert optimistic update on error
       setVotedOptionId(null);
       logger.error('❌ Error voting:', error);
     } finally {
       setIsVoting(false);
     }
-  }, [onVoteSuccess]);
+  }, [onVoteSuccess, onAuthRequired]);
 
   const totalVotes = localPoll.options.reduce((sum, opt) => sum + opt.voteCount, 0);
 

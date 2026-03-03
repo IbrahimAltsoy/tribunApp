@@ -16,19 +16,16 @@ import { colors } from "../../theme/colors";
 import { spacing } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
 import type { FanMomentDto } from "../../types/fanMoment";
-import ReportBlockModal from "../ReportBlockModal";
 
 type Props = {
   visible: boolean;
   moment?: FanMomentDto;
   onClose: () => void;
-  sessionId?: string;
 };
 
-const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose, sessionId }) => {
+const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose }) => {
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
-  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -85,14 +82,6 @@ const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose, sessionI
       <View style={styles.detailOverlay}>
         <View style={styles.detailCard}>
           <View style={styles.headerButtons}>
-            {sessionId && !moment?.isOwnMoment && (
-              <TouchableOpacity
-                style={styles.detailReport}
-                onPress={() => setShowReportModal(true)}
-              >
-                <Ionicons name="flag-outline" size={20} color="#ef4444" />
-              </TouchableOpacity>
-            )}
             <TouchableOpacity style={styles.detailClose} onPress={onClose}>
               <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
@@ -148,18 +137,6 @@ const MomentDetailModal: React.FC<Props> = ({ visible, moment, onClose, sessionI
         </View>
       </View>
 
-      {/* Report Modal */}
-      {sessionId && moment && (
-        <ReportBlockModal
-          visible={showReportModal}
-          onClose={() => setShowReportModal(false)}
-          sessionId={sessionId}
-          targetSessionId={moment.creatorSessionId || ''}
-          contentType="FanMoment"
-          contentId={moment.id}
-          showBlockOption={!!moment.creatorSessionId}
-        />
-      )}
     </Modal>
   );
 };
@@ -172,11 +149,6 @@ const styles = StyleSheet.create({
     zIndex: 2,
     flexDirection: "row",
     gap: spacing.xs,
-  },
-  detailReport: {
-    backgroundColor: "rgba(0,0,0,0.4)",
-    borderRadius: 14,
-    padding: spacing.xs,
   },
   detailOverlay: {
     flex: 1,

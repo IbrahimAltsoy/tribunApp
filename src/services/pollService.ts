@@ -1,48 +1,19 @@
-import * as SecureStore from 'expo-secure-store';
 import type { PollDto, VotePollRequest } from '../types/poll';
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
+import { getAuthHeaders } from './authService';
 
 const API_BASE_URL = getApiBaseUrl("http://localhost:5000");
 const API_URL = joinUrl(API_BASE_URL, "/api/polls");
-
-/**
- * Get or create a unique session ID for this device
- * Uses SecureStore for persistent storage across app restarts
- */
-const getSessionId = async (): Promise<string> => {
-  try {
-    let sessionId = await SecureStore.getItemAsync('userSessionId');
-
-    if (!sessionId) {
-      // Generate a new UUID v4
-      sessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-
-      await SecureStore.setItemAsync('userSessionId', sessionId);
-    }
-
-    return sessionId;
-  } catch (error) {
-    // Silent error - generate fallback session ID
-    return 'fallback-session-' + Date.now();
-  }
-};
 
 /**
  * Get single active poll (for home screen)
  */
 const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; error?: string }> => {
   try {
-    const currentLanguage = languageService.getLanguage();
-    const response = await fetch(`${API_URL}/active?language=${currentLanguage}`, {
+    const response = await fetch(`${API_URL}/active`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -51,8 +22,6 @@ const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; erro
     }
 
     const json = await response.json();
-
-    // Backend returns {success: true, data: PollDto}
     const poll: PollDto = json.data || json;
 
     return {
@@ -60,7 +29,6 @@ const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; erro
       data: poll,
     };
   } catch (error) {
-    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -73,12 +41,10 @@ const getActivePoll = async (): Promise<{ success: boolean; data?: PollDto; erro
  */
 const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; error?: string }> => {
   try {
-    const currentLanguage = languageService.getLanguage();
-    const response = await fetch(`${API_URL}/active?language=${currentLanguage}`, {
+    const response = await fetch(`${API_URL}/active`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
       },
     });
 
@@ -87,8 +53,6 @@ const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; e
     }
 
     const json = await response.json();
-
-    // Backend returns {success: true, data: PollDto} for single poll or array
     const polls: PollDto[] = Array.isArray(json.data) ? json.data : (json.data ? [json.data] : (Array.isArray(json) ? json : []));
 
     return {
@@ -96,7 +60,6 @@ const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; e
       data: polls,
     };
   } catch (error) {
-    // Silent error - app continues working
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -105,35 +68,38 @@ const getActivePolls = async (): Promise<{ success: boolean; data?: PollDto[]; e
 };
 
 /**
- * Submit a vote for a poll option
+ * Submit a vote for a poll option — JWT auth required.
+ * Returns 'unauthorized' error if not logged in.
  */
 const votePoll = async (
   pollOptionId: string
 ): Promise<{ success: boolean; data?: PollDto; error?: string }> => {
   try {
-    const sessionId = await getSessionId();
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders['Authorization']) {
+      return { success: false, error: 'unauthorized' };
+    }
 
-    const voteRequest: VotePollRequest = {
-      pollOptionId,
-      sessionId,
-    };
+    const voteRequest: VotePollRequest = { pollOptionId };
 
     const response = await fetch(`${API_URL}/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...languageService.getRequestHeaders(),
+        ...authHeaders,
       },
       body: JSON.stringify(voteRequest),
     });
+
+    if (response.status === 401) {
+      return { success: false, error: 'unauthorized' };
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const json = await response.json();
-
-    // Backend returns {success: true, data: PollDto}
     const poll: PollDto = json.data || json;
 
     return {
@@ -141,7 +107,6 @@ const votePoll = async (
       data: poll,
     };
   } catch (error) {
-    // Silent error - user-friendly error handling
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -149,9 +114,82 @@ const votePoll = async (
   }
 };
 
+/**
+ * Check if the current user has voted for a specific poll option.
+ * Returns false without a network call if not logged in.
+ */
+const hasVoted = async (
+  pollOptionId: string
+): Promise<{ success: boolean; data?: boolean; error?: string }> => {
+  try {
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders['Authorization']) {
+      return { success: true, data: false };
+    }
+
+    const response = await fetch(`${API_URL}/has-voted?pollOptionId=${pollOptionId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+    });
+
+    if (response.status === 401) {
+      return { success: true, data: false };
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    return { success: true, data: json.data ?? false };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Get the voted option ID for a given poll.
+ * Returns null without a network call if not logged in.
+ */
+const getVotedOptionId = async (
+  pollId: string
+): Promise<{ success: boolean; data?: string | null; error?: string }> => {
+  try {
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders['Authorization']) {
+      return { success: true, data: null };
+    }
+
+    const response = await fetch(`${API_URL}/voted-option?pollId=${pollId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+    });
+
+    if (response.status === 401) {
+      return { success: true, data: null };
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    return { success: true, data: json.data ?? null };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
 export const pollService = {
-  getSessionId,
   getActivePoll,
   getActivePolls,
   votePoll,
+  hasVoted,
+  getVotedOptionId,
 };

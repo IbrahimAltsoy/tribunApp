@@ -11,11 +11,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
 import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
+import { useAuth } from '../contexts/AuthContext';
 
 type Props = {
   onViewTerms: () => void;
@@ -33,6 +35,17 @@ const SettingsScreen: React.FC<Props> = ({
   onOpenNotificationTest,
 }) => {
   const { t } = useTranslation();
+  // SettingsScreen is nested inside MarsStack; use getParent() to reach root navigator
+  const navigation = useNavigation();
+  const rootNavigation = (navigation as any).getParent?.() ?? navigation;
+  const { authState, user, logout } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert('Çıkış Yap', 'Hesabınızdan çıkmak istediğinize emin misiniz?', [
+      { text: 'İptal', style: 'cancel' },
+      { text: 'Çıkış Yap', style: 'destructive', onPress: logout },
+    ]);
+  };
 
   const handleResetOnboarding = () => {
     Alert.alert(
@@ -93,6 +106,56 @@ const SettingsScreen: React.FC<Props> = ({
           <Ionicons name="settings" size={40} color={colors.primary} />
           <Text style={styles.headerTitle}>{t('settings.title')}</Text>
           <Text style={styles.headerSubtitle}>{t('settings.subtitle')}</Text>
+        </View>
+
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Hesap</Text>
+
+          {authState === 'authenticated' && user ? (
+            <>
+              <View style={[styles.settingItem, { marginBottom: spacing.md }]}>
+                <View style={[styles.settingIcon, { backgroundColor: `${colors.primary}20` }]}>
+                  <Ionicons name="person" size={22} color={colors.primary} />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={styles.settingTitle}>{user.displayName || user.username}</Text>
+                  <Text style={styles.settingDescription}>{user.email}</Text>
+                </View>
+                <View style={[styles.authBadge, { backgroundColor: `${colors.success}20` }]}>
+                  <Text style={[styles.authBadgeText, { color: colors.success }]}>Giriş Yapıldı</Text>
+                </View>
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]}
+                onPress={handleLogout}
+              >
+                <View style={[styles.settingIcon, { backgroundColor: `${colors.error}15` }]}>
+                  <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={[styles.settingTitle, { color: colors.error }]}>Çıkış Yap</Text>
+                  <Text style={styles.settingDescription}>Hesabınızdan güvenli çıkış yapın</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]}
+              onPress={() => rootNavigation.navigate('Auth')}
+            >
+              <View style={[styles.settingIcon, { backgroundColor: `${colors.primary}20` }]}>
+                <Ionicons name="log-in-outline" size={22} color={colors.primary} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Giriş Yap / Kayıt Ol</Text>
+                <Text style={styles.settingDescription}>Beğeni, yorum ve daha fazlası için giriş yapın</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+            </Pressable>
+          )}
         </View>
 
         {/* Legal Section */}
@@ -346,6 +409,15 @@ const styles = StyleSheet.create({
     fontFamily: typography.regular,
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+  authBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radii.xs,
+  },
+  authBadgeText: {
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
   },
   footer: {
     paddingTop: spacing.xxl,

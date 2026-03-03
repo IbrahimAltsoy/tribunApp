@@ -25,13 +25,12 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface EulaModalProps {
   visible: boolean;
-  sessionId: string;
   onAccept: () => void;
 }
 
 const CURRENT_EULA_VERSION = '1.0';
 
-const EulaModal: React.FC<EulaModalProps> = ({ visible, sessionId, onAccept }) => {
+const EulaModal: React.FC<EulaModalProps> = ({ visible, onAccept }) => {
   const { t } = useTranslation();
   const [isAccepting, setIsAccepting] = useState(false);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
@@ -52,7 +51,6 @@ const EulaModal: React.FC<EulaModalProps> = ({ visible, sessionId, onAccept }) =
       const appVersion = Application.nativeApplicationVersion || '1.0.0';
 
       const response = await userSafetyService.acceptEula(
-        sessionId,
         CURRENT_EULA_VERSION,
         deviceInfo,
         appVersion

@@ -1,5 +1,4 @@
 import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
-import { languageService } from "../utils/languageService";
 
 export type StaffDto = {
   id: string;
@@ -25,7 +24,6 @@ const getStaff = async (
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...languageService.getRequestHeaders(),
       },
     });
 
