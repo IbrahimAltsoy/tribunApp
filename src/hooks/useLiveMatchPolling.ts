@@ -442,7 +442,6 @@ export const useLiveMatchPolling = ({
       const response = await footballService.getLiveScores();
 
       if (response.success && response.data && Array.isArray(response.data)) {
-        logger.log("🔴 Live scores data:", response.data.length, "matches");
 
         // Get the correct team ID based on teamType
         const targetTeamId = teamType === "Mens" ? TEAM_IDS.MENS : TEAM_IDS.WOMENS;
@@ -453,7 +452,6 @@ export const useLiveMatchPolling = ({
         );
 
         if (amedMatch) {
-          logger.log(`🏟️ ${teamType} team match found, state:`, amedMatch.stateId);
 
           // Detect events if we have previous state
           if (previousStateRef.current !== null) {
@@ -474,13 +472,6 @@ export const useLiveMatchPolling = ({
               isFirstFetchRef.current = false;
               const stateId = amedMatch.stateId;
 
-              if (
-                stateId === MATCH_STATES.FIRST_HALF ||
-                stateId === MATCH_STATES.SECOND_HALF
-              ) {
-                const teams = getTeamNames(amedMatch);
-                logger.log("📺 Live match in progress:", teams.home, "vs", teams.away);
-              }
             }
           }
 
@@ -517,14 +508,12 @@ export const useLiveMatchPolling = ({
 
       if (interval > 0) {
         setIsPolling(true);
-        logger.log(`⚡ Live polling: ${interval / 1000}s interval`);
 
         intervalRef.current = setInterval(() => {
           fetchLiveScores();
         }, interval);
       } else {
         setIsPolling(false);
-        logger.log("⏸️ No active match, polling paused");
       }
     },
     [fetchLiveScores],
@@ -545,7 +534,6 @@ export const useLiveMatchPolling = ({
       return;
     }
 
-    logger.log("🏟️ useLiveMatchPolling: Starting for", teamType);
 
     // Initial fetch and smart interval setup
     const initializePolling = async () => {
@@ -557,14 +545,12 @@ export const useLiveMatchPolling = ({
         : POLLING_INTERVALS.BACKGROUND_CHECK;
 
       if (interval > 0) {
-        logger.log(`⚡ Polling interval set to ${interval / 1000}s`);
         intervalRef.current = setInterval(() => {
           fetchLiveScores();
         }, interval);
         setIsPolling(true);
         setPollingInterval(interval);
       } else {
-        logger.log("⏸️ No active match, using background check interval");
         intervalRef.current = setInterval(() => {
           fetchLiveScores();
         }, POLLING_INTERVALS.BACKGROUND_CHECK);
@@ -576,7 +562,6 @@ export const useLiveMatchPolling = ({
     initializePolling();
 
     return () => {
-      logger.log("🏟️ useLiveMatchPolling: Cleaning up");
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

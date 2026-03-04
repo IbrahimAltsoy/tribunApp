@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1.5,
     borderColor: colors.glassStroke,
-    backgroundColor: "rgba(19, 30, 19, 0.4)",
+    backgroundColor: "rgba(18, 18, 18, 0.85)",
     overflow: "hidden",
     ...Platform.select({
       ios: {

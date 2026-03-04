@@ -63,12 +63,10 @@ type LeagueLegendItem = {
   description: string;
 };
 
-type GenderTeam = "mens" | "womens";
 type StandingsView = "general" | "home" | "away" | "scorers";
 
 const FixtureScreen = () => {
   const { t } = useTranslation();
-  const [selectedGender, setSelectedGender] = useState<GenderTeam>("mens");
   const [standingsView, setStandingsView] = useState<StandingsView>("general");
 
   // Week selection state
@@ -102,7 +100,7 @@ const FixtureScreen = () => {
 
   // Smart live match polling with automatic notifications
   const { liveMatch } = useLiveMatchPolling({
-    teamType: selectedGender === "mens" ? "Mens" : "Womens",
+    teamType: "Mens",
     enabled: true,
     onGoalCelebration: (teamName, playerName, minute) => {
       setGoalCelebrationData({ teamName, playerName, minute });
@@ -163,10 +161,8 @@ const FixtureScreen = () => {
   // Load all data function (used for pull-to-refresh)
   const loadAllData = useCallback(async () => {
     try {
-      // Season IDs: Mens = 25749, Womens = 26532
-      const seasonId = selectedGender === "mens" ? 25749 : 26532;
-      // Team IDs: Mens = 3570, Womens = 261209
-      const teamId = selectedGender === "mens" ? 3570 : 261209;
+      const seasonId = 25749;
+      const teamId = 3570;
 
       // Load all data in parallel for faster refresh
       const [standingsResponse, scheduleResponse, scorersResponse] = await Promise.all([
@@ -198,7 +194,7 @@ const FixtureScreen = () => {
     } catch (error) {
       logger.error('Failed to refresh fixture data:', error);
     }
-  }, [selectedGender, standingsView]);
+  }, [standingsView]);
 
   // Pull-to-refresh handler
   const onRefresh = useCallback(async () => {
@@ -214,8 +210,7 @@ const FixtureScreen = () => {
   // Load standings from backend
   useEffect(() => {
     const loadStandings = async () => {
-      // Season IDs: Mens = 25749, Womens = 26532
-      const seasonId = selectedGender === "mens" ? 25749 : 26532;
+      const seasonId = 25749;
 
       const response = await footballService.getStandingsTable(seasonId);
       if (response.success && response.data) {
@@ -232,7 +227,7 @@ const FixtureScreen = () => {
       }
     };
     loadStandings();
-  }, [selectedGender]);
+  }, []);
 
   // Load top scorers from backend - ONLY when scorers tab is active
   useEffect(() => {
@@ -242,8 +237,7 @@ const FixtureScreen = () => {
     }
 
     const loadTopScorers = async () => {
-      // Season IDs: Mens = 25749, Womens = 26532
-      const seasonId = selectedGender === "mens" ? 25749 : 26532;
+      const seasonId = 25749;
 
       logger.log("🔥 Loading top scorers for season:", seasonId);
       const response = await footballService.getTopScorers(seasonId);
@@ -260,13 +254,12 @@ const FixtureScreen = () => {
       }
     };
     loadTopScorers();
-  }, [selectedGender, standingsView]); // Dependency: both gender AND tab view
+  }, [standingsView]);
 
   // Load team schedule from backend
   useEffect(() => {
     const loadSchedule = async () => {
-      // Team IDs: Mens = 3570, Womens = 261209
-      const teamId = selectedGender === "mens" ? 3570 : 261209;
+      const teamId = 3570;
 
       const response = await footballService.getTeamSchedule(teamId);
       if (response.success && response.data) {
@@ -285,7 +278,7 @@ const FixtureScreen = () => {
       }
     };
     loadSchedule();
-  }, [selectedGender]);
+  }, []);
 
   // Auto-select the latest week for past results when backend data loads
   useEffect(() => {
@@ -394,37 +387,22 @@ const FixtureScreen = () => {
     []
   );
 
-  // Our team name based on gender
-  const ourTeam = useMemo(
-    () => (selectedGender === "mens" ? "Amedspor" : "Amed SK"),
-    [selectedGender]
-  );
+  const ourTeam = "Galatasaray";
 
-  // League info based on gender - static league name, dynamic week from backend
+  // League info - static league name, dynamic week from backend
   const leagueInfo = useMemo(() => {
-    const ourTeamName = selectedGender === "mens" ? "Amedspor" : "Amed SK";
-
-    // Use backend week if available, otherwise fallback to mock data or default
     const latestWeek =
       currentWeekFromBackend ||
       (currentPastResults.length > 0
         ? Math.max(...currentPastResults.map((r) => r.week))
-        : selectedGender === "mens"
-          ? 18
-          : 14);
+        : 18);
 
-    return selectedGender === "mens"
-      ? {
-          name: "TFF 1.Lig 2025-2026",
-          week: latestWeek,
-          ourTeam: ourTeamName,
-        }
-      : {
-          name: "TFF Kadınlar 1.Lig 2025-2026",
-          week: latestWeek,
-          ourTeam: ourTeamName,
-        };
-  }, [selectedGender, currentWeekFromBackend, currentPastResults]);
+    return {
+      name: "Süper Lig 2025-2026",
+      week: latestWeek,
+      ourTeam: "Galatasaray",
+    };
+  }, [currentWeekFromBackend, currentPastResults]);
 
   // Get available weeks for past results (last 5 weeks)
   const pastWeeks = useMemo(() => {
@@ -454,57 +432,12 @@ const FixtureScreen = () => {
     [currentUpcomingFixtures, selectedUpcomingWeek]
   );
 
-  // Render Gender Selector
-  const renderGenderSelector = () => (
-    <View style={styles.genderSelector}>
-      <Pressable
-        style={[
-          styles.genderButton,
-          selectedGender === "mens" && styles.genderButtonActive,
-        ]}
-        onPress={() => setSelectedGender("mens")}
-      >
-        <Text
-          style={[
-            styles.genderButtonText,
-            selectedGender === "mens" && styles.genderButtonTextActive,
-          ]}
-        >
-          {t("fixture.genderSelector.mens")}
-        </Text>
-      </Pressable>
-      <Pressable
-        style={[
-          styles.genderButton,
-          selectedGender === "womens" && styles.genderButtonActive,
-        ]}
-        onPress={() => setSelectedGender("womens")}
-      >
-        <Text
-          style={[
-            styles.genderButtonText,
-            selectedGender === "womens" && styles.genderButtonTextActive,
-          ]}
-        >
-          {t("fixture.genderSelector.womens")}
-        </Text>
-      </Pressable>
-    </View>
-  );
-
-  // Get position background color based on league rules
+  // Get position background color based on Süper Lig rules
   const getPositionColor = (pos: number): string | undefined => {
-    if (selectedGender === "mens") {
-      // TFF 1. Lig (Men's)
-      if (pos >= 1 && pos <= 2) return "#3b82f6"; // Mavi - Süper Lig'e terfi
-      if (pos === 3) return "#f59e0b"; // Turuncu - Final
-      if (pos >= 4 && pos <= 7) return "#eab308"; // Sarı - Çeyrek final
-      if (pos >= 17 && pos <= 20) return "#ef4444"; // Kırmızı - Küme düşme
-    } else {
-      // Women's league
-      if (pos === 1) return "#3b82f6"; // Mavi - Kupaya katılım (Kadınlar Şampiyonlar Ligi)
-      if (pos >= 14 && pos <= 16) return "#ef4444"; // Kırmızı - Küme düşme
-    }
+    if (pos === 1) return "#3b82f6";          // Mavi - Şampiyonlar Ligi
+    if (pos >= 2 && pos <= 3) return "#10b981"; // Yeşil - Avrupa Ligi
+    if (pos >= 4 && pos <= 6) return "#f59e0b"; // Turuncu - Konferans Ligi
+    if (pos >= 17 && pos <= 18) return "#ef4444"; // Kırmızı - Küme düşme
     return undefined;
   };
 
@@ -811,7 +744,7 @@ const FixtureScreen = () => {
               <FlatList
                 data={currentStandings}
                 renderItem={renderStandingRow}
-                keyExtractor={(item) => `${selectedGender}-${item.team}`}
+                keyExtractor={(item) => item.team}
                 scrollEnabled={false}
                 removeClippedSubviews={true}
                 initialNumToRender={20}
@@ -851,9 +784,7 @@ const FixtureScreen = () => {
                 const goals = scorer.total || 0;
                 const position = scorer.position || index + 1;
 
-                // Check if this is our team (Amedspor or Amed SK)
-                const isOurTeam =
-                  teamName === "Amedspor" || teamName === "Amed SK";
+                const isOurTeam = teamName === "Galatasaray";
 
                 // Medal emoji for top 3
                 const rankDisplay =
@@ -1459,9 +1390,6 @@ const FixtureScreen = () => {
         {/* Live Match Section - AT THE TOP */}
         {renderLiveMatchSection()}
 
-        {/* Gender Selector */}
-        {renderGenderSelector()}
-
         {/* Standings Section (RESTORED) */}
         {renderStandingsSection()}
 
@@ -1535,37 +1463,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     fontFamily: typography.medium,
     color: colors.mutedText,
-  },
-
-  // Gender Selector
-  genderSelector: {
-    flexDirection: "row",
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
-    backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: spacing.xs / 2,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  genderButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  genderButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  genderButtonText: {
-    fontSize: fontSizes.md,
-    fontFamily: typography.semiBold,
-    color: colors.text,
-  },
-  genderButtonTextActive: {
-    color: colors.background,
   },
 
   // Standings Section (RESTORED)

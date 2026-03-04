@@ -52,7 +52,7 @@ import { useBanStatus, checkBanBeforeAction } from "../hooks/useBanStatus";
 import type { PollDto } from "../types/poll";
 import type { FanMomentDto } from "../types/fanMoment";
 
-const storeImage = require("../assets/footboll/1.jpg");
+const storeImage = require("../assets/footboll/hagi.jpg");
 
 const HomeScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -321,52 +321,35 @@ const HomeScreen: React.FC = () => {
       >
         <ImageBackground
           source={storeImage}
+          resizeMode="cover"
           style={styles.supportImage}
-          imageStyle={styles.supportImageStyle}
         >
+          {/* Gradient: transparent top → dark bottom */}
           <LinearGradient
-            colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.8)"]}
+            colors={["rgba(0,0,0,0.05)", "transparent", "rgba(0,0,0,0.88)"]}
+            locations={[0, 0.35, 1]}
             style={StyleSheet.absoluteFill}
           />
-          {Platform.OS === "ios" ? (
-            <View style={styles.supportContentIOS}>
+          {/* Red top accent stripe */}
+          <View style={styles.supportTopStripe} />
+          {/* Bottom content */}
+          <View style={styles.supportContent}>
+            <View style={styles.supportHeaderRow}>
               <View style={styles.supportPillWrapper}>
-                <Ionicons name="storefront" size={14} color={colors.primary} />
+                <Ionicons name="storefront-outline" size={12} color="#E8111A" />
                 <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
               </View>
-              <Text
-                style={styles.supportTitleIOS}
-                allowFontScaling={false}
-                numberOfLines={1}
-              >
-                {t("home.supportStore")}
-              </Text>
-              <Text style={styles.supportSubtitle}>
-                {t("home.supportSubtitle")}
-              </Text>
               <View style={styles.supportArrowCircle}>
-                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+                <Ionicons name="arrow-forward" size={16} color={colors.white} />
               </View>
             </View>
-          ) : (
-            <BlurView
-              intensity={22}
-              tint="dark"
-              style={styles.supportContent}
-            >
-              <View style={styles.supportPillWrapper}>
-                <Ionicons name="storefront" size={14} color={colors.primary} />
-                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
-              </View>
-              <Text style={styles.supportTitle}>{t("home.supportStore")}</Text>
-              <Text style={styles.supportSubtitle}>
-                {t("home.supportSubtitle")}
-              </Text>
-              <View style={styles.supportArrowCircle}>
-                <Ionicons name="arrow-forward" size={20} color={colors.white} />
-              </View>
-            </BlurView>
-          )}
+            <Text style={styles.supportTitle} numberOfLines={1}>
+              {t("home.supportStore")}
+            </Text>
+            <Text style={styles.supportSubtitle} numberOfLines={1}>
+              {t("home.supportSubtitle")}
+            </Text>
+          </View>
         </ImageBackground>
       </Pressable>
     </View>
@@ -889,112 +872,91 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   supportCard: {
-    marginHorizontal: spacing.lg,
     marginTop: spacing.md,
-    borderRadius: 20,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "rgba(232,17,26,0.22)",
     ...Platform.select({
       ios: {
-        shadowColor: colors.shadowSoft,
+        shadowColor: "#E8111A",
         shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.3,
-        shadowRadius: 10,
+        shadowOpacity: 0.2,
+        shadowRadius: 14,
       },
-      android: {
-        elevation: 6,
-      },
+      android: { elevation: 6 },
     }),
   },
   supportCardPressed: {
-    opacity: 0.95,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+    transform: [{ scale: 0.985 }],
   },
   supportImage: {
-    height: 180,
+    height: 210,
     justifyContent: "flex-end",
-  },
-  supportImageStyle: {
-    borderRadius: 20,
-  },
-  supportContent: {
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    backgroundColor: "rgba(0, 0, 0, 0.65)",
     overflow: "hidden",
   },
-  supportContentIOS: {
-    padding: spacing.lg,
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    backgroundColor: "rgba(0, 0, 0, 0.88)",
+  supportTopStripe: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: "#E8111A",
   },
-  supportTitleIOS: {
-    color: colors.white,
-    fontWeight: "700",
-    fontSize: 24,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+  supportContent: {
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  supportHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.xs,
   },
   supportPillWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    alignSelf: "flex-start",
+    gap: 4,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: 12,
-    backgroundColor: "rgba(232, 17, 26, 0.15)",
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "rgba(232,17,26,0.15)",
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: "rgba(232,17,26,0.35)",
   },
   supportPill: {
-    color: colors.primary,
+    color: "#E8111A",
     fontFamily: typography.bold,
     fontSize: fontSizes.xs,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   supportTitle: {
-    color: colors.white,
+    color: colors.primary,
     fontFamily: typography.bold,
-    fontSize: fontSizes.xl,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-    flexShrink: 0,
-    width: "100%",
+    fontSize: 22,
   },
   supportSubtitle: {
-    color: colors.textSecondary,
+    color: "rgba(255,255,255,0.55)",
     fontFamily: typography.medium,
-    fontSize: fontSizes.sm,
-    lineHeight: 20,
+    fontSize: fontSizes.xs,
   },
   supportArrowCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#E8111A",
     alignItems: "center",
     justifyContent: "center",
-    alignSelf: "flex-start",
-    marginTop: spacing.xs,
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
+        shadowColor: "#E8111A",
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.4,
+        shadowOpacity: 0.55,
         shadowRadius: 6,
       },
-      android: {
-        elevation: 4,
-      },
+      android: { elevation: 4 },
     }),
   },
 

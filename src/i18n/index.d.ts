@@ -1,6 +1,6 @@
 import type { i18n } from "i18next";
 
-export type LanguageCode = "tr" | "en" | "ku";
+export type LanguageCode = "tr";
 
 export type AvailableLanguage = {
   code: LanguageCode;

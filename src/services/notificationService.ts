@@ -560,11 +560,14 @@ const getNotifications = async (options?: {
 
     const fullUrl = `${joinUrl(NOTIFICATION_API_BASE_URL, "/api/notifications")}?${params}`;
     const response = await fetch(fullUrl, {
-      headers: {
-      },
+      headers: {},
     });
-    const result = await response.json();
 
+    const text = await response.text();
+    if (!text) {
+      return { success: false, data: [], totalCount: 0, unreadCount: 0 };
+    }
+    const result = JSON.parse(text);
     return result;
   } catch (error) {
     logger.error('Failed to get notifications:', error);

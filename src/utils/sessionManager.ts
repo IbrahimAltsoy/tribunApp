@@ -37,7 +37,7 @@ const generateSessionId = (): string => {
 /**
  * Initialize or retrieve user session
  * - If session exists, return it
- * - If not, create new session with random Amedspor nickname
+ * - If not, create new session with random Galatasaray nickname
  */
 export const initializeSession = async (): Promise<UserSession> => {
   try {

@@ -30,10 +30,10 @@ const FixtureList: React.FC<Props> = ({ fixtures }) => {
         <View key={fixture.id} style={styles.fixtureCard}>
           <View style={styles.fixtureRow}>
             <View style={styles.fixtureContent}>
-              <Text style={styles.fixtureOpponent}>Amedspor</Text>
+              <Text style={styles.fixtureOpponent}>Galatasaray</Text>
               <Text style={styles.fixtureVs}>
                 {t("fixture.vsDash", {
-                  home: "Amedspor",
+                  home: "Galatasaray",
                   away: fixture.opponent,
                 })}{" "}
               </Text>

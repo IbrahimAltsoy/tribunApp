@@ -109,7 +109,7 @@
     "supportTitle": "Takımına Destek Ol",
     "supportSubtitle": "Formalar, atkılar ve lisanslı ürünler için tıkla.",
     "supportPill": "Mağaza",
-    "supportStore": "AmedStore.com",
+    "supportStore": "gsstore.org",
     "supportClubTitle": "Kulübünü Destekle",
     "supportClubSubtitle": "Resmi mağazadan destek ol, forma al",
     "goToStore": "MAĞAZAYA GİT →",
@@ -239,10 +239,6 @@
     "vsDash": "{{home}} - {{away}}",
     "liveTickerTitle": "Anlık Gol / Pozisyon",
     "liveTickerSubtitle": "Canlı maçlardan gol, kart ve pozisyon akışı",
-    "genderSelector": {
-      "mens": "Erkek Takımı",
-      "womens": "Kadın Takımı"
-    },
     "legend": {
       "title": "Açıklamalar",
       "promotion": "Yükselme",
@@ -322,10 +318,6 @@
   "team": {
     "title": "Takım",
     "subtitle": "Yönetim, teknik kadro ve oyuncular",
-    "genderSelector": {
-      "mens": "Erkek Takımı",
-      "womens": "Kadın Takımı"
-    },
     "tabs": {
       "management": "Yönetim Kadrosu",
       "coaching": "Teknik Kadro",

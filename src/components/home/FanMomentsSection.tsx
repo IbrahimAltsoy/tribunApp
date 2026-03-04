@@ -456,7 +456,12 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
             <View style={styles.slotContainer}>{slot}</View>
           )}
 
-          <View style={styles.listSeparator} />
+          {/* Section header */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionAccent} />
+            <Text style={styles.sectionTitle}>TRİBÜN ANLARI</Text>
+            <View style={styles.sectionLine} />
+          </View>
         </>
       }
       onEndReached={hasMore ? onLoadMore : undefined}
@@ -774,17 +779,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(232,17,26,0.18)",
+    borderLeftWidth: 3,
+    borderLeftColor: "#E8111A",
     backgroundColor: colors.backgroundElevated,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     ...Platform.select({
       ios: {
-        shadowColor: "#000",
+        shadowColor: "#E8111A",
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
       },
       android: { elevation: 4 },
     }),
@@ -842,6 +849,43 @@ const styles = StyleSheet.create({
       },
       android: { elevation: 5 },
     }),
+  },
+
+  // ─── Section Header ──────────────────────────────────────────────────────
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+
+  sectionAccent: {
+    width: 3,
+    height: 14,
+    backgroundColor: "#E8111A",
+    borderRadius: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E8111A",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+      },
+    }),
+  },
+
+  sectionTitle: {
+    color: colors.textTertiary,
+    fontFamily: typography.bold,
+    fontSize: fontSizes.xs,
+    letterSpacing: 2,
+  },
+
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
   },
 
   // ─── Loading More ────────────────────────────────────────────────────────

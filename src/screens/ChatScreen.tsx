@@ -419,8 +419,8 @@ const ChatScreen: React.FC = () => {
       <LinearGradient
         colors={[
           colors.primary,
-          "rgba(0, 191, 71, 0.8)",
-          "rgba(0, 191, 71, 0.6)",
+          "rgba(197, 62, 9, 0.8)",
+          "rgba(171, 44, 9, 0.6)",
           colors.background,
         ]}
         start={{ x: 0, y: 0 }}
@@ -591,12 +591,16 @@ const ChatScreen: React.FC = () => {
                 <Pressable
                   style={[
                     styles.sendBtnWrapper,
-                    (inputText.trim().length === 0 || !isChatOpen || !selectedRoom) &&
+                    (inputText.trim().length === 0 ||
+                      !isChatOpen ||
+                      !selectedRoom) &&
                       styles.sendBtnDisabled,
                   ]}
                   onPress={handleSendText}
                   disabled={
-                    inputText.trim().length === 0 || !isChatOpen || !selectedRoom
+                    inputText.trim().length === 0 ||
+                    !isChatOpen ||
+                    !selectedRoom
                   }
                 >
                   <LinearGradient

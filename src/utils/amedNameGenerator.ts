@@ -1,5 +1,5 @@
 /**
- * Amedspor Themed Anonymous Nickname Generator
+ * Galatasaray Themed Anonymous Nickname Generator
  * Generates fun, themed nicknames for anonymous chat users
  */
 
@@ -57,7 +57,7 @@ const football = [
 ];
 
 /**
- * Generate a random Amedspor-themed nickname
+ * Generate a random Galatasaray-themed nickname
  */
 export const generateAmedNickname = (): string => {
   const categories = [
