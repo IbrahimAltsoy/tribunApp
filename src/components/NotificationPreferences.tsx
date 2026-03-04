@@ -14,7 +14,8 @@ import { useTranslation } from 'react-i18next';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
-import { notificationService, type NotificationPreferences } from '../services/notificationService';
+import { notificationService } from '../services/notificationService';
+import type { NotificationPreferences as NotificationPrefsType } from '../services/notificationService';
 import { logger } from '../utils/logger';
 
 type Props = {
@@ -24,7 +25,7 @@ type Props = {
 const NotificationPreferences: React.FC<Props> = ({ onClose }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [preferences, setPreferences] = useState<NotificationPreferences>({
+  const [preferences, setPreferences] = useState<NotificationPrefsType>({
     enabled: true,
     chatRooms: true,
     liveMatches: true,
@@ -49,7 +50,7 @@ const NotificationPreferences: React.FC<Props> = ({ onClose }) => {
     }
   };
 
-  const handleToggle = async (key: keyof NotificationPreferences) => {
+  const handleToggle = async (key: keyof NotificationPrefsType) => {
     // If disabling master switch, warn user
     if (key === 'enabled' && preferences.enabled) {
       Alert.alert(

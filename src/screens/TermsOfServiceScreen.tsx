@@ -14,7 +14,6 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
-import { formatDate } from '../i18n';
 
 type Props = {
   onClose?: () => void;
@@ -38,8 +37,7 @@ const TermsOfServiceScreen: React.FC<Props> = ({
     }
   };
 
-  // Format date based on current locale
-  const lastUpdatedDate = formatDate(new Date('2026-01-08'), {
+  const lastUpdatedDate = new Date('2026-01-08').toLocaleDateString('tr-TR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -57,7 +55,7 @@ const TermsOfServiceScreen: React.FC<Props> = ({
   ] as const;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleClose} style={styles.closeButton}>
@@ -149,7 +147,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
   },
   lastUpdated: {
     fontSize: fontSizes.sm,
@@ -164,7 +163,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSizes.lg,
     fontFamily: typography.bold,
-    color: colors.white,
+    color: colors.accent,
     marginBottom: spacing.md,
   },
   paragraph: {

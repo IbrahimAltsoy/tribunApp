@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   notificationBadgeText: {
-    color: colors.white,
+    color: "#1A1A1A",
     fontSize: 10,
     fontWeight: "700",
     textAlign: "center",

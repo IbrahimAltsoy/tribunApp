@@ -237,6 +237,13 @@ const AnimatedMomentCard: React.FC<{
   return (
     <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
       <Animated.View style={[styles.momentCard, { transform: [{ scale: scaleAnim }] }]}>
+        {/* Sol kenar — kırmızıdan sarıya gradient */}
+        <LinearGradient
+          colors={["#E8111A", "#FFC72C"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.cardLeftAccent}
+        />
         {moment.imageUrl ? (
           /* — Image card: full-bleed with gradient overlay — */
           <ImageBackground
@@ -527,6 +534,16 @@ const styles = StyleSheet.create({
     }),
   },
 
+  // Sol kırmızı / sağ sarı dikey kenar
+  cardLeftAccent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: "#E8111A",
+    zIndex: 5,
+  },
   // Full-bleed image / video container
   momentHero: {
     height: 300,

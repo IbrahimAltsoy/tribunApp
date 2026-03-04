@@ -27,4 +27,12 @@ export const availableLanguages = [
   { code: "tr", label: "Türkçe" },
 ];
 
+export function formatDate(value, options) {
+  return new Intl.DateTimeFormat(i18n.language || "tr", options).format(value);
+}
+
+export function formatNumber(value, options) {
+  return new Intl.NumberFormat(i18n.language || "tr", options).format(value);
+}
+
 export default i18n;
