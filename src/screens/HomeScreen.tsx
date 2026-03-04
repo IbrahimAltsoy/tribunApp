@@ -256,6 +256,13 @@ const HomeScreen: React.FC = () => {
     setReportModalVisible(true);
   }, []);
 
+  // Report triggered from the detail modal — close detail first, then open report
+  const handleReportFromDetail = useCallback(() => {
+    if (!selectedMoment) return;
+    setDetailModalVisible(false);
+    handleReportMoment(selectedMoment);
+  }, [selectedMoment, handleReportMoment]);
+
   const handleReportBlockSuccess = useCallback(() => {
     if (momentToReport?.creatorUserId) {
       // Engellenen kullanıcının tüm paylaşımlarını listeden kaldır
@@ -564,7 +571,6 @@ const HomeScreen: React.FC = () => {
           onShareMoment={shareMoment}
           onLikeMoment={handleLikeMoment}
           onPressAuthor={handlePressAuthor}
-          onReportMoment={handleReportMoment}
           slot={smartSlot}
           refreshing={refreshing}
           onRefresh={onRefresh}
@@ -622,6 +628,7 @@ const HomeScreen: React.FC = () => {
         visible={detailModalVisible}
         moment={selectedMoment}
         onClose={() => setDetailModalVisible(false)}
+        onReport={selectedMoment && !selectedMoment.isOwnMoment ? handleReportFromDetail : undefined}
       />
 
       {/* Notification Modal */}
@@ -837,7 +844,7 @@ const HomeScreen: React.FC = () => {
                       ]}
                     >
                       <LinearGradient
-                        colors={["#0FA958", "#12C26A"]}
+                        colors={["#FFC72C", "#D97706"]}
                         style={styles.editSaveGradient}
                       >
                         <Ionicons
@@ -916,7 +923,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.glassStroke,
-    backgroundColor: "rgba(19, 30, 19, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
     overflow: "hidden",
   },
   supportContentIOS: {
@@ -924,7 +931,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.glassStroke,
-    backgroundColor: "rgba(19, 30, 19, 0.85)",
+    backgroundColor: "rgba(0, 0, 0, 0.88)",
   },
   supportTitleIOS: {
     color: colors.white,
@@ -942,7 +949,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 191, 71, 0.2)",
+    backgroundColor: "rgba(232, 17, 26, 0.15)",
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -1050,7 +1057,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(15, 169, 88, 0.15)",
+    backgroundColor: "rgba(232, 17, 26, 0.12)",
     borderWidth: 1,
     borderColor: colors.primary,
   },
