@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the comprehensive push notification system implemented in the Amedspor Tribün mobile app. The system includes:
+This document describes the comprehensive push notification system implemented in the GS Tribün mobile app. The system includes:
 
 - ✅ Local notification support
 - ✅ Push notification token management
@@ -31,7 +31,7 @@ await notificationService.scheduleLocalNotification({
   type: NotificationType.MATCH_GOAL,
   id: 'match-123',
   title: '⚽ GOL!',
-  body: 'Amedspor - Mehmet Ali (45\')',
+  body: 'GS Tribün - Mehmet Ali (45\')',
 });
 
 // Get user preferences

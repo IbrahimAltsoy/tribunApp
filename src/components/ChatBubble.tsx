@@ -16,6 +16,7 @@ export type Message = {
   timestamp: string;
   isMine: boolean;
   isRead?: boolean;
+  isEdited?: boolean;
   sessionId?: string;
   userId?: string;
 };
@@ -111,6 +112,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onLongPress }) => {
                 <Text style={styles.messageText}>{message.text}</Text>
                 {message.timestamp && (
                   <View style={styles.footer}>
+                    {message.isEdited && (
+                      <Text style={styles.editedLabel}>düzenlendi</Text>
+                    )}
                     <Text style={styles.timestamp}>{message.timestamp}</Text>
                     {message.isRead && (
                       <Ionicons
@@ -278,6 +282,13 @@ const styles = StyleSheet.create({
   otherBubbleBorder: {
     borderBottomLeftRadius: radii.xs,
     borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  editedLabel: {
+    color: colors.textTertiary,
+    fontSize: fontSizes.xs,
+    fontFamily: typography.medium,
+    opacity: 0.6,
+    fontStyle: "italic" as const,
   },
 });
 

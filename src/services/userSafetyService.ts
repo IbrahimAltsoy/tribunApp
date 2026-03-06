@@ -7,7 +7,7 @@
 import { getApiBaseUrl, joinUrl } from '../utils/apiBaseUrl';
 import { logger } from '../utils/logger';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAuthHeaders } from './authService';
+import { getAuthHeaders, getAccessToken } from './authService';
 
 const STORAGE_KEYS = {
   BLOCKED_USERS: '@tribun_blocked_users',
@@ -218,9 +218,15 @@ class UserSafetyService {
   }
 
   /**
-   * Refresh blocked user IDs from server
+   * Refresh blocked user IDs from server.
+   * No-op when unauthenticated to avoid 401 errors after logout/delete.
    */
   async refreshBlockedSessions(): Promise<void> {
+    const token = await getAccessToken();
+    if (!token) {
+      this.blockedUserIdsCache = new Set();
+      return;
+    }
     await this.getBlockedUserIds();
   }
 

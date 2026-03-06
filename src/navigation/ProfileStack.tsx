@@ -4,6 +4,7 @@ import { Modal, Platform, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import ProfileEditScreen from "../screens/ProfileEditScreen";
 import TermsOfServiceScreen from "../screens/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import ConsentScreen from "../screens/ConsentScreen";
@@ -44,6 +45,11 @@ const ProfileStack: React.FC = () => {
         <Stack.Screen
           name="ProfileHome"
           component={ProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={ProfileEditScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

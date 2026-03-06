@@ -18,6 +18,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../contexts/AuthContext";
 import { fanMomentService } from "../services/fanMomentService";
+import { mediaService } from "../services/mediaService";
 import { colors } from "../theme/colors";
 import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -44,6 +45,19 @@ const ProfileScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMoment, setSelectedMoment] = useState<FanMomentDto | null>(null);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const raw = user?.avatarUrl;
+    if (!raw) { setAvatarDisplayUrl(null); return; }
+    // objectName ise signed URL al, tam URL ise objectName'i çıkar
+    const objectName = raw.startsWith("http")
+      ? raw.replace(/^https?:\/\/[^/]+\/[^/]+\//, "")
+      : raw;
+    mediaService.getSignedUrl(objectName).then((r) => {
+      if (r.success && r.url) setAvatarDisplayUrl(r.url);
+    });
+  }, [user?.avatarUrl]);
 
   const loadMoments = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -179,8 +193,8 @@ const ProfileScreen: React.FC = () => {
                 style={styles.avatarRing}
               >
                 <View style={styles.avatarInner}>
-                  {user?.avatarUrl ? (
-                    <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+                  {avatarDisplayUrl ? (
+                    <Image source={{ uri: avatarDisplayUrl }} style={styles.avatar} />
                   ) : (
                     <LinearGradient
                       colors={[colors.primary, colors.accent]}
@@ -194,6 +208,15 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.displayName}>{displayName}</Text>
               <Text style={styles.username}>@{user?.username}</Text>
               {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
+
+              {/* Edit Profile Button */}
+              <Pressable
+                onPress={() => navigation.navigate("EditProfile")}
+                style={({ pressed }) => [styles.editButton, pressed && { opacity: 0.7 }]}
+              >
+                <Ionicons name="pencil-outline" size={14} color={colors.accent} />
+                <Text style={styles.editButtonText}>Profili Düzenle</Text>
+              </Pressable>
 
               {/* Stats */}
               <View style={styles.statsRow}>
@@ -402,6 +425,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.xs,
     lineHeight: 20,
+  },
+  editButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  editButtonText: {
+    color: colors.accent,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
   },
   statsRow: {
     flexDirection: "row",

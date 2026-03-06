@@ -16,12 +16,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { colors } from '../../theme/colors';
 import { spacing, radii } from '../../theme/spacing';
 import { fontSizes, typography } from '../../theme/typography';
 import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/authService';
 
 const IS_IOS = Platform.OS === 'ios';
 
@@ -38,6 +38,12 @@ const LoginScreen: React.FC<Props> = ({ onNavigateRegister }) => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errors, setErrors] = useState<{ emailOrUsername?: string; password?: string }>({});
+
+  // Forgot password state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   // Entrance animation
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -90,6 +96,22 @@ const LoginScreen: React.FC<Props> = ({ onNavigateRegister }) => {
       }
     }
   }, [signInWithApple]);
+
+  const handleForgotPassword = useCallback(async () => {
+    if (!forgotEmail.trim()) {
+      Alert.alert('Hata', 'Lütfen e-posta adresinizi girin.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      await authService.forgotPassword(forgotEmail.trim());
+      setForgotSent(true);
+    } catch (err) {
+      Alert.alert('Hata', err instanceof Error ? err.message : 'Bu e-posta adresi sistemde kayıtlı değil.');
+    } finally {
+      setForgotLoading(false);
+    }
+  }, [forgotEmail]);
 
   return (
     <View style={styles.container}>
@@ -207,6 +229,58 @@ const LoginScreen: React.FC<Props> = ({ onNavigateRegister }) => {
                     )}
                   </LinearGradient>
                 </TouchableOpacity>
+
+                {/* Forgot Password Link */}
+                {!showForgot && (
+                  <TouchableOpacity onPress={() => setShowForgot(true)} hitSlop={8} style={styles.forgotBtn}>
+                    <Text style={styles.forgotText}>Şifremi unuttum</Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Forgot Password Inline Form */}
+                {showForgot && (
+                  <View style={styles.forgotBox}>
+                    {forgotSent ? (
+                      <>
+                        <Text style={styles.forgotSentText}>
+                          E-posta adresinize sıfırlama bağlantısı gönderildi. Gelen kutunuzu kontrol edin.
+                        </Text>
+                        <TouchableOpacity onPress={() => { setShowForgot(false); setForgotSent(false); setForgotEmail(''); }} hitSlop={8}>
+                          <Text style={styles.forgotBackText}>← Geri dön</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <Text style={styles.forgotLabel}>Şifre sıfırlama için e-postanı gir:</Text>
+                        <TextInput
+                          style={styles.forgotInput}
+                          placeholder="ornek@email.com"
+                          placeholderTextColor={colors.mutedText}
+                          value={forgotEmail}
+                          onChangeText={setForgotEmail}
+                          autoCapitalize="none"
+                          keyboardType="email-address"
+                          autoCorrect={false}
+                        />
+                        <View style={styles.forgotActions}>
+                          <TouchableOpacity onPress={() => setShowForgot(false)} hitSlop={8}>
+                            <Text style={styles.forgotBackText}>İptal</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.forgotSubmitBtn, forgotLoading && { opacity: 0.6 }]}
+                            onPress={handleForgotPassword}
+                            disabled={forgotLoading}
+                          >
+                            {forgotLoading
+                              ? <ActivityIndicator color={colors.white} size="small" />
+                              : <Text style={styles.forgotSubmitText}>Gönder</Text>
+                            }
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                )}
 
                 {/* Divider */}
                 <View style={styles.divider}>
@@ -475,6 +549,72 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontFamily: typography.semiBold,
     fontSize: fontSizes.sm,
+  },
+
+  // Forgot password
+  forgotBtn: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+  },
+  forgotText: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.xs,
+    textDecorationLine: 'underline',
+  },
+  forgotBox: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  forgotLabel: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    marginBottom: 4,
+  },
+  forgotInput: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    color: colors.text,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  forgotActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  forgotBackText: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  forgotSubmitBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+  },
+  forgotSubmitText: {
+    color: colors.white,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
+  },
+  forgotSentText: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    lineHeight: 20,
+    marginBottom: 8,
   },
 });
 

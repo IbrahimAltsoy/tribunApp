@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   FlatList,
   Keyboard,
@@ -23,6 +24,7 @@ import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
 import { generateAmedNickname } from "../utils/amedNameGenerator";
 import { initializeSession, updateNickname, UserSession } from "../utils/sessionManager";
+import { useAuth } from "../contexts/AuthContext";
 import { chatService, type ChatMessageDto, type ChatRoomDto, type ChatScheduleDto } from "../services/chatService";
 import { chatHubService, BanNotification } from "../services/chatHubService";
 import { userSafetyService } from "../services/userSafetyService";
@@ -50,6 +52,8 @@ const isScheduleOpen = (schedule: ChatScheduleDto | null) => {
 
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
+  const { user, authState } = useAuth();
+  const isAuthenticated = authState === "authenticated" && !!user;
   const [session, setSession] = useState<UserSession | null>(null);
   const [nickname, setNickname] = useState("");
   const [inputText, setInputText] = useState("");
@@ -64,8 +68,12 @@ const ChatScreen: React.FC = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 
+  // Edit state
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+  const [editText, setEditText] = useState("");
+
   // Ban status
-  const { isBanned, banInfo, checkBanStatus, showBanAlert } = useBanStatus();
+  const { isBanned, checkBanStatus, showBanAlert } = useBanStatus();
 
   const flatListRef = useRef<FlatList<Message>>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
@@ -78,7 +86,11 @@ const ChatScreen: React.FC = () => {
     const loadSession = async () => {
       const userSession = await initializeSession();
       setSession(userSession);
-      setNickname(userSession.nickname);
+      if (isAuthenticated && user) {
+        setNickname(user.username);
+      } else {
+        setNickname(userSession.nickname);
+      }
 
       // Check EULA status
       const needsEula = await userSafetyService.needsEulaAcceptance();
@@ -95,6 +107,15 @@ const ChatScreen: React.FC = () => {
   useEffect(() => {
     nicknameRef.current = nickname;
   }, [nickname]);
+
+  // Giriş durumu değişince nickname güncelle + SignalR bağlantısını JWT ile yenile
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setNickname(user.username);
+      // Reconnect with JWT so hub can identify the user
+      chatHubService.stop().then(() => chatHubService.start());
+    }
+  }, [isAuthenticated, user?.username]);
 
   useEffect(() => {
     selectedRoomRef.current = selectedRoom?.id ?? null;
@@ -196,9 +217,22 @@ const ChatScreen: React.FC = () => {
     });
 
     // Handle ban notification from server
-    chatHubService.onBan((ban: BanNotification) => {
-      // Refresh ban status from server
+    chatHubService.onBan((_ban: BanNotification) => {
       checkBanStatus();
+    });
+
+    chatHubService.onMessageEdited((data) => {
+      if (data.roomId !== selectedRoomRef.current) return;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === data.id ? { ...msg, text: data.message, isEdited: data.isEdited } : msg
+        )
+      );
+    });
+
+    chatHubService.onMessageDeleted((data) => {
+      if (data.roomId !== selectedRoomRef.current) return;
+      setMessages((prev) => prev.filter((msg) => msg.id !== data.id));
     });
 
     chatHubService.start();
@@ -230,6 +264,7 @@ const ChatScreen: React.FC = () => {
             sender: msg.username || t("chat.anonymous"),
             timestamp: formatTimestamp(msg.createdAt),
             isMine: msg.username === nicknameRef.current,
+            isEdited: msg.isEdited,
             sessionId: msg.sessionId,
             userId: msg.userId,
           }));
@@ -373,10 +408,52 @@ const ChatScreen: React.FC = () => {
   );
 
   const handleMessageLongPress = useCallback((message: Message) => {
-    // Don't show report modal for own messages
+    // Authenticated user's own message (matched by userId)
+    if (isAuthenticated && user && message.userId === user.id) {
+      Alert.alert("Mesaj", undefined, [
+        {
+          text: "Düzenle",
+          onPress: () => {
+            setEditingMessage(message);
+            setEditText(message.text);
+          },
+        },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            if (!selectedRoom) return;
+            try {
+              await chatHubService.deleteOwnMessage(selectedRoom.id, message.id);
+            } catch {
+              Alert.alert("Hata", "Mesaj silinemedi.");
+            }
+          },
+        },
+        { text: "İptal", style: "cancel" },
+      ]);
+      return;
+    }
+    // Don't show report modal for own messages (anonymous/username-matched)
     if (message.isMine) return;
     setSelectedMessage(message);
     setShowReportModal(true);
+  }, [isAuthenticated, user, selectedRoom]);
+
+  const handleSubmitEdit = useCallback(async () => {
+    if (!editingMessage || !selectedRoom || !editText.trim()) return;
+    try {
+      await chatHubService.editMessage(selectedRoom.id, editingMessage.id, editText.trim());
+    } catch {
+      Alert.alert("Hata", "Mesaj düzenlenemedi.");
+    }
+    setEditingMessage(null);
+    setEditText("");
+  }, [editingMessage, selectedRoom, editText]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessage(null);
+    setEditText("");
   }, []);
 
   const handleReportModalClose = useCallback(() => {
@@ -488,29 +565,37 @@ const ChatScreen: React.FC = () => {
                 <Ionicons name="person" size={18} color={colors.white} />
               </LinearGradient>
             </View>
-            <TextInput
-              style={styles.nickInput}
-              value={nickname}
-              onChangeText={setNickname}
-              placeholder={t("chat.nicknamePlaceholder")}
-              placeholderTextColor={colors.textSecondary}
-            />
-            <Pressable
-              onPress={async () => {
-                const newNick = generateAmedNickname();
-                setNickname(newNick);
-                await updateNickname(newNick);
-              }}
-              style={styles.shuffleButton}
-            >
-              <BlurView
-                intensity={IS_IOS ? 15 : 10}
-                tint="dark"
-                style={styles.shuffleBlur}
+            {isAuthenticated ? (
+              <Text style={styles.nickInputAuthenticated} numberOfLines={1}>
+                {user?.displayName || user?.username}
+              </Text>
+            ) : (
+              <TextInput
+                style={styles.nickInput}
+                value={nickname}
+                onChangeText={setNickname}
+                placeholder={t("chat.nicknamePlaceholder")}
+                placeholderTextColor={colors.textSecondary}
+              />
+            )}
+            {!isAuthenticated && (
+              <Pressable
+                onPress={async () => {
+                  const newNick = generateAmedNickname();
+                  setNickname(newNick);
+                  await updateNickname(newNick);
+                }}
+                style={styles.shuffleButton}
               >
-                <Feather name="shuffle" size={16} color={colors.primary} />
-              </BlurView>
-            </Pressable>
+                <BlurView
+                  intensity={IS_IOS ? 15 : 10}
+                  tint="dark"
+                  style={styles.shuffleBlur}
+                >
+                  <Feather name="shuffle" size={16} color={colors.primary} />
+                </BlurView>
+              </Pressable>
+            )}
           </BlurView>
         </View>
 
@@ -568,6 +653,19 @@ const ChatScreen: React.FC = () => {
           ))}
         </View>
 
+        {/* Edit Mode Bar */}
+        {editingMessage && (
+          <View style={styles.editBar}>
+            <Ionicons name="create-outline" size={16} color={colors.primary} />
+            <Text style={styles.editBarText} numberOfLines={1}>
+              {editingMessage.text}
+            </Text>
+            <Pressable onPress={handleCancelEdit}>
+              <Ionicons name="close" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        )}
+
         {/* Premium Input Box */}
         <View style={styles.inputBoxWrapper}>
           <BlurView
@@ -577,13 +675,13 @@ const ChatScreen: React.FC = () => {
           >
             <View style={styles.inputBox}>
               <TextInput
-                placeholder={isChatOpen ? t("chat.placeholder") : closedNote}
+                placeholder={editingMessage ? "Mesajı düzenle..." : (isChatOpen ? t("chat.placeholder") : closedNote)}
                 placeholderTextColor={colors.textSecondary}
                 style={styles.input}
-                value={inputText}
-                onChangeText={setInputText}
+                value={editingMessage ? editText : inputText}
+                onChangeText={editingMessage ? setEditText : setInputText}
                 multiline
-                editable={isChatOpen && !!selectedRoom}
+                editable={editingMessage ? true : (isChatOpen && !!selectedRoom)}
               />
               <Animated.View
                 style={{ transform: [{ scale: sendButtonScale }] }}
@@ -591,21 +689,21 @@ const ChatScreen: React.FC = () => {
                 <Pressable
                   style={[
                     styles.sendBtnWrapper,
-                    (inputText.trim().length === 0 ||
-                      !isChatOpen ||
-                      !selectedRoom) &&
+                    (editingMessage
+                      ? editText.trim().length === 0
+                      : (inputText.trim().length === 0 || !isChatOpen || !selectedRoom)) &&
                       styles.sendBtnDisabled,
                   ]}
-                  onPress={handleSendText}
+                  onPress={editingMessage ? handleSubmitEdit : handleSendText}
                   disabled={
-                    inputText.trim().length === 0 ||
-                    !isChatOpen ||
-                    !selectedRoom
+                    editingMessage
+                      ? editText.trim().length === 0
+                      : (inputText.trim().length === 0 || !isChatOpen || !selectedRoom)
                   }
                 >
                   <LinearGradient
                     colors={
-                      inputText.trim().length > 0
+                      (editingMessage ? editText.trim().length > 0 : inputText.trim().length > 0)
                         ? [colors.primary, colors.accent]
                         : ["rgba(0, 191, 71, 0.3)", "rgba(0, 191, 71, 0.3)"]
                     }
@@ -613,7 +711,7 @@ const ChatScreen: React.FC = () => {
                     end={{ x: 1, y: 1 }}
                     style={styles.sendBtn}
                   >
-                    <Ionicons name="send" size={18} color={colors.white} />
+                    <Ionicons name={editingMessage ? "checkmark" : "send"} size={18} color={colors.white} />
                   </LinearGradient>
                 </Pressable>
               </Animated.View>
@@ -797,6 +895,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     fontFamily: typography.semiBold,
   },
+  nickInputAuthenticated: {
+    flex: 1,
+    color: colors.white,
+    fontSize: fontSizes.md,
+    fontFamily: typography.semiBold,
+  },
   shuffleButton: {
     borderRadius: radii.md,
     overflow: "hidden",
@@ -936,6 +1040,25 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: {
     opacity: 0.5,
+  },
+  editBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: "rgba(0, 191, 71, 0.1)",
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: "rgba(0, 191, 71, 0.3)",
+  },
+  editBarText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontSize: fontSizes.sm,
+    fontFamily: typography.medium,
   },
 });
 

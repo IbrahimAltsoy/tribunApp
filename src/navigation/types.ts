@@ -1,6 +1,7 @@
 export type ProfileStackParamList = {
   ProfileHome: undefined;
   Settings: undefined;
+  EditProfile: undefined;
 };
 
 export type RootStackParamList = {

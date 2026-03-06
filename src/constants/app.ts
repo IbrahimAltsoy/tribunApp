@@ -108,10 +108,10 @@ export const VALIDATION_PATTERNS = {
  * Storage keys for AsyncStorage
  */
 export const STORAGE_KEYS = {
-  USER_NICKNAME: '@amedspor:nickname',
-  THEME_MODE: '@amedspor:theme',
-  ONBOARDING_COMPLETE: '@amedspor:onboarding',
-  LAST_SYNC: '@amedspor:lastSync',
+  USER_NICKNAME: '@gstribun:nickname',
+  THEME_MODE: '@gstribun:theme',
+  ONBOARDING_COMPLETE: '@gstribun:onboarding',
+  LAST_SYNC: '@gstribun:lastSync',
 } as const;
 
 /**

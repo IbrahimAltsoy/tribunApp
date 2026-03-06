@@ -51,14 +51,20 @@ class ChatHubService {
     | ((status: ConnectionStatus) => void)
     | null = null;
   private onBanCallback: ((ban: BanNotification) => void) | null = null;
+  private onMessageEditedCallback: ((data: { id: string; roomId: string; message: string; isEdited: boolean; editedAt: string }) => void) | null = null;
+  private onMessageDeletedCallback: ((data: { id: string; roomId: string }) => void) | null = null;
 
   async start(): Promise<void> {
-    if (this.isManuallyDisconnected) {
-      return;
-    }
+    // Explicit start always clears the manual-disconnect flag
+    this.isManuallyDisconnected = false;
 
-    if (this.connection?.state === SignalR.HubConnectionState.Connected) {
-      this.notifyStatus(ConnectionStatus.Connected);
+    if (
+      this.connection?.state === SignalR.HubConnectionState.Connected ||
+      this.connection?.state === SignalR.HubConnectionState.Connecting
+    ) {
+      if (this.connection.state === SignalR.HubConnectionState.Connected) {
+        this.notifyStatus(ConnectionStatus.Connected);
+      }
       return;
     }
 
@@ -97,7 +103,9 @@ class ChatHubService {
       if (this.reconnectAttempts < this.maxReconnectAttempts) {
         this.notifyStatus(ConnectionStatus.Reconnecting);
         const delay = Math.min(5000 * this.reconnectAttempts, 30000);
-        setTimeout(() => this.start(), delay);
+        setTimeout(() => {
+          if (!this.isManuallyDisconnected) this.start();
+        }, delay);
       } else {
         this.notifyStatus(ConnectionStatus.Failed);
       }
@@ -166,6 +174,28 @@ class ChatHubService {
     this.onBanCallback = callback;
   }
 
+  onMessageEdited(callback: (data: { id: string; roomId: string; message: string; isEdited: boolean; editedAt: string }) => void): void {
+    this.onMessageEditedCallback = callback;
+  }
+
+  onMessageDeleted(callback: (data: { id: string; roomId: string }) => void): void {
+    this.onMessageDeletedCallback = callback;
+  }
+
+  async editMessage(roomId: string, messageId: string, newContent: string): Promise<void> {
+    if (!this.connection || this.connection.state !== SignalR.HubConnectionState.Connected) {
+      throw new Error("Not connected");
+    }
+    await this.connection.invoke("EditMessage", roomId, messageId, newContent);
+  }
+
+  async deleteOwnMessage(roomId: string, messageId: string): Promise<void> {
+    if (!this.connection || this.connection.state !== SignalR.HubConnectionState.Connected) {
+      throw new Error("Not connected");
+    }
+    await this.connection.invoke("DeleteOwnMessage", roomId, messageId);
+  }
+
   async stop(): Promise<void> {
     this.isManuallyDisconnected = true;
     if (this.connection) {
@@ -191,7 +221,9 @@ class ChatHubService {
     this.connection.onclose(() => {
       this.notifyStatus(ConnectionStatus.Disconnected);
       if (!this.isManuallyDisconnected) {
-        setTimeout(() => this.start(), 3000);
+        setTimeout(() => {
+          if (!this.isManuallyDisconnected) this.start();
+        }, 3000);
       }
     });
 
@@ -199,8 +231,11 @@ class ChatHubService {
       this.notifyStatus(ConnectionStatus.Reconnecting);
     });
 
-    this.connection.onreconnected(() => {
+    this.connection.onreconnected(async () => {
       this.notifyStatus(ConnectionStatus.Connected);
+      if (this.currentRoomId) {
+        await this.joinRoom(this.currentRoomId);
+      }
     });
 
     this.connection.on("ReceiveMessage", (message: ChatHubMessage) => {
@@ -231,6 +266,22 @@ class ChatHubService {
     this.connection.on("UserBanned", (ban: BanNotification) => {
       if (this.onBanCallback) {
         this.onBanCallback(ban);
+      }
+    });
+
+    this.connection.on("MessageEdited", (data: { id: string; roomId: string; message: string; isEdited: boolean; editedAt: string }) => {
+      if (this.onMessageEditedCallback) {
+        this.onMessageEditedCallback(data);
+      }
+    });
+
+    this.connection.on("MessageDeleted", (data: { id: string; roomId: string } | string) => {
+      if (this.onMessageDeletedCallback) {
+        const payload: { id: string; roomId: string } =
+          typeof data === "string"
+            ? { id: data, roomId: this.currentRoomId ?? "" }
+            : data;
+        this.onMessageDeletedCallback(payload);
       }
     });
   }

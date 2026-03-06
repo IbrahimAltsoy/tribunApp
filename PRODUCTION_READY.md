@@ -1,4 +1,4 @@
-# 🚀 Production Ready Checklist - Amedspor Tribün
+# 🚀 Production Ready Checklist - GS Tribün
 
 ## ✅ Completed Optimizations
 
@@ -26,11 +26,11 @@
 **Environment Variables:**
 ```bash
 EXPO_PUBLIC_ENV=production
-EXPO_PUBLIC_API_URL=https://api.amedspor.com/api
-EXPO_PUBLIC_CHAT_HUB_URL=https://api.amedspor.com/chathub
-EXPO_PUBLIC_POLL_HUB_URL=https://api.amedspor.com/pollhub
-EXPO_PUBLIC_GOAL_HUB_URL=https://api.amedspor.com/goalhub
-EXPO_PUBLIC_MEDIA_UPLOAD_URL=https://api.amedspor.com/api/media/upload
+EXPO_PUBLIC_API_URL=https://api.gstribun.com/api
+EXPO_PUBLIC_CHAT_HUB_URL=https://api.gstribun.com/chathub
+EXPO_PUBLIC_POLL_HUB_URL=https://api.gstribun.com/pollhub
+EXPO_PUBLIC_GOAL_HUB_URL=https://api.gstribun.com/goalhub
+EXPO_PUBLIC_MEDIA_UPLOAD_URL=https://api.gstribun.com/api/media/upload
 EXPO_PUBLIC_SENTRY_DSN=your_sentry_dsn
 EXPO_PUBLIC_ADMOB_APP_ID=ca-app-pub-xxxxx
 # See .env.example for full list
@@ -110,11 +110,11 @@ Create `src/services/adManager.ts` following the enterprise pattern:
       "url": "https://u.expo.dev/YOUR_PROJECT_ID"  // ⚠️ REQUIRED
     },
     "ios": {
-      "bundleIdentifier": "com.amedspor.tribun",  // ✅ Already set
+      "bundleIdentifier": "com.gstribun.tribun",  // ✅ Already set
       "buildNumber": "1"  // Increment for each build
     },
     "android": {
-      "package": "com.amedspor.tribun",  // ✅ Already set
+      "package": "com.gstribun.tribun",  // ✅ Already set
       "versionCode": 1  // Increment for each build
     }
   }
@@ -337,4 +337,4 @@ Your app is now optimized for production with:
 ---
 
 *Generated on: 2026-01-08*
-*Project: Amedspor Tribün - React Native (Expo)*
+*Project: GS Tribün - React Native (Expo)*

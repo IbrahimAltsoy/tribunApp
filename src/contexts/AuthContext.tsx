@@ -35,6 +35,7 @@ interface AuthContextValue {
   signInWithApple: () => Promise<void>;
   refreshAuth: () => Promise<boolean>;
   getToken: () => Promise<string | null>;
+  updateUser: (updatedUser: UserDto) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -170,9 +171,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return authService.getAccessToken();
   }, []);
 
+  const updateUser = useCallback((updatedUser: UserDto) => {
+    setUser(updatedUser);
+  }, []);
+
   return (
     <AuthContext.Provider
-      value={{ authState, user, login, register, logout, signInWithGoogle, signInWithApple, refreshAuth, getToken }}
+      value={{ authState, user, login, register, logout, signInWithGoogle, signInWithApple, refreshAuth, getToken, updateUser }}
     >
       {children}
     </AuthContext.Provider>

@@ -20,6 +20,8 @@ export type ChatMessageDto = {
   createdAt: string;
   sessionId?: string;
   userId?: string;
+  isEdited?: boolean;
+  editedAt?: string;
 };
 
 export type ChatScheduleDto = {

@@ -24,7 +24,7 @@ This document describes the backend API requirements for the anonymous chat syst
 ```typescript
 interface MessagePayload {
   sessionId: string;      // UUID from AsyncStorage (e.g., "a1b2c3d4-...")
-  nickname: string;       // Amedspor-themed name (e.g., "Kırmızı Aslan")
+  nickname: string;       // GS Tribün themed name (e.g., "Kırmızı Aslan")
   message: string;        // Message content
   roomId: string;         // Match/room identifier
   timestamp: number;      // Client timestamp (milliseconds)
@@ -117,7 +117,7 @@ Content-Type: application/json
 CREATE TABLE messages (
   message_id VARCHAR(36) PRIMARY KEY,
   session_id VARCHAR(36) NOT NULL,          -- From frontend
-  nickname VARCHAR(100) NOT NULL,           -- Amedspor-themed name
+  nickname VARCHAR(100) NOT NULL,           -- GS Tribün themed name
   message TEXT NOT NULL,
   room_id VARCHAR(36) NOT NULL,
   client_timestamp BIGINT NOT NULL,

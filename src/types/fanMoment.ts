@@ -19,6 +19,7 @@ export interface FanMomentDto {
   hasLiked?: boolean; // True if current JWT user has liked this moment
   creatorUserId?: string; // UserId of authenticated creator (null for anonymous)
   creatorSessionId?: string; // Session ID of anonymous creator (kept for backward compat)
+  creatorAvatarUrl?: string; // Signed avatar URL of the creator
 }
 
 /**

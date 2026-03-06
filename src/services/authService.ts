@@ -189,6 +189,69 @@ const appleSignIn = async (request: AppleSignInRequest): Promise<AuthResponse> =
   return data;
 };
 
+const PROFILE_URL = joinUrl(API_BASE_URL, '/api/profile');
+
+const updateProfile = async (request: {
+  displayName?: string;
+  bio?: string;
+  avatarUrl?: string;
+}): Promise<import('../types/auth').UserDto> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${PROFILE_URL}/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(request),
+  });
+  const json = await response.json();
+  if (!response.ok) throw new Error(json.message || 'Profil güncellenemedi.');
+  const updated = json.data || json;
+  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updated));
+  return updated;
+};
+
+const deleteAccount = async (): Promise<void> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${PROFILE_URL}/me`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...headers },
+  });
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.message || 'Hesap silinemedi.');
+  }
+  await clearTokens();
+};
+
+const forgotPassword = async (email: string): Promise<void> => {
+  const response = await fetch(`${AUTH_URL}/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.message || 'İstek gönderilemedi.');
+  }
+};
+
+const changePassword = async (request: {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}): Promise<void> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${PROFILE_URL}/me/password`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    const json = await response.json();
+    throw new Error(json.message || 'Şifre değiştirilemedi.');
+  }
+};
+
 export const authService = {
   login,
   register,
@@ -196,6 +259,10 @@ export const authService = {
   refreshToken,
   googleSignIn,
   appleSignIn,
+  updateProfile,
+  forgotPassword,
+  changePassword,
+  deleteAccount,
   storeTokens,
   clearTokens,
   getAccessToken,

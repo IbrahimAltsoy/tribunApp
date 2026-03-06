@@ -6,7 +6,6 @@ import {
   ScrollView,
   Pressable,
   Alert,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +17,7 @@ import { fontSizes, typography } from '../theme/typography';
 import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
 import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/authService';
 
 type Props = {
   onViewTerms: () => void;
@@ -47,6 +47,42 @@ const SettingsScreen: React.FC<Props> = ({
     ]);
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Hesabı Sil',
+      'Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz. Tüm verileriniz kalıcı olarak silinecek.',
+      [
+        { text: 'İptal', style: 'cancel' },
+        {
+          text: 'Evet, Hesabımı Sil',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Son Onay',
+              'Hesabınız tamamen silinecek. Devam etmek istiyor musunuz?',
+              [
+                { text: 'Vazgeç', style: 'cancel' },
+                {
+                  text: 'Sil',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await authService.deleteAccount();
+                      logout();
+                      (navigation as any).popToTop?.();
+                    } catch (err) {
+                      Alert.alert('Hata', err instanceof Error ? err.message : 'Hesap silinemedi.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   const handleResetOnboarding = () => {
     Alert.alert(
       t('settings.resetOnboarding.title'),
@@ -70,17 +106,10 @@ const SettingsScreen: React.FC<Props> = ({
                   {
                     text: t('ok'),
                     onPress: () => {
-                      // App will restart and show onboarding
-                      if (Platform.OS === 'ios') {
-                        // @ts-ignore
-                        RNRestart?.Restart?.();
-                      } else {
-                        // For Android, we can use react-native-restart or just notify
-                        Alert.alert(
-                          t('settings.resetOnboarding.restartTitle'),
-                          t('settings.resetOnboarding.restartMessage')
-                        );
-                      }
+                      Alert.alert(
+                        t('settings.resetOnboarding.restartTitle'),
+                        t('settings.resetOnboarding.restartMessage')
+                      );
                     },
                   },
                 ]
@@ -137,6 +166,20 @@ const SettingsScreen: React.FC<Props> = ({
                 <View style={styles.settingContent}>
                   <Text style={[styles.settingTitle, { color: colors.error }]}>Çıkış Yap</Text>
                   <Text style={styles.settingDescription}>Hesabınızdan güvenli çıkış yapın</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]}
+                onPress={handleDeleteAccount}
+              >
+                <View style={[styles.settingIcon, { backgroundColor: 'rgba(100,0,0,0.15)' }]}>
+                  <Ionicons name="trash-outline" size={22} color="#8B0000" />
+                </View>
+                <View style={styles.settingContent}>
+                  <Text style={[styles.settingTitle, { color: '#8B0000' }]}>Hesabı Sil</Text>
+                  <Text style={styles.settingDescription}>Hesabınızı ve tüm verilerinizi kalıcı olarak silin</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
               </Pressable>

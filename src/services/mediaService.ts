@@ -79,8 +79,8 @@ const uploadImageAnonymous = async (
     return {
       success: true,
       data: {
-        url: publicUrl,
         ...json.data,
+        url: publicUrl,  // publicUrl her zaman öncelikli
       },
     };
   } catch (error) {

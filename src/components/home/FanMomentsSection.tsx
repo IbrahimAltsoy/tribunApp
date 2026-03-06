@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import {
   FlatList,
+  Image,
   ImageBackground,
   Pressable,
   StyleSheet,
@@ -66,9 +67,26 @@ const AnimatedMomentCard: React.FC<{
     setActiveAudioMomentId,
   }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [imageUri, setImageUri] = useState<string | null>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const lastPlaybackTime = useRef(0);
   const wasActive = useRef(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadImage = async () => {
+      if (!moment.imageUrl) { setImageUri(null); return; }
+      const objectName = /^https?:\/\//i.test(moment.imageUrl)
+        ? moment.imageUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, "")
+        : moment.imageUrl;
+      const result = await mediaService.getSignedUrl(objectName);
+      if (isActive) setImageUri(result.success ? result.url ?? null : null);
+    };
+
+    loadImage();
+    return () => { isActive = false; };
+  }, [moment.imageUrl]);
 
   useEffect(() => {
     let isActive = true;
@@ -199,9 +217,13 @@ const AnimatedMomentCard: React.FC<{
           style={({ pressed }) => [styles.overlayAuthorRow, pressed && styles.authorPressed]}
           disabled={!moment.creatorUserId}
         >
-          <View style={[styles.overlayAvatar, moment.creatorUserId && styles.overlayAvatarLinked]}>
-            <Ionicons name="person" size={10} color={colors.white} />
-          </View>
+          {moment.creatorAvatarUrl ? (
+              <Image source={{ uri: moment.creatorAvatarUrl }} style={[styles.overlayAvatar, styles.overlayAvatarLinked]} />
+            ) : (
+              <View style={[styles.overlayAvatar, moment.creatorUserId && styles.overlayAvatarLinked]}>
+                <Ionicons name="person" size={10} color={colors.white} />
+              </View>
+            )}
           <Text style={styles.overlayUsername} numberOfLines={1}>
             {moment.username}
           </Text>
@@ -247,8 +269,9 @@ const AnimatedMomentCard: React.FC<{
         {moment.imageUrl ? (
           /* — Image card: full-bleed with gradient overlay — */
           <ImageBackground
-            source={{ uri: moment.imageUrl }}
+            source={imageUri ? { uri: imageUri } : undefined}
             style={styles.momentHero}
+            resizeMode="contain"
           >
             {ownerActionsNode}
             {mediaOverlay}
@@ -309,9 +332,13 @@ const AnimatedMomentCard: React.FC<{
                 style={({ pressed }) => [styles.fallbackAuthorRow, pressed && styles.authorPressed]}
                 disabled={!moment.creatorUserId}
               >
-                <View style={[styles.fallbackAvatar, moment.creatorUserId && styles.fallbackAvatarLinked]}>
-                  <Ionicons name="person" size={12} color={colors.text} />
-                </View>
+                {moment.creatorAvatarUrl ? (
+                  <Image source={{ uri: moment.creatorAvatarUrl }} style={[styles.fallbackAvatar, styles.fallbackAvatarLinked]} />
+                ) : (
+                  <View style={[styles.fallbackAvatar, moment.creatorUserId && styles.fallbackAvatarLinked]}>
+                    <Ionicons name="person" size={12} color={colors.text} />
+                  </View>
+                )}
                 <Text style={styles.fallbackUsername} numberOfLines={1}>
                   {moment.username}
                 </Text>
@@ -546,9 +573,9 @@ const styles = StyleSheet.create({
   },
   // Full-bleed image / video container
   momentHero: {
-    height: 300,
+    height: 320,
     justifyContent: "flex-end",
-    backgroundColor: colors.backgroundElevated,
+    backgroundColor: "#0D0D0D",
   },
 
   // Gradient overlay sitting at the bottom of hero
