@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
@@ -27,14 +26,9 @@ const PrivacyPolicyScreen: React.FC<Props> = ({
   onAccept,
 }) => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
 
   const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else if (navigation.canGoBack()) {
-      navigation.goBack();
-    }
+    onClose?.();
   };
 
   const lastUpdatedDate = new Date('2026-01-08').toLocaleDateString('tr-TR', {
@@ -57,7 +51,7 @@ const PrivacyPolicyScreen: React.FC<Props> = ({
   ] as const;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={handleClose} style={styles.closeButton}>

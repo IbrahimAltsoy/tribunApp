@@ -10,272 +10,311 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { fontSizes, typography } from '../theme/typography';
+import { typography } from '../theme/typography';
 
 const { width } = Dimensions.get('window');
 
 const SplashScreen: React.FC = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const shieldAnim = useRef(new Animated.Value(0)).current;
-  const textFadeAnim = useRef(new Animated.Value(0)).current;
-  const dot1Anim = useRef(new Animated.Value(0.3)).current;
-  const dot2Anim = useRef(new Animated.Value(0.3)).current;
-  const dot3Anim = useRef(new Animated.Value(0.3)).current;
+  const containerFade = useRef(new Animated.Value(0)).current;
+  const markScale   = useRef(new Animated.Value(0.65)).current;
+  const markFade    = useRef(new Animated.Value(0)).current;
+  const glowPulse   = useRef(new Animated.Value(0)).current;
+  const textFade    = useRef(new Animated.Value(0)).current;
+  const tagFade     = useRef(new Animated.Value(0)).current;
+  const dot1        = useRef(new Animated.Value(0.3)).current;
+  const dot2        = useRef(new Animated.Value(0.3)).current;
+  const dot3        = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    // Phase 1: Shield bounces in
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 60,
-      friction: 6,
-      useNativeDriver: true,
+    // 0ms — bg fade in
+    Animated.timing(containerFade, {
+      toValue: 1, duration: 300, useNativeDriver: true,
     }).start();
 
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-
-    // Phase 2: Text fades in after shield
+    // 100ms — logo mark springs in
     setTimeout(() => {
-      Animated.timing(textFadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
+      Animated.parallel([
+        Animated.spring(markScale, {
+          toValue: 1, tension: 55, friction: 7, useNativeDriver: true,
+        }),
+        Animated.timing(markFade, {
+          toValue: 1, duration: 400, useNativeDriver: true,
+        }),
+      ]).start();
+    }, 100);
+
+    // 450ms — wordmark fades in
+    setTimeout(() => {
+      Animated.timing(textFade, {
+        toValue: 1, duration: 500, useNativeDriver: true,
       }).start();
-    }, 300);
+    }, 450);
 
-    // Phase 3: Shield subtle glow pulse
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shieldAnim, {
-          toValue: 1,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shieldAnim, {
-          toValue: 0,
-          duration: 1800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    // 700ms — tagline + dots
+    setTimeout(() => {
+      Animated.timing(tagFade, {
+        toValue: 1, duration: 500, useNativeDriver: true,
+      }).start();
+    }, 700);
 
-    // Dots loading animation — staggered
-    const dotAnimation = (dot: Animated.Value, delay: number) =>
+    // glow pulse loop
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowPulse, { toValue: 1, duration: 2000, useNativeDriver: true }),
+          Animated.timing(glowPulse, { toValue: 0, duration: 2000, useNativeDriver: true }),
+        ])
+      ).start();
+    }, 600);
+
+    // loading dots
+    const dot = (anim: Animated.Value, delay: number) =>
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot, {
-            toValue: 0.3,
-            duration: 400,
-            useNativeDriver: true,
-          }),
-          Animated.delay(800),
+          Animated.timing(anim, { toValue: 1, duration: 350, useNativeDriver: true }),
+          Animated.timing(anim, { toValue: 0.3, duration: 350, useNativeDriver: true }),
+          Animated.delay(700),
         ])
       );
-
-    dotAnimation(dot1Anim, 0).start();
-    dotAnimation(dot2Anim, 200).start();
-    dotAnimation(dot3Anim, 400).start();
+    dot(dot1, 800).start();
+    dot(dot2, 1000).start();
+    dot(dot3, 1200).start();
   }, []);
 
-  const shieldOpacity = shieldAnim.interpolate({
+  const glowOpacity = glowPulse.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.85, 1],
+    outputRange: [0.25, 0.65],
+  });
+
+  const glowScale = glowPulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.12],
   });
 
   return (
-    <View style={styles.container}>
-      {/* Background gradient — dark with subtle red tint at top */}
+    <Animated.View style={[styles.root, { opacity: containerFade }]}>
+      {/* Background */}
       <LinearGradient
-        colors={['rgba(232,17,26,0.18)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']}
-        locations={[0, 0.45, 1]}
+        colors={['rgba(200,15,25,0.22)', 'rgba(10,10,10,0)', 'rgba(10,10,10,0)']}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      {/* Radial-like bottom accent */}
+      <LinearGradient
+        colors={['rgba(10,10,10,0)', 'rgba(180,10,20,0.06)']}
+        locations={[0.6, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Decorative top arc */}
-      <View style={styles.topArc} />
+      <View style={styles.center}>
 
-      <Animated.View
-        style={[
-          styles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {/* Shield Logo */}
-        <Animated.View style={[styles.shieldWrapper, { opacity: shieldOpacity }]}>
-          {/* Outer glow ring */}
-          <LinearGradient
-            colors={[colors.primary, colors.accent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.shieldGlowRing}
-          />
-          {/* Inner shield */}
-          <LinearGradient
-            colors={['#1C1C1C', '#111111']}
-            style={styles.shieldInner}
-          >
-            <Ionicons
-              name="shield"
-              size={52}
-              color={colors.primary}
-              style={styles.shieldIconBg}
+        {/* ── Logo Mark ── */}
+        <Animated.View style={[
+          styles.markWrapper,
+          { opacity: markFade, transform: [{ scale: markScale }] },
+        ]}>
+          {/* Outer glow ring — pulses */}
+          <Animated.View style={[
+            styles.glowRing,
+            { opacity: glowOpacity, transform: [{ scale: glowScale }] },
+          ]}>
+            <LinearGradient
+              colors={[colors.primary, colors.accent, colors.primary]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
             />
-            <View style={styles.gsOverlay}>
-              <Text style={styles.gsOverlayText}>GS</Text>
+          </Animated.View>
+
+          {/* Mid ring */}
+          <View style={styles.midRing} />
+
+          {/* Inner badge */}
+          <LinearGradient
+            colors={['#1E1E1E', '#111111', '#0A0A0A']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={styles.innerBadge}
+          >
+            {/* Subtle inner glow */}
+            <LinearGradient
+              colors={['rgba(200,15,25,0.18)', 'rgba(200,15,25,0)']}
+              style={styles.innerGlow}
+            />
+            {/* Flame icon */}
+            <View style={styles.flameContainer}>
+              <Ionicons name="flame" size={44} color="rgba(200,15,25,0.12)" style={styles.flameBg} />
+              <LinearGradient
+                colors={[colors.accent, colors.primary]}
+                start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }}
+                style={styles.flameGrad}
+              >
+                <Ionicons name="flame" size={36} color="transparent" />
+              </LinearGradient>
             </View>
           </LinearGradient>
         </Animated.View>
 
-        {/* Brand Text */}
-        <Animated.View style={[styles.brandRow, { opacity: textFadeAnim }]}>
-          <Text style={styles.brandGs}>GS </Text>
-          <Text style={styles.brandTribun}>Tribün</Text>
+        {/* ── Wordmark ── */}
+        <Animated.View style={[styles.wordmark, { opacity: textFade }]}>
+          <Text style={styles.wordGs}>GS</Text>
+          <View style={styles.wordSep} />
+          <Text style={styles.wordTribun}>TRİBÜN</Text>
         </Animated.View>
 
-        <Animated.Text style={[styles.tagline, { opacity: textFadeAnim }]}>
+        {/* ── Tagline ── */}
+        <Animated.Text style={[styles.tagline, { opacity: tagFade }]}>
           Galatasaray Taraftar Uygulaması
         </Animated.Text>
-      </Animated.View>
 
-      {/* Loading dots */}
-      <Animated.View style={[styles.footer, { opacity: textFadeAnim }]}>
+      </View>
+
+      {/* ── Footer ── */}
+      <Animated.View style={[styles.footer, { opacity: tagFade }]}>
         <View style={styles.dotsRow}>
-          <Animated.View style={[styles.dot, { opacity: dot1Anim }]} />
-          <Animated.View style={[styles.dot, styles.dotMid, { opacity: dot2Anim }]} />
-          <Animated.View style={[styles.dot, { opacity: dot3Anim }]} />
+          <Animated.View style={[styles.dot, { opacity: dot1 }]} />
+          <Animated.View style={[styles.dot, styles.dotAccent, { opacity: dot2 }]} />
+          <Animated.View style={[styles.dot, { opacity: dot3 }]} />
         </View>
-        <Text style={styles.versionText}>v1.0.0</Text>
+        <Text style={styles.version}>v1.0.0</Text>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 };
 
-const SHIELD_SIZE = 110;
+const MARK = 120;
+const GLOW = MARK + 36;
+const MID  = MARK + 10;
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0A0A0A',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topArc: {
-    position: 'absolute',
-    top: -width * 0.3,
-    width: width * 1.4,
-    height: width * 0.8,
-    borderRadius: width * 0.7,
-    backgroundColor: 'rgba(232,17,26,0.07)',
-    alignSelf: 'center',
-  },
-  content: {
+  center: {
     alignItems: 'center',
   },
 
-  // Shield
-  shieldWrapper: {
-    width: SHIELD_SIZE,
-    height: SHIELD_SIZE,
-    borderRadius: SHIELD_SIZE / 2,
+  // Mark
+  markWrapper: {
+    width: MARK,
+    height: MARK,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
+    marginBottom: 32,
     ...Platform.select({
       ios: {
         shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.45,
-        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.55,
+        shadowRadius: 24,
       },
-      android: { elevation: 12 },
+      android: { elevation: 16 },
     }),
   },
-  shieldGlowRing: {
+  glowRing: {
     position: 'absolute',
-    width: SHIELD_SIZE,
-    height: SHIELD_SIZE,
-    borderRadius: SHIELD_SIZE / 2,
-    opacity: 0.3,
+    width: GLOW,
+    height: GLOW,
+    borderRadius: GLOW / 2,
+    overflow: 'hidden',
   },
-  shieldInner: {
-    width: SHIELD_SIZE - 8,
-    height: SHIELD_SIZE - 8,
-    borderRadius: (SHIELD_SIZE - 8) / 2,
+  midRing: {
+    position: 'absolute',
+    width: MID,
+    height: MID,
+    borderRadius: MID / 2,
+    borderWidth: 1,
+    borderColor: 'rgba(200,15,25,0.35)',
+  },
+  innerBadge: {
+    width: MARK,
+    height: MARK,
+    borderRadius: MARK / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(232,17,26,0.4)',
+    borderColor: 'rgba(200,15,25,0.3)',
   },
-  shieldIconBg: {
+  innerGlow: {
     position: 'absolute',
-    opacity: 0.15,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: MARK * 0.55,
   },
-  gsOverlay: {
+  flameContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  gsOverlayText: {
-    fontSize: 34,
-    fontFamily: typography.extraBold,
-    color: colors.accent,
-    letterSpacing: 2,
+  flameBg: {
+    position: 'absolute',
+  },
+  flameGrad: {
+    borderRadius: 20,
+    overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: colors.accent,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.6,
-        shadowRadius: 8,
+        shadowOpacity: 0.8,
+        shadowRadius: 10,
       },
     }),
   },
 
-  // Brand text
-  brandRow: {
+  // Wordmark
+  wordmark: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: spacing.sm,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
   },
-  brandGs: {
-    fontSize: fontSizes.xxxl,
-    fontFamily: typography.extraBold,
+  wordGs: {
+    fontSize: 36,
+    fontFamily: typography.extraBold ?? typography.bold,
     color: colors.accent,
-    letterSpacing: 2,
+    letterSpacing: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.accent,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.6,
+        shadowRadius: 10,
+      },
+    }),
   },
-  brandTribun: {
-    fontSize: fontSizes.xxxl,
-    fontFamily: typography.extraBold,
+  wordSep: {
+    width: 2,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 1,
+  },
+  wordTribun: {
+    fontSize: 28,
+    fontFamily: typography.extraBold ?? typography.bold,
     color: colors.white,
-    letterSpacing: 1,
-  },
-  tagline: {
-    fontSize: fontSizes.sm,
-    fontFamily: typography.medium,
-    color: colors.mutedText,
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginTop: spacing.xs / 2,
+    letterSpacing: 5,
   },
 
-  // Footer / dots
+  // Tagline
+  tagline: {
+    fontSize: 11,
+    fontFamily: typography.medium,
+    color: 'rgba(255,255,255,0.35)',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+
+  // Footer
   footer: {
     position: 'absolute',
     bottom: 52,
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 10,
   },
   dotsRow: {
     flexDirection: 'row',
@@ -283,19 +322,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
+  },
+  dotAccent: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.primary,
-  },
-  dotMid: {
     backgroundColor: colors.accent,
   },
-  versionText: {
-    fontSize: fontSizes.xs,
+  version: {
+    fontSize: 10,
     fontFamily: typography.medium,
-    color: 'rgba(255,255,255,0.25)',
-    letterSpacing: 1,
+    color: 'rgba(255,255,255,0.2)',
+    letterSpacing: 1.5,
   },
 });
 

@@ -12,7 +12,7 @@ const AuthScreen: React.FC = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    if (authState === 'authenticated') {
+    if (authState === 'authenticated' && navigation.canGoBack()) {
       navigation.goBack();
     }
   }, [authState, navigation]);

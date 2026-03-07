@@ -325,6 +325,10 @@ class UserSafetyService {
     deviceInfo?: string,
     appVersion?: string
   ): Promise<ApiResponse<EulaAcceptanceDto>> {
+    // Save locally first so the modal never gets stuck regardless of API outcome
+    await AsyncStorage.setItem(STORAGE_KEYS.EULA_ACCEPTED, 'true');
+    await AsyncStorage.setItem(STORAGE_KEYS.EULA_VERSION, eulaVersion);
+
     try {
       const response = await fetch(this.buildUrl('/api/UserSafety/eula/accept'), {
         method: 'POST',
@@ -339,14 +343,12 @@ class UserSafetyService {
       const result = await response.json();
 
       if (result.success && result.data) {
-        await AsyncStorage.setItem(STORAGE_KEYS.EULA_ACCEPTED, 'true');
-        await AsyncStorage.setItem(STORAGE_KEYS.EULA_VERSION, eulaVersion);
         return { success: true, data: result.data };
       }
 
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
-      logger.error('UserSafety: Failed to accept EULA', error);
+      logger.error('UserSafety: Failed to accept EULA (local save succeeded)', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }

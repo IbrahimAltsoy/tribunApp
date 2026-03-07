@@ -171,8 +171,9 @@ const FeedScreen: React.FC = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#FFFFFF"
-            colors={["#0FA958", "#12C26A"]}
+            tintColor="#f2b91e"
+            colors={["#f2b91e"]}
+            progressBackgroundColor="#1A1A1A"
           />
         }
       >

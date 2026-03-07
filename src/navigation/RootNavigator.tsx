@@ -150,12 +150,11 @@ const RootNavigator: React.FC = () => {
           component={AuthScreen}
           options={{
             headerShown: false,
-            presentation: 'modal',
+            presentation: 'fullScreenModal',
           }}
         />
         <Stack.Screen
           name="Terms"
-          component={TermsOfServiceScreen}
           options={{
             headerShown: true,
             headerTitle: '',
@@ -165,10 +164,13 @@ const RootNavigator: React.FC = () => {
             headerTintColor: colors.primary,
             presentation: 'modal',
           }}
-        />
+        >
+          {({ navigation }) => (
+            <TermsOfServiceScreen onClose={() => navigation.goBack()} showAcceptButton={false} />
+          )}
+        </Stack.Screen>
         <Stack.Screen
           name="Privacy"
-          component={PrivacyPolicyScreen}
           options={{
             headerShown: true,
             headerTitle: '',
@@ -178,7 +180,11 @@ const RootNavigator: React.FC = () => {
             headerTintColor: colors.primary,
             presentation: 'modal',
           }}
-        />
+        >
+          {({ navigation }) => (
+            <PrivacyPolicyScreen onClose={() => navigation.goBack()} showAcceptButton={false} />
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -32,7 +32,9 @@
       "env": {
         "EXPO_PUBLIC_ENV": "production",
         "NODE_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.bihevra.com/"
+        "EXPO_PUBLIC_API_URL": "https://api.bihevra.com/",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "768357338287-v9hbeqetc9vidqldvhoquv9qg8nk92vp.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "768357338287-sfb0jp0ipe80oi3l4j1v327sqmeh3b0d.apps.googleusercontent.com"
       },
       "android": {
         "buildType": "app-bundle"
@@ -49,7 +51,7 @@
         "track": "internal"
       },
       "ios": {
-        "ascAppId": "6758375935"
+        "ascAppId": "6760221295"
       }
     }
   }

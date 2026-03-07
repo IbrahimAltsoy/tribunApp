@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../theme/colors";
 import { spacing, radii } from "../../theme/spacing";
 import { fontSizes, typography } from "../../theme/typography";
-import BihevraText from "../BihevraText";
+import TribunWordmark from "../TribunWordmark";
 import type { FanMomentDto } from "../../types/fanMoment";
 
 type ShareableMomentCardProps = {
@@ -80,7 +80,7 @@ const ShareableMomentCard = forwardRef<ShareableMomentCardRef, ShareableMomentCa
               >
                 {/* Bihevra Watermark */}
                 <View style={styles.watermarkMedia}>
-                  <BihevraText fontSize={18} variant="watermark" />
+                  <TribunWordmark fontSize={18} variant="watermark" />
                 </View>
               </LinearGradient>
 
@@ -113,7 +113,7 @@ const ShareableMomentCard = forwardRef<ShareableMomentCardRef, ShareableMomentCa
 
               {/* Bihevra Watermark */}
               <View style={styles.watermarkPlaceholder}>
-                <BihevraText fontSize={20} variant="watermark" />
+                <TribunWordmark fontSize={20} variant="watermark" />
               </View>
             </LinearGradient>
           )}

@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:768357338287:android:58b24d796710505bca585a",
+        "mobilesdk_app_id": "1:768357338287:android:bb96aec2fcd5bbe8ca585a",
         "android_client_info": {
-          "package_name": "com.bihevra.tribun"
+          "package_name": "com.gstribun.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "768357338287-5qq8q2kufsp1gq2qmp94tf5kfei1fsm2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gstribun.app",
+            "certificate_hash": "5e6a117c62a3c8a4ac9f991051e37ca09b06ff14"
+          }
+        },
+        {
+          "client_id": "768357338287-v9hbeqetc9vidqldvhoquv9qg8nk92vp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCtMsYwBnS7NS6oQHjPLMplsiA4juLq0B4"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "768357338287-v9hbeqetc9vidqldvhoquv9qg8nk92vp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "768357338287-sfb0jp0ipe80oi3l4j1v327sqmeh3b0d.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gstribun.app"
+              }
+            }
+          ]
         }
       }
     }

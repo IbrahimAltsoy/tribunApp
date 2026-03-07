@@ -50,19 +50,16 @@ const EulaModal: React.FC<EulaModalProps> = ({ visible, onAccept }) => {
       const deviceInfo = `${Platform.OS} ${Platform.Version}`;
       const appVersion = Application.nativeApplicationVersion || '1.0.0';
 
-      const response = await userSafetyService.acceptEula(
+      await userSafetyService.acceptEula(
         CURRENT_EULA_VERSION,
         deviceInfo,
         appVersion
       );
-
-      if (response.success) {
-        onAccept();
-      }
     } catch (error) {
       console.error('Failed to accept EULA:', error);
     } finally {
       setIsAccepting(false);
+      onAccept();
     }
   };
 

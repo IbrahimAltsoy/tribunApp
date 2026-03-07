@@ -2,12 +2,12 @@
   "expo": {
     "name": "GS Tribün",
     "slug": "tribunapplication",
-    "version": "1.0.7",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "scheme": "bihevra",
+    "scheme": "gstribun",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -17,14 +17,15 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/ee031be9-ba0f-407c-bd0f-9f8c65041939"
     },
-    "runtimeVersion": "1.0.7",
+    "runtimeVersion": "1.0.0",
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bihevra.tribun",
-      "buildNumber": "1",
+      "bundleIdentifier": "com.gstribun.app",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "buildNumber": "2",
       "infoPlist": {
         "NSCameraUsageDescription": "Taraftar anınızı fotoğrafla paylaşabilmeniz için kamera iznine ihtiyacımız var.",
         "NSPhotoLibraryUsageDescription": "Fotoğraf galerinizden seçim yapabilmeniz için izin gerekiyor.",
@@ -40,8 +41,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.bihevra.tribun",
-      "versionCode": 9,
+      "package": "com.gstribun.app",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "CAMERA",
@@ -81,7 +82,8 @@
       "expo-video",
       "expo-audio",
       "expo-tracking-transparency",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

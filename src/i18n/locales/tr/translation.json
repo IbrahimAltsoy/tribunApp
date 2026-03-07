@@ -365,8 +365,8 @@
       "description": "Canlı maç skorları, taraftar sohbeti, haberler ve daha fazlası"
     },
     "community": {
-      "title": "Küresel Tribün",
-      "description": "Dünyanın her yerinden taraftarlarla bağlantı kurun ve anılarınızı paylaşın"
+      "title": "Asla Yalnız Değilsin",
+      "description": "Dünyanın her yerindeki Galatasaraylılarla bağlantı kur, anılarını paylaş, birlikte haykır"
     },
     "privacy": {
       "title": "Gizliliğiniz Önemli",
@@ -444,7 +444,7 @@
       },
       "contact": {
         "title": "8. İletişim",
-        "content": "Sorularınız için:\nE-posta: bihevra.app@gmail.com"
+        "content": "Sorularınız için:\nE-posta: gstribun.app@gmail.com"
       }
     },
     "footer": "© 2026 GS Tribün. Tüm hakları saklıdır."
@@ -495,7 +495,7 @@
       },
       "contact": {
         "title": "10. İletişim",
-        "content": "KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:\nE-posta: bihevra.app@gmail.com"
+        "content": "KVKK haklarınızı kullanmak veya gizlilik ile ilgili sorularınız için:\nE-posta: gstribun.app@gmail.com"
       }
     },
     "badge": "KVKK & GDPR Uyumlu",

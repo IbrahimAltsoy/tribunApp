@@ -21,6 +21,9 @@ import type { OnboardingSlide } from '../types/onboarding';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const GS_RED = '#E8111A';
+const GS_GOLD = '#FFC72C';
+
 type Props = {
   onComplete: () => void;
 };
@@ -55,25 +58,32 @@ const OnboardingScreen: React.FC<Props> = ({ onComplete }) => {
 
   const renderSlide = ({ item }: { item: OnboardingSlide }) => (
     <View style={styles.slide}>
-      <LinearGradient
-        colors={item.gradientColors || [colors.background, colors.card]}
-        style={styles.slideGradient}
-      >
-        <View style={styles.iconContainer}>
+      {/* Decorative background circles */}
+      <View style={styles.bgCircleLarge} />
+      <View style={styles.bgCircleSmall} />
+
+      {/* GS Tribün Logo */}
+      <View style={styles.logoRow}>
+        <Text style={styles.logoGS}>GS</Text>
+        <Text style={styles.logoTribun}>TRİBÜN</Text>
+      </View>
+
+      {/* Icon */}
+      <View style={styles.iconContainer}>
+        <View style={styles.iconGlow} />
+        <View style={styles.iconRing}>
           <View style={styles.iconCircle}>
-            <Ionicons
-              name={item.icon as any}
-              size={80}
-              color={item.iconColor || colors.primary}
-            />
+            <Ionicons name={item.icon as any} size={68} color={GS_GOLD} />
           </View>
         </View>
+      </View>
 
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{t(item.title)}</Text>
-          <Text style={styles.description}>{t(item.description)}</Text>
-        </View>
-      </LinearGradient>
+      {/* Text */}
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{t(item.title)}</Text>
+        <View style={styles.divider} />
+        <Text style={styles.description}>{t(item.description)}</Text>
+      </View>
     </View>
   );
 
@@ -88,7 +98,7 @@ const OnboardingScreen: React.FC<Props> = ({ onComplete }) => {
 
         const dotWidth = scrollX.interpolate({
           inputRange,
-          outputRange: [8, 32, 8],
+          outputRange: [6, 28, 6],
           extrapolate: 'clamp',
         });
 
@@ -101,13 +111,7 @@ const OnboardingScreen: React.FC<Props> = ({ onComplete }) => {
         return (
           <Animated.View
             key={index}
-            style={[
-              styles.dot,
-              {
-                width: dotWidth,
-                opacity,
-              },
-            ]}
+            style={[styles.dot, { width: dotWidth, opacity }]}
           />
         );
       })}
@@ -115,86 +119,97 @@ const OnboardingScreen: React.FC<Props> = ({ onComplete }) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <View style={styles.header}>
-        {currentIndex < slides.length - 1 && (
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
-          </Pressable>
-        )}
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        renderItem={renderSlide}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        bounces={false}
-        keyExtractor={(item) => item.id}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-        onMomentumScrollEnd={(event) => {
-          const index = Math.round(
-            event.nativeEvent.contentOffset.x / SCREEN_WIDTH
-          );
-          setCurrentIndex(index);
-          onboardingService.updateCurrentStep(index);
-        }}
-        scrollEventThrottle={16}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#100505', '#0A0A0A', '#0A0A0A']}
+        style={StyleSheet.absoluteFill}
       />
 
-      {renderPagination()}
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <View style={styles.header}>
+          {currentIndex < slides.length - 1 && (
+            <Pressable onPress={handleSkip} style={styles.skipButton}>
+              <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
+            </Pressable>
+          )}
+        </View>
 
-      <View style={styles.footer}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.nextButton,
-            pressed && styles.nextButtonPressed,
-          ]}
-          onPress={handleNext}
-        >
-          <LinearGradient
-            colors={[colors.primary, colors.accent]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.nextButtonGradient}
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          renderItem={renderSlide}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          bounces={false}
+          keyExtractor={(item) => item.id}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          onMomentumScrollEnd={(event) => {
+            const index = Math.round(
+              event.nativeEvent.contentOffset.x / SCREEN_WIDTH
+            );
+            setCurrentIndex(index);
+            onboardingService.updateCurrentStep(index);
+          }}
+          scrollEventThrottle={16}
+        />
+
+        {renderPagination()}
+
+        <View style={styles.footer}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.nextButton,
+              pressed && styles.nextButtonPressed,
+            ]}
+            onPress={handleNext}
           >
-            <Text style={styles.nextButtonText}>
-              {currentIndex === slides.length - 1
-                ? t('onboarding.getStarted')
-                : t('onboarding.next')}
-            </Text>
-            <Ionicons
-              name={
-                currentIndex === slides.length - 1
-                  ? 'checkmark-circle'
-                  : 'arrow-forward'
-              }
-              size={24}
-              color={colors.white}
-            />
-          </LinearGradient>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+            <LinearGradient
+              colors={[GS_RED, '#C40E16']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.nextButtonGradient}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentIndex === slides.length - 1
+                  ? t('onboarding.getStarted')
+                  : t('onboarding.next')}
+              </Text>
+              <Ionicons
+                name={
+                  currentIndex === slides.length - 1
+                    ? 'checkmark-circle'
+                    : 'arrow-forward'
+                }
+                size={20}
+                color={colors.white}
+              />
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#0A0A0A',
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    minHeight: 50,
+    minHeight: 44,
   },
   skipButton: {
     paddingHorizontal: spacing.md,
@@ -202,38 +217,91 @@ const styles = StyleSheet.create({
   },
   skipText: {
     color: colors.textSecondary,
-    fontFamily: typography.semiBold,
-    fontSize: fontSizes.md,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+    letterSpacing: 0.3,
   },
   slide: {
     width: SCREEN_WIDTH,
     flex: 1,
-  },
-  slideGradient: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-  iconContainer: {
-    marginBottom: spacing.xxxl,
-    alignItems: 'center',
+  bgCircleLarge: {
+    position: 'absolute',
+    width: SCREEN_WIDTH * 0.9,
+    height: SCREEN_WIDTH * 0.9,
+    borderRadius: SCREEN_WIDTH * 0.45,
+    backgroundColor: 'rgba(232, 17, 26, 0.04)',
+    top: '5%',
+    alignSelf: 'center',
   },
-  iconCircle: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(0, 191, 71, 0.1)',
-    borderWidth: 2,
-    borderColor: colors.primary,
+  bgCircleSmall: {
+    position: 'absolute',
+    width: SCREEN_WIDTH * 0.5,
+    height: SCREEN_WIDTH * 0.5,
+    borderRadius: SCREEN_WIDTH * 0.25,
+    backgroundColor: 'rgba(255, 199, 44, 0.03)',
+    top: '15%',
+    alignSelf: 'center',
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: spacing.xxl,
+    gap: 7,
+  },
+  logoGS: {
+    fontSize: fontSizes.lg,
+    fontFamily: typography.extraBold,
+    color: GS_GOLD,
+    letterSpacing: 1.5,
+  },
+  logoTribun: {
+    fontSize: fontSizes.xs,
+    fontFamily: typography.bold,
+    color: colors.white,
+    letterSpacing: 4,
+    opacity: 0.9,
+  },
+  iconContainer: {
+    marginBottom: spacing.xxl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 199, 44, 0.05)',
+  },
+  iconRing: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 199, 44, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 199, 44, 0.03)',
+  },
+  iconCircle: {
+    width: 124,
+    height: 124,
+    borderRadius: 62,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 199, 44, 0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#141414',
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
+        shadowColor: GS_GOLD,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.2,
+        shadowRadius: 18,
       },
       android: {
         elevation: 8,
@@ -242,34 +310,43 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    maxWidth: '90%',
+    maxWidth: '88%',
   },
   title: {
-    fontSize: fontSizes.xxl,
+    fontSize: fontSizes.xl,
     fontFamily: typography.bold,
     color: colors.white,
     textAlign: 'center',
+    marginBottom: spacing.md,
+    letterSpacing: 0.2,
+  },
+  divider: {
+    width: 36,
+    height: 2,
+    backgroundColor: GS_GOLD,
+    borderRadius: 1,
     marginBottom: spacing.lg,
-    lineHeight: 40,
+    opacity: 0.75,
   },
   description: {
-    fontSize: fontSizes.lg,
-    fontFamily: typography.medium,
+    fontSize: fontSizes.md,
+    fontFamily: typography.regular,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 28,
+    lineHeight: 26,
+    letterSpacing: 0.2,
   },
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xl,
-    gap: spacing.xs,
+    paddingVertical: spacing.lg,
+    gap: 6,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.primary,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: GS_GOLD,
   },
   footer: {
     paddingHorizontal: spacing.xl,
@@ -280,13 +357,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...Platform.select({
       ios: {
-        shadowColor: colors.primary,
+        shadowColor: GS_RED,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 6,
+        elevation: 8,
       },
     }),
   },
@@ -298,14 +375,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: 16,
     paddingHorizontal: spacing.xl,
     gap: spacing.sm,
   },
   nextButtonText: {
     color: colors.white,
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.md,
     fontFamily: typography.bold,
+    letterSpacing: 0.5,
   },
 });
 

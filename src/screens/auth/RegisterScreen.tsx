@@ -21,20 +21,14 @@ import { spacing, radii } from '../../theme/spacing';
 import { fontSizes, typography } from '../../theme/typography';
 import { useAuth } from '../../contexts/AuthContext';
 
-/**
- * Password validation: min 10 chars, at least 1 letter, at least 1 digit
- * Matches backend RegisterRequestValidator
- */
-const validatePassword = (password: string): string | null => {
-  if (password.length < 10) return 'Şifre en az 10 karakter olmalı.';
-  if (!/[a-zA-Z]/.test(password)) return 'Şifre en az bir harf içermeli.';
-  if (!/[0-9]/.test(password)) return 'Şifre en az bir rakam içermeli.';
+const validatePassword = (p: string): string | null => {
+  if (p.length < 10) return 'Şifre en az 10 karakter olmalı.';
+  if (!/[a-zA-Z]/.test(p)) return 'Şifre en az bir harf içermeli.';
+  if (!/[0-9]/.test(p)) return 'Şifre en az bir rakam içermeli.';
   return null;
 };
 
-type Props = {
-  onNavigateLogin: () => void;
-};
+type Props = { onNavigateLogin: () => void };
 
 const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
   const { register } = useAuth();
@@ -45,61 +39,43 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [emailSent, setEmailSent] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 8, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 9, useNativeDriver: true }),
     ]).start();
   }, []);
 
+  const clearErr = (field: string) => setErrors(e => { const n = { ...e }; delete n[field]; return n; });
+
   const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!username.trim()) {
-      newErrors.username = 'Kullanıcı adı gerekli.';
-    } else if (username.trim().length < 3) {
-      newErrors.username = 'Kullanıcı adı en az 3 karakter olmalı.';
-    }
-
-    if (!email.trim()) {
-      newErrors.email = 'E-posta gerekli.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      newErrors.email = 'Geçerli bir e-posta adresi girin.';
-    }
-
-    const passwordError = validatePassword(password);
-    if (passwordError) newErrors.password = passwordError;
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Şifre tekrarı gerekli.';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Şifreler eşleşmiyor.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const e: Record<string, string> = {};
+    if (!username.trim()) e.username = 'Kullanıcı adı gerekli.';
+    else if (username.trim().length < 3) e.username = 'En az 3 karakter olmalı.';
+    if (!email.trim()) e.email = 'E-posta gerekli.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) e.email = 'Geçerli bir e-posta girin.';
+    const pe = validatePassword(password);
+    if (pe) e.password = pe;
+    if (!confirmPassword) e.confirmPassword = 'Şifre tekrarı gerekli.';
+    else if (password !== confirmPassword) e.confirmPassword = 'Şifreler eşleşmiyor.';
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
   const handleRegister = useCallback(async () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await register(
-        username.trim(),
-        email.trim(),
-        password,
-        confirmPassword,
-        displayName.trim() || undefined,
-      );
+      await register(username.trim(), email.trim(), password, confirmPassword, displayName.trim() || undefined);
       setRegisteredEmail(email.trim());
       setEmailSent(true);
     } catch (err) {
@@ -109,91 +85,90 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
     }
   }, [register, username, email, password, confirmPassword, displayName]);
 
-  const clearError = (field: string) => setErrors((e) => { const next = { ...e }; delete next[field]; return next; });
-
-  // E-posta gönderildi ekranı
   if (emailSent) {
     return (
-      <View style={styles.container}>
-        <LinearGradient colors={['rgba(232,17,26,0.15)', 'rgba(0,0,0,0)']} style={StyleSheet.absoluteFill} />
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.emailSentContainer}>
-            <LinearGradient colors={[colors.primary, '#C40E16']} style={styles.emailIconBadge}>
-              <Ionicons name="mail" size={36} color={colors.white} />
+      <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+        <LinearGradient
+          colors={['rgba(200,15,25,0.15)', 'rgba(10,10,10,0)']}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={styles.sentContainer}>
+          <View style={styles.sentIconWrap}>
+            <LinearGradient colors={[colors.primary, '#900010']} style={styles.sentIconGrad}>
+              <Ionicons name="mail" size={36} color="#fff" />
             </LinearGradient>
-            <Text style={styles.emailSentTitle}>E-posta Gönderildi!</Text>
-            <Text style={styles.emailSentText}>
-              <Text style={styles.emailSentEmail}>{registeredEmail}</Text>
-              {' '}adresine doğrulama bağlantısı gönderildi.{'\n\n'}
-              E-postanızdaki bağlantıya tıklayarak hesabınızı doğrulayın.
-            </Text>
-            <TouchableOpacity style={styles.primaryButton} onPress={onNavigateLogin} activeOpacity={0.85}>
-              <LinearGradient colors={[colors.primary, '#C40E16']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryButtonGradient}>
-                <Text style={styles.primaryButtonText}>Giriş Yap</Text>
-                <Ionicons name="arrow-forward" size={18} color={colors.white} />
-              </LinearGradient>
-            </TouchableOpacity>
           </View>
-        </SafeAreaView>
-      </View>
+          <Text style={styles.sentTitle}>E-posta Gönderildi!</Text>
+          <Text style={styles.sentText}>
+            <Text style={styles.sentEmail}>{registeredEmail}</Text>
+            {' '}adresine doğrulama bağlantısı gönderildi.{'\n\n'}
+            Bağlantıya tıklayarak hesabınızı doğrulayın.
+          </Text>
+          <TouchableOpacity style={styles.loginBtn} onPress={onNavigateLogin} activeOpacity={0.85}>
+            <LinearGradient colors={[colors.primary, '#A00010']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.loginBtnGrad}>
+              <Text style={styles.loginBtnText}>Giriş Yap</Text>
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['rgba(232,17,26,0.15)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0)']} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
-      <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
-      >
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+      <LinearGradient
+        colors={['rgba(200,15,25,0.15)', 'rgba(10,10,10,0)', 'rgba(10,10,10,0)']}
+        locations={[0, 0.4, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Pressable onPress={onNavigateLogin} style={styles.backButton} hitSlop={8}>
-              <Ionicons name="arrow-back" size={22} color={colors.text} />
-            </Pressable>
-            <Text style={styles.title}>Hesap Oluştur</Text>
-            <Text style={styles.subtitle}>
-              <Text style={styles.subtitleGs}>GS Tribün</Text>
-              {' topluluğuna katıl'}
-            </Text>
-          </View>
 
-          {/* Form */}
-          <View style={styles.form}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Pressable onPress={onNavigateLogin} style={styles.backBtn} hitSlop={8}>
+                <Ionicons name="arrow-back" size={20} color={colors.text} />
+              </Pressable>
+              <Text style={styles.headerTitle}>Hesap Oluştur</Text>
+              <Text style={styles.headerSub}>
+                <Text style={styles.headerSubAccent}>GS Tribün </Text>
+                topluluğuna katıl
+              </Text>
+            </View>
+
             {/* Username */}
-            <View>
+            <View style={styles.fieldWrap}>
               <Text style={styles.label}>Kullanıcı Adı *</Text>
-              <View style={[styles.inputWrapper, errors.username ? styles.inputError : null]}>
-                <Ionicons name="at-outline" size={20} color={colors.textTertiary} style={styles.inputIcon} />
+              <View style={[styles.inputRow, errors.username ? styles.inputErr : null]}>
+                <Ionicons name="at-outline" size={17} color={errors.username ? colors.error : '#666'} style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
                   placeholder="kullanici_adi"
-                  placeholderTextColor={colors.mutedText}
+                  placeholderTextColor="#555"
                   value={username}
-                  onChangeText={(t) => { setUsername(t); clearError('username'); }}
+                  onChangeText={t => { setUsername(t); clearErr('username'); }}
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
               </View>
-              {errors.username && <Text style={styles.errorText}>{errors.username}</Text>}
+              {errors.username ? <Text style={styles.errText}>{errors.username}</Text> : null}
             </View>
 
             {/* Display Name */}
-            <View>
+            <View style={styles.fieldWrap}>
               <Text style={styles.label}>Görünen Ad</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color={colors.textTertiary} style={styles.inputIcon} />
+              <View style={styles.inputRow}>
+                <Ionicons name="person-outline" size={17} color="#666" style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
                   placeholder="Adın (opsiyonel)"
-                  placeholderTextColor={colors.mutedText}
+                  placeholderTextColor="#555"
                   value={displayName}
                   onChangeText={setDisplayName}
                 />
@@ -201,158 +176,160 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
             </View>
 
             {/* Email */}
-            <View>
+            <View style={styles.fieldWrap}>
               <Text style={styles.label}>E-posta *</Text>
-              <View style={[styles.inputWrapper, errors.email ? styles.inputError : null]}>
-                <Ionicons name="mail-outline" size={20} color={colors.textTertiary} style={styles.inputIcon} />
+              <View style={[styles.inputRow, errors.email ? styles.inputErr : null]}>
+                <Ionicons name="mail-outline" size={17} color={errors.email ? colors.error : '#666'} style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
                   placeholder="ornek@email.com"
-                  placeholderTextColor={colors.mutedText}
+                  placeholderTextColor="#555"
                   value={email}
-                  onChangeText={(t) => { setEmail(t); clearError('email'); }}
+                  onChangeText={t => { setEmail(t); clearErr('email'); }}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   autoCorrect={false}
                 />
               </View>
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {errors.email ? <Text style={styles.errText}>{errors.email}</Text> : null}
             </View>
 
             {/* Password */}
-            <View>
+            <View style={styles.fieldWrap}>
               <Text style={styles.label}>Şifre *</Text>
-              <View style={[styles.inputWrapper, errors.password ? styles.inputError : null]}>
-                <Ionicons name="lock-closed-outline" size={20} color={colors.textTertiary} style={styles.inputIcon} />
+              <View style={[styles.inputRow, errors.password ? styles.inputErr : null]}>
+                <Ionicons name="lock-closed-outline" size={17} color={errors.password ? colors.error : '#666'} style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
                   placeholder="En az 10 karakter, harf ve rakam"
-                  placeholderTextColor={colors.mutedText}
+                  placeholderTextColor="#555"
                   value={password}
-                  onChangeText={(t) => { setPassword(t); clearError('password'); }}
+                  onChangeText={t => { setPassword(t); clearErr('password'); }}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
-                <TouchableOpacity onPress={() => setShowPassword((v) => !v)} style={styles.eyeButton}>
-                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textTertiary} />
-                </TouchableOpacity>
+                <Pressable onPress={() => setShowPassword(v => !v)} hitSlop={10}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={17} color="#555" />
+                </Pressable>
               </View>
-              {errors.password ? (
-                <Text style={styles.errorText}>{errors.password}</Text>
-              ) : (
-                <Text style={styles.hintText}>Min 10 karakter, en az 1 harf ve 1 rakam</Text>
-              )}
+              {errors.password
+                ? <Text style={styles.errText}>{errors.password}</Text>
+                : <Text style={styles.hint}>Min 10 karakter, en az 1 harf ve 1 rakam</Text>
+              }
             </View>
 
             {/* Confirm Password */}
-            <View>
+            <View style={styles.fieldWrap}>
               <Text style={styles.label}>Şifre Tekrar *</Text>
-              <View style={[styles.inputWrapper, errors.confirmPassword ? styles.inputError : null]}>
-                <Ionicons name="lock-closed-outline" size={20} color={colors.textTertiary} style={styles.inputIcon} />
+              <View style={[styles.inputRow, errors.confirmPassword ? styles.inputErr : null]}>
+                <Ionicons name="lock-closed-outline" size={17} color={errors.confirmPassword ? colors.error : '#666'} style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
                   placeholder="Şifreyi tekrar girin"
-                  placeholderTextColor={colors.mutedText}
+                  placeholderTextColor="#555"
                   value={confirmPassword}
-                  onChangeText={(t) => { setConfirmPassword(t); clearError('confirmPassword'); }}
-                  secureTextEntry={!showConfirmPassword}
+                  onChangeText={t => { setConfirmPassword(t); clearErr('confirmPassword'); }}
+                  secureTextEntry={!showConfirm}
                   autoCapitalize="none"
                 />
-                <TouchableOpacity onPress={() => setShowConfirmPassword((v) => !v)} style={styles.eyeButton}>
-                  <Ionicons name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textTertiary} />
-                </TouchableOpacity>
+                <Pressable onPress={() => setShowConfirm(v => !v)} hitSlop={10}>
+                  <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={17} color="#555" />
+                </Pressable>
               </View>
-              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+              {errors.confirmPassword ? <Text style={styles.errText}>{errors.confirmPassword}</Text> : null}
             </View>
 
-            {/* Register Button */}
+            {/* Register button */}
             <TouchableOpacity
-              style={[styles.primaryButton, loading && styles.buttonDisabled]}
+              style={[styles.loginBtn, loading && { opacity: 0.6 }]}
               onPress={handleRegister}
               disabled={loading}
               activeOpacity={0.85}
             >
-              <LinearGradient colors={[colors.primary, '#C40E16']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.primaryButtonGradient}>
-                {loading ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <>
-                    <Text style={styles.primaryButtonText}>Kayıt Ol</Text>
-                    <Ionicons name="checkmark" size={18} color={colors.white} />
-                  </>
-                )}
+              <LinearGradient colors={[colors.primary, '#A00010']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.loginBtnGrad}>
+                {loading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <><Text style={styles.loginBtnText}>Kayıt Ol</Text><Ionicons name="checkmark" size={18} color="#fff" /></>
+                }
               </LinearGradient>
             </TouchableOpacity>
-          </View>
 
-          {/* Login Link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Zaten hesabın var mı? </Text>
-            <TouchableOpacity onPress={onNavigateLogin} hitSlop={8}>
-              <Text style={styles.footerLink}>Giriş Yap</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Zaten hesabın var mı? </Text>
+              <TouchableOpacity onPress={onNavigateLogin} hitSlop={8}>
+                <Text style={styles.footerLink}>Giriş Yap</Text>
+              </TouchableOpacity>
+            </View>
+
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  safeArea: { flex: 1 },
+  root: { flex: 1, backgroundColor: '#0A0A0A' },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl },
+  scroll: { flexGrow: 1, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl },
 
   // Email sent
-  emailSentContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
-  emailIconBadge: {
-    width: 80, height: 80, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm,
-    ...Platform.select({ ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.45, shadowRadius: 12 }, android: { elevation: 8 } }),
+  sentContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
+  sentIconWrap: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+    ...Platform.select({
+      ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.5, shadowRadius: 14 },
+      android: { elevation: 10 },
+    }),
   },
-  emailSentTitle: { color: colors.text, fontFamily: typography.bold, fontSize: fontSizes.xxl ?? 26, textAlign: 'center' },
-  emailSentText: { color: colors.textSecondary, fontFamily: typography.medium, fontSize: fontSizes.md, textAlign: 'center', lineHeight: 22 },
-  emailSentEmail: { color: colors.accent, fontFamily: typography.semiBold },
+  sentIconGrad: { width: 80, height: 80, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  sentTitle: { color: colors.white, fontFamily: typography.bold, fontSize: (fontSizes.xxl ?? 26), textAlign: 'center' },
+  sentText: { color: '#888', fontFamily: typography.medium, fontSize: fontSizes.md, textAlign: 'center', lineHeight: 22 },
+  sentEmail: { color: colors.accent, fontFamily: typography.semiBold },
 
   // Header
   header: { paddingTop: spacing.lg, paddingBottom: spacing.xl, gap: spacing.xs },
-  backButton: {
-    width: 40, height: 40, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs,
-    backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: radii.md, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  backBtn: {
+    width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#181818', borderRadius: radii.md, borderWidth: 1, borderColor: '#2A2A2A',
+    marginBottom: spacing.sm,
   },
-  title: { color: colors.text, fontFamily: typography.bold, fontSize: fontSizes.xxl ?? 26 },
-  subtitle: { color: colors.textSecondary, fontFamily: typography.medium, fontSize: fontSizes.md },
-  subtitleGs: { color: colors.accent, fontFamily: typography.semiBold },
+  headerTitle: { color: colors.white, fontFamily: typography.bold, fontSize: (fontSizes.xxl ?? 26) },
+  headerSub: { color: '#888', fontFamily: typography.medium, fontSize: fontSizes.md },
+  headerSubAccent: { color: colors.accent, fontFamily: typography.semiBold },
 
-  // Form
-  form: { gap: spacing.md },
-  label: { color: colors.textSecondary, fontFamily: typography.medium, fontSize: fontSizes.xs, marginBottom: spacing.xs / 2, letterSpacing: 0.3 },
-  inputWrapper: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: radii.lg, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: spacing.md, height: 52,
+  // Fields
+  fieldWrap: { marginBottom: spacing.md },
+  label: { color: '#666', fontFamily: typography.medium, fontSize: fontSizes.xs, marginBottom: 6, letterSpacing: 0.3 },
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#181818', borderRadius: radii.lg,
+    borderWidth: 1, borderColor: '#2A2A2A',
+    paddingHorizontal: spacing.md, height: 54,
   },
-  inputError: { borderColor: colors.error, borderWidth: 1.5, backgroundColor: 'rgba(232,17,26,0.05)' },
-  inputIcon: { marginRight: spacing.sm },
-  input: { flex: 1, color: colors.text, fontFamily: typography.medium, fontSize: fontSizes.md, height: '100%' },
-  eyeButton: { padding: spacing.xs },
-  errorText: { color: colors.error, fontFamily: typography.medium, fontSize: fontSizes.xs, marginTop: spacing.xs / 2, paddingHorizontal: spacing.xs },
-  hintText: { color: colors.textTertiary, fontFamily: typography.medium, fontSize: fontSizes.xs, marginTop: spacing.xs / 2, paddingHorizontal: spacing.xs },
+  inputErr: { borderColor: colors.error, backgroundColor: 'rgba(220,30,40,0.07)' },
+  inputIco: { marginRight: spacing.sm },
+  input: { flex: 1, color: colors.white, fontFamily: typography.medium, fontSize: fontSizes.md, height: '100%' },
+  errText: { color: colors.error, fontFamily: typography.medium, fontSize: fontSizes.xs, marginTop: 5, marginLeft: spacing.xs },
+  hint: { color: '#555', fontFamily: typography.medium, fontSize: fontSizes.xs, marginTop: 5, marginLeft: spacing.xs },
 
   // Button
-  primaryButton: {
+  loginBtn: {
     borderRadius: radii.lg, overflow: 'hidden', marginTop: spacing.sm,
-    ...Platform.select({ ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10 }, android: { elevation: 6 } }),
+    ...Platform.select({
+      ios: { shadowColor: colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.45, shadowRadius: 12 },
+      android: { elevation: 8 },
+    }),
   },
-  primaryButtonGradient: { height: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
-  buttonDisabled: { opacity: 0.55 },
-  primaryButtonText: { color: colors.white, fontFamily: typography.semiBold, fontSize: fontSizes.md, letterSpacing: 0.3 },
+  loginBtnGrad: { height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  loginBtnText: { color: '#fff', fontFamily: typography.semiBold, fontSize: fontSizes.md, letterSpacing: 0.3 },
 
   // Footer
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.xl },
-  footerText: { color: colors.textSecondary, fontFamily: typography.medium, fontSize: fontSizes.sm },
+  footerText: { color: '#666', fontFamily: typography.medium, fontSize: fontSizes.sm },
   footerLink: { color: colors.accent, fontFamily: typography.semiBold, fontSize: fontSizes.sm },
 });
 

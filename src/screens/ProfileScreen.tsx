@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   Pressable,
   Image,
   ActivityIndicator,
@@ -11,7 +11,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
@@ -35,6 +35,7 @@ const ITEM_SIZE = (width - spacing.md * 2 - spacing.xs * (GRID_COLS - 1)) / GRID
 type Tab = "mine" | "liked";
 
 const ProfileScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { authState, user, logout } = useAuth();
   const isAuthenticated = authState === "authenticated";
@@ -77,13 +78,16 @@ const ProfileScreen: React.FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadMoments();
+    await Promise.all([
+      loadMoments(),
+      new Promise(resolve => setTimeout(resolve, 800)),
+    ]);
     setRefreshing(false);
   };
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={["rgba(232,17,26,0.15)", "transparent"]}
           style={StyleSheet.absoluteFill}
@@ -111,7 +115,7 @@ const ProfileScreen: React.FC = () => {
             </LinearGradient>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -150,39 +154,47 @@ const ProfileScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient
         colors={["rgba(232,17,26,0.12)", "transparent"]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
 
-      {/* Header row */}
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Profil</Text>
-        <Pressable
-          onPress={() => navigation.navigate("Settings")}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Ionicons name="settings-outline" size={24} color={colors.textSecondary} />
-        </Pressable>
-      </View>
-
-      <FlatList
-        data={currentMoments}
-        keyExtractor={(item) => item.id}
-        numColumns={GRID_COLS}
-        renderItem={renderMomentItem}
-        contentContainerStyle={styles.gridContent}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="never"
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor="#f2b91e"
+            colors={["#f2b91e"]}
+            progressBackgroundColor="#1A1A1A"
           />
         }
-        ListHeaderComponent={
-          <View>
+      >
+        {/* Pull-to-refresh indicator */}
+        {refreshing && (
+          <View style={styles.refreshIndicator}>
+            <ActivityIndicator size="small" color="#f2b91e" />
+            <Text style={styles.refreshText}>Yenileniyor...</Text>
+          </View>
+        )}
+
+        {/* Header row */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Profil</Text>
+          <Pressable
+            onPress={() => navigation.navigate("Settings")}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="settings-outline" size={24} color={colors.textSecondary} />
+          </Pressable>
+        </View>
+
+        <View>
             {/* Avatar & Info */}
             <View style={styles.profileSection}>
               {/* Avatar with GS gradient ring */}
@@ -262,16 +274,16 @@ const ProfileScreen: React.FC = () => {
               </Pressable>
             </View>
 
-            {loading && (
+            {loading && !refreshing && (
               <ActivityIndicator
                 style={{ marginVertical: spacing.xl }}
                 color={colors.primary}
               />
             )}
           </View>
-        }
-        ListEmptyComponent={
-          !loading ? (
+
+          {/* Grid */}
+          {!loading && currentMoments.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons
                 name={activeTab === "mine" ? "camera-outline" : "heart-outline"}
@@ -284,10 +296,27 @@ const ProfileScreen: React.FC = () => {
                   : "Henüz beğenilen anı yok."}
               </Text>
             </View>
-          ) : null
-        }
-        columnWrapperStyle={currentMoments.length > 0 ? styles.gridRow : undefined}
-      />
+          ) : (
+            <View style={styles.gridContent}>
+              {(() => {
+                const rows: FanMomentDto[][] = [];
+                for (let i = 0; i < currentMoments.length; i += GRID_COLS) {
+                  rows.push(currentMoments.slice(i, i + GRID_COLS));
+                }
+                return rows.map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.gridRow}>
+                    {row.map((item) => (
+                      <React.Fragment key={item.id}>
+                        {renderMomentItem({ item })}
+                      </React.Fragment>
+                    ))}
+                    {row.length < GRID_COLS && <View style={styles.gridItem} />}
+                  </View>
+                ));
+              })()}
+            </View>
+          )}
+      </ScrollView>
 
       {selectedMoment && (
         <MomentDetailModal
@@ -296,7 +325,7 @@ const ProfileScreen: React.FC = () => {
           onClose={() => setSelectedMoment(null)}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -304,6 +333,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollView: {
+    flex: 1,
   },
   headerRow: {
     flexDirection: "row",
@@ -316,6 +348,20 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xl,
     fontFamily: typography.bold,
     color: colors.text,
+  },
+
+  // Refresh indicator
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  refreshText: {
+    color: "#f2b91e",
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
   },
 
   // Guest
@@ -510,6 +556,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   gridRow: {
+    flexDirection: "row",
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },

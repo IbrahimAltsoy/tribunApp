@@ -539,12 +539,6 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.screenContent}>
-        <Header
-          onPressNotifications={handleNotificationPress}
-          notificationCount={unreadNotificationCount}
-        />
-
         <FanMomentsSection
           moments={momentList}
           onPressAdd={handleOpenShareModal}
@@ -555,13 +549,18 @@ const HomeScreen: React.FC = () => {
           onLikeMoment={handleLikeMoment}
           onPressAuthor={handlePressAuthor}
           slot={smartSlot}
+          headerNode={
+            <Header
+              onPressNotifications={handleNotificationPress}
+              notificationCount={unreadNotificationCount}
+            />
+          }
           refreshing={refreshing}
           onRefresh={onRefresh}
           onLoadMore={loadMoreMoments}
           loadingMore={loadingMore}
           hasMore={hasMoreMoments}
         />
-      </View>
 
       {/* Kullanıcı Profil Kartı */}
       <UserProfileModal

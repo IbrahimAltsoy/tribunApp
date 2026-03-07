@@ -35,6 +35,7 @@ type Props = {
   onLikeMoment?: (moment: FanMomentDto) => void;
   onPressAuthor?: (userId: string, username: string) => void;
   slot?: React.ReactNode;
+  headerNode?: React.ReactNode;
   refreshing?: boolean;
   onRefresh?: () => void;
   onLoadMore?: () => void;
@@ -384,6 +385,7 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
   onLikeMoment,
   onPressAuthor,
   slot,
+  headerNode,
   refreshing = false,
   onRefresh,
   onLoadMore,
@@ -444,24 +446,35 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
     <FlatList
       data={moments}
       keyExtractor={(item) => item.id}
+      style={styles.list}
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
-      contentInsetAdjustmentBehavior="automatic"
+      alwaysBounceVertical
+      overScrollMode="always"
       refreshControl={
         onRefresh ? (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary, colors.primaryLight]}
+            tintColor="#f2b91e"
+            colors={["#f2b91e"]}
+            progressBackgroundColor="#1A1A1A"
           />
         ) : undefined
       }
       ListHeaderComponent={
         <>
+          {headerNode}
+          {/* Pull-to-refresh indicator */}
+          {refreshing && (
+            <View style={styles.refreshIndicator}>
+              <ActivityIndicator size="small" color="#f2b91e" />
+              <Text style={styles.refreshText}>Yenileniyor...</Text>
+            </View>
+          )}
           {/* Composer bar */}
           <Pressable
             onPress={onPressAdd}
@@ -531,6 +544,9 @@ const FanMomentsSection: React.FC<Props> = React.memo(({
 });
 
 const styles = StyleSheet.create({
+  list: {
+    flex: 1,
+  },
   listContent: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
@@ -930,6 +946,20 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: colors.border,
+  },
+
+  // ─── Refresh Indicator ───────────────────────────────────────────────────
+  refreshIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
+  },
+  refreshText: {
+    color: "#f2b91e",
+    fontSize: 13,
+    fontFamily: "Montserrat_500Medium",
   },
 
   // ─── Loading More ────────────────────────────────────────────────────────

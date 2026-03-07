@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ViewStyle } from "react-native";
 import { typography } from "../theme/typography";
 import { colors } from "../theme/colors";
 
-type BihevraTextProps = {
+type TribunWordmarkProps = {
   fontSize?: number;
   variant?: "default" | "watermark" | "splash" | "header";
   style?: ViewStyle;
@@ -13,7 +13,7 @@ type BihevraTextProps = {
  * GS Tribün stilize text logosu
  * "GS" sarı, "Tribün" beyaz
  */
-const BihevraText: React.FC<BihevraTextProps> = ({
+const TribunWordmark: React.FC<TribunWordmarkProps> = ({
   fontSize = 24,
   variant = "default",
   style,
@@ -82,4 +82,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BihevraText;
+export default TribunWordmark;
