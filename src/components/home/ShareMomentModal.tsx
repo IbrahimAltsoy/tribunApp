@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   Image,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   StyleSheet,
@@ -50,6 +51,7 @@ const ShareMomentModal: React.FC<Props> = ({
   const [captionError, setCaptionError] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [selectedMediaType, setSelectedMediaType] = useState<MediaType>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Video player for preview
   const videoPlayer = useVideoPlayer(selectedMediaType === "video" ? selectedMedia : null, (player) => {
@@ -64,6 +66,7 @@ const ShareMomentModal: React.FC<Props> = ({
       setCaptionError(null);
       setSelectedMedia(null);
       setSelectedMediaType(null);
+      setIsSubmitting(false);
     }
   }, [visible]);
 
@@ -111,15 +114,30 @@ const ShareMomentModal: React.FC<Props> = ({
     return true;
   };
 
+  // Show permission denied alert — Settings yönlendirmeli
+  const showPermissionAlert = (message: string, canAskAgain: boolean) => {
+    if (canAskAgain) {
+      Alert.alert(t("shareMoment.permissionDenied"), message, [
+        { text: t("ok") },
+      ]);
+    } else {
+      Alert.alert(t("shareMoment.permissionDenied"), message, [
+        { text: t("cancel"), style: "cancel" },
+        {
+          text: "Ayarları Aç",
+          onPress: () => Linking.openSettings(),
+        },
+      ]);
+    }
+  };
+
   // Pick image or video from gallery
   const pickMediaFromGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status, canAskAgain } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (status !== "granted") {
-      Alert.alert(
-        t("shareMoment.permissionDenied"),
-        t("shareMoment.galleryPermissionMessage")
-      );
+      showPermissionAlert(t("shareMoment.galleryPermissionMessage"), canAskAgain);
       return;
     }
 
@@ -128,7 +146,7 @@ const ShareMomentModal: React.FC<Props> = ({
       allowsEditing: Platform.OS === "ios",
       aspect: [16, 9],
       quality: 0.8,
-      videoMaxDuration: 60, // Max 60 seconds
+      videoMaxDuration: 60,
     });
 
     if (!result.canceled && result.assets[0]) {
@@ -140,13 +158,11 @@ const ShareMomentModal: React.FC<Props> = ({
 
   // Take photo with camera
   const takePhotoWithCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status, canAskAgain } =
+      await ImagePicker.requestCameraPermissionsAsync();
 
     if (status !== "granted") {
-      Alert.alert(
-        t("shareMoment.permissionDenied"),
-        t("shareMoment.cameraPermissionMessage")
-      );
+      showPermissionAlert(t("shareMoment.cameraPermissionMessage"), canAskAgain);
       return;
     }
 
@@ -165,14 +181,11 @@ const ShareMomentModal: React.FC<Props> = ({
 
   // Record video with camera
   const recordVideoWithCamera = async () => {
-    const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
-    const micStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status, canAskAgain } =
+      await ImagePicker.requestCameraPermissionsAsync();
 
-    if (cameraStatus.status !== "granted") {
-      Alert.alert(
-        t("shareMoment.permissionDenied"),
-        t("shareMoment.cameraPermissionMessage")
-      );
+    if (status !== "granted") {
+      showPermissionAlert(t("shareMoment.cameraPermissionMessage"), canAskAgain);
       return;
     }
 
@@ -181,7 +194,7 @@ const ShareMomentModal: React.FC<Props> = ({
       allowsEditing: Platform.OS === "ios",
       aspect: [16, 9],
       quality: 0.8,
-      videoMaxDuration: 60, // Max 60 seconds
+      videoMaxDuration: 60,
     });
 
     if (!result.canceled && result.assets[0]) {
@@ -235,6 +248,8 @@ const ShareMomentModal: React.FC<Props> = ({
   };
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
+
     const isCityValid = validateCity(newCity);
     const isCaptionValid = validateCaption(newCaption);
 
@@ -247,6 +262,8 @@ const ShareMomentModal: React.FC<Props> = ({
       return;
     }
 
+    setIsSubmitting(true);
+    onClose(); // Modal anında kapanır
     onSubmit(selectedMedia || undefined, selectedMediaType || undefined);
   };
 
@@ -394,10 +411,10 @@ const ShareMomentModal: React.FC<Props> = ({
                   <TouchableOpacity
                     style={[
                       styles.modalButton,
-                      (cityError || captionError) && styles.modalButtonDisabled,
+                      (cityError || captionError || isSubmitting) && styles.modalButtonDisabled,
                     ]}
                     onPress={handleSubmit}
-                    disabled={!!(cityError || captionError)}
+                    disabled={!!(cityError || captionError || isSubmitting)}
                     activeOpacity={0.85}
                   >
                     <LinearGradient

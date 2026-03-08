@@ -161,8 +161,8 @@ const FixtureScreen = () => {
   // Load all data function (used for pull-to-refresh)
   const loadAllData = useCallback(async () => {
     try {
-      const seasonId = 25749;
-      const teamId = 3570;
+      const seasonId = 25682;
+      const teamId = 34;
 
       // Load all data in parallel for faster refresh
       const [standingsResponse, scheduleResponse, scorersResponse] = await Promise.all([
@@ -210,7 +210,7 @@ const FixtureScreen = () => {
   // Load standings from backend
   useEffect(() => {
     const loadStandings = async () => {
-      const seasonId = 25749;
+      const seasonId = 25682;
 
       const response = await footballService.getStandingsTable(seasonId);
       if (response.success && response.data) {
@@ -237,7 +237,7 @@ const FixtureScreen = () => {
     }
 
     const loadTopScorers = async () => {
-      const seasonId = 25749;
+      const seasonId = 25682;
 
       logger.log("🔥 Loading top scorers for season:", seasonId);
       const response = await footballService.getTopScorers(seasonId);
@@ -259,7 +259,7 @@ const FixtureScreen = () => {
   // Load team schedule from backend
   useEffect(() => {
     const loadSchedule = async () => {
-      const teamId = 3570;
+      const teamId = 34;
 
       const response = await footballService.getTeamSchedule(teamId);
       if (response.success && response.data) {

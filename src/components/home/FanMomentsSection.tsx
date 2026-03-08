@@ -78,10 +78,11 @@ const AnimatedMomentCard: React.FC<{
 
     const loadImage = async () => {
       if (!moment.imageUrl) { setImageUri(null); return; }
-      const objectName = /^https?:\/\//i.test(moment.imageUrl)
-        ? moment.imageUrl.replace(/^https?:\/\/[^/]+\/[^/]+\//, "")
-        : moment.imageUrl;
-      const result = await mediaService.getSignedUrl(objectName);
+      if (/^https?:\/\//i.test(moment.imageUrl)) {
+        if (isActive) setImageUri(moment.imageUrl);
+        return;
+      }
+      const result = await mediaService.getSignedUrl(moment.imageUrl);
       if (isActive) setImageUri(result.success ? result.url ?? null : null);
     };
 

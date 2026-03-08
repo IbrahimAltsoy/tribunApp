@@ -35,7 +35,7 @@ const POLLING_INTERVALS = {
 
 // Team IDs from SportMonks API
 const TEAM_IDS = {
-  MENS: 3570,
+  MENS: 34,
   WOMENS: 261209,
 } as const;
 

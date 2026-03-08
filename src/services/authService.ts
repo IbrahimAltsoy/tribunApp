@@ -89,7 +89,7 @@ const login = async (request: LoginRequest): Promise<AuthResponse> => {
   return data;
 };
 
-const register = async (request: RegisterRequest): Promise<AuthResponse> => {
+const register = async (request: RegisterRequest): Promise<void> => {
   const response = await fetch(`${AUTH_URL}/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -112,10 +112,7 @@ const register = async (request: RegisterRequest): Promise<AuthResponse> => {
       'Kayıt başarısız.';
     throw new Error(errorMsg);
   }
-
-  const data: AuthResponse = json.data || json;
-  await storeTokens(data);
-  return data;
+  // Token saklanmaz — email doğrulanmadan authenticated yapılmamalı
 };
 
 const refreshToken = async (): Promise<AuthResponse | null> => {

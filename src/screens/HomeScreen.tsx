@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import {
   ImageBackground,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -202,7 +203,8 @@ const HomeScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const momentList = useMemo(() => moments, [moments]);
+  // Prevent double-like while API request is in-flight
+  const likingMomentIds = useRef(new Set<string>());
 
   const handleOpenDetail = useCallback((moment: FanMomentDto) => {
     setSelectedMoment(moment);
@@ -362,11 +364,22 @@ const HomeScreen: React.FC = () => {
     setEditModalVisible(true);
   }, []);
 
+  const showEditPermissionAlert = useCallback((message: string, canAskAgain: boolean) => {
+    if (canAskAgain) {
+      Alert.alert(t("shareMoment.permissionDenied"), message, [{ text: t("ok") }]);
+    } else {
+      Alert.alert(t("shareMoment.permissionDenied"), message, [
+        { text: t("cancel"), style: "cancel" },
+        { text: "Ayarları Aç", onPress: () => Linking.openSettings() },
+      ]);
+    }
+  }, [t]);
+
   // Pick image for edit
   const pickEditImage = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status, canAskAgain } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      alert(t("shareMoment.galleryPermissionMessage"));
+      showEditPermissionAlert(t("shareMoment.galleryPermissionMessage"), canAskAgain);
       return;
     }
 
@@ -380,13 +393,13 @@ const HomeScreen: React.FC = () => {
     if (!result.canceled && result.assets[0]) {
       setEditImage(result.assets[0].uri);
     }
-  }, [t]);
+  }, [t, showEditPermissionAlert]);
 
   // Take photo for edit
   const takeEditPhoto = useCallback(async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const { status, canAskAgain } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      alert(t("shareMoment.cameraPermissionMessage"));
+      showEditPermissionAlert(t("shareMoment.cameraPermissionMessage"), canAskAgain);
       return;
     }
 
@@ -399,7 +412,7 @@ const HomeScreen: React.FC = () => {
     if (!result.canceled && result.assets[0]) {
       setEditImage(result.assets[0].uri);
     }
-  }, [t]);
+  }, [t, showEditPermissionAlert]);
 
   const handleDeleteMoment = useCallback(
     (moment: FanMomentDto) => {
@@ -433,47 +446,47 @@ const HomeScreen: React.FC = () => {
         return;
       }
 
+      // Spam koruması — aynı moment için in-flight istek varsa yoksay
+      if (likingMomentIds.current.has(moment.id)) return;
+      likingMomentIds.current.add(moment.id);
+
       // Optimistic update
       setMoments((prev) =>
         prev.map((m) =>
           m.id === moment.id
-            ? {
-                ...m,
-                hasLiked: !m.hasLiked,
-                likeCount: m.hasLiked ? m.likeCount - 1 : m.likeCount + 1,
-              }
+            ? { ...m, hasLiked: !m.hasLiked, likeCount: m.hasLiked ? m.likeCount - 1 : m.likeCount + 1 }
             : m
         )
       );
 
-      const response = await fanMomentService.likeMoment(moment.id);
+      try {
+        const response = await fanMomentService.likeMoment(moment.id);
 
-      if (!response.success) {
-        // Revert optimistic update on failure
-        setMoments((prev) =>
-          prev.map((m) =>
-            m.id === moment.id
-              ? {
-                  ...m,
-                  hasLiked: moment.hasLiked,
-                  likeCount: moment.likeCount,
-                }
-              : m
-          )
-        );
-
-        if (response.error === 'unauthorized') {
-          navigation.navigate('Auth');
+        if (!response.success) {
+          // Optimistic update'i geri al
+          setMoments((prev) =>
+            prev.map((m) =>
+              m.id === moment.id
+                ? { ...m, hasLiked: moment.hasLiked, likeCount: moment.likeCount }
+                : m
+            )
+          );
+          if (response.error === 'unauthorized') {
+            navigation.navigate('Auth');
+          }
+        } else if (response.data) {
+          // Backend'den gelen kesin değerlerle senkronize et
+          const synced = { hasLiked: response.data.liked, likeCount: response.data.likeCount };
+          setMoments((prev) =>
+            prev.map((m) => (m.id === moment.id ? { ...m, ...synced } : m))
+          );
+          // Açık detail modal'ı da güncelle
+          setSelectedMoment((prev) =>
+            prev?.id === moment.id ? { ...prev, ...synced } : prev
+          );
         }
-      } else if (response.data) {
-        // Sync with backend response
-        setMoments((prev) =>
-          prev.map((m) =>
-            m.id === moment.id
-              ? { ...m, hasLiked: response.data!.liked, likeCount: response.data!.likeCount }
-              : m
-          )
-        );
+      } finally {
+        likingMomentIds.current.delete(moment.id);
       }
     },
     [authState, navigation]
@@ -540,7 +553,7 @@ const HomeScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
         <FanMomentsSection
-          moments={momentList}
+          moments={moments}
           onPressAdd={handleOpenShareModal}
           onSelectMoment={handleOpenDetail}
           onEditMoment={handleEditMoment}

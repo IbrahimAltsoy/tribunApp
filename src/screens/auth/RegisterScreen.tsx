@@ -28,9 +28,9 @@ const validatePassword = (p: string): string | null => {
   return null;
 };
 
-type Props = { onNavigateLogin: () => void };
+type Props = { onNavigateLogin: () => void; onRegistered?: () => void };
 
-const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
+const RegisterScreen: React.FC<Props> = ({ onNavigateLogin, onRegistered }) => {
   const { register } = useAuth();
 
   const [username, setUsername] = useState('');
@@ -102,13 +102,17 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin }) => {
           <Text style={styles.sentText}>
             <Text style={styles.sentEmail}>{registeredEmail}</Text>
             {' '}adresine doğrulama bağlantısı gönderildi.{'\n\n'}
-            Bağlantıya tıklayarak hesabınızı doğrulayın.
+            Bağlantıya tıklayarak hesabınızı doğrulayın, ardından giriş yapın.
           </Text>
-          <TouchableOpacity style={styles.loginBtn} onPress={onNavigateLogin} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.loginBtn} onPress={onRegistered ?? onNavigateLogin} activeOpacity={0.85}>
             <LinearGradient colors={[colors.primary, '#A00010']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.loginBtnGrad}>
-              <Text style={styles.loginBtnText}>Giriş Yap</Text>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
+              <Ionicons name="home-outline" size={18} color="#fff" />
+              <Text style={styles.loginBtnText}>Ana Sayfaya Dön</Text>
             </LinearGradient>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.loginBtnSecondary} onPress={onNavigateLogin} activeOpacity={0.85}>
+            <Text style={styles.loginBtnSecondaryText}>Giriş Yap</Text>
+            <Ionicons name="arrow-forward" size={16} color={colors.accent} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -326,6 +330,8 @@ const styles = StyleSheet.create({
   },
   loginBtnGrad: { height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   loginBtnText: { color: '#fff', fontFamily: typography.semiBold, fontSize: fontSizes.md, letterSpacing: 0.3 },
+  loginBtnSecondary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingVertical: spacing.sm, marginTop: spacing.xs },
+  loginBtnSecondaryText: { color: colors.accent, fontFamily: typography.semiBold, fontSize: fontSizes.sm },
 
   // Footer
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.xl },

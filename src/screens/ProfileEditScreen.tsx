@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Linking,
   ScrollView,
   Platform,
 } from "react-native";
@@ -61,9 +62,19 @@ const ProfileEditScreen: React.FC = () => {
     .slice(0, 2);
 
   const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status, canAskAgain } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("İzin Gerekli", "Fotoğraf seçmek için galeri izni gerekiyor.");
+      if (canAskAgain) {
+        Alert.alert("İzin Gerekli", "Fotoğraf seçmek için galeri izni gerekiyor.", [
+          { text: "Tamam" },
+        ]);
+      } else {
+        Alert.alert("İzin Gerekli", "Fotoğraf seçmek için galeri iznini ayarlardan etkinleştirin.", [
+          { text: "Vazgeç", style: "cancel" },
+          { text: "Ayarları Aç", onPress: () => Linking.openSettings() },
+        ]);
+      }
       return;
     }
 

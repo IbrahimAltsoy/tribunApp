@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -99,8 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     confirmPassword: string,
     displayName?: string,
   ) => {
-    const response = await authService.register({ username, email, password, confirmPassword, displayName });
-    handleAuthResponse(response);
+    // Register sadece hesap oluşturur — email doğrulanmadan authenticated yapılmaz
+    await authService.register({ username, email, password, confirmPassword, displayName });
   }, []);
 
   const logout = useCallback(async () => {
@@ -175,10 +175,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({ authState, user, login, register, logout, signInWithGoogle, signInWithApple, refreshAuth, getToken, updateUser }),
+    [authState, user, login, register, logout, signInWithGoogle, signInWithApple, refreshAuth, getToken, updateUser],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{ authState, user, login, register, logout, signInWithGoogle, signInWithApple, refreshAuth, getToken, updateUser }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

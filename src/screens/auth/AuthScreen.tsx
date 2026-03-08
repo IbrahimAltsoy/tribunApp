@@ -18,7 +18,12 @@ const AuthScreen: React.FC = () => {
   }, [authState, navigation]);
 
   if (view === 'register') {
-    return <RegisterScreen onNavigateLogin={() => setView('login')} />;
+    return (
+      <RegisterScreen
+        onNavigateLogin={() => setView('login')}
+        onRegistered={() => navigation.canGoBack() && navigation.goBack()}
+      />
+    );
   }
 
   return <LoginScreen onNavigateRegister={() => setView('register')} />;
