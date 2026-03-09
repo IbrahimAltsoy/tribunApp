@@ -13,6 +13,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/types";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
@@ -67,6 +70,7 @@ type StandingsView = "general" | "home" | "away" | "scorers";
 
 const FixtureScreen = () => {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [standingsView, setStandingsView] = useState<StandingsView>("general");
 
   // Week selection state
@@ -610,73 +614,32 @@ const FixtureScreen = () => {
         </View>
       </View>
 
-      {/* View Tabss */}
-      <View style={styles.viewTabs}>
-        <Pressable
-          style={[
-            styles.viewTab,
-            standingsView === "general" && styles.viewTabActive,
-          ]}
-          onPress={() => setStandingsView("general")}
-        >
-          <Text
-            style={[
-              styles.viewTabText,
-              standingsView === "general" && styles.viewTabTextActive,
-            ]}
+      {/* View Tabs */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.viewTabs}
+        style={styles.viewTabsScroll}
+      >
+        {(
+          [
+            { key: "general", label: t("fixture.standings.tabGeneral") },
+            { key: "home",    label: t("fixture.standings.tabHome") },
+            { key: "away",    label: t("fixture.standings.tabAway") },
+            { key: "scorers", label: t("fixture.standings.tabScorers") },
+          ] as const
+        ).map(({ key, label }) => (
+          <Pressable
+            key={key}
+            style={[styles.viewTab, standingsView === key && styles.viewTabActive]}
+            onPress={() => setStandingsView(key)}
           >
-            {t("fixture.standings.tabGeneral")}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.viewTab,
-            standingsView === "home" && styles.viewTabActive,
-          ]}
-          onPress={() => setStandingsView("home")}
-        >
-          <Text
-            style={[
-              styles.viewTabText,
-              standingsView === "home" && styles.viewTabTextActive,
-            ]}
-          >
-            {t("fixture.standings.tabHome")}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.viewTab,
-            standingsView === "away" && styles.viewTabActive,
-          ]}
-          onPress={() => setStandingsView("away")}
-        >
-          <Text
-            style={[
-              styles.viewTabText,
-              standingsView === "away" && styles.viewTabTextActive,
-            ]}
-          >
-            {t("fixture.standings.tabAway")}
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.viewTab,
-            standingsView === "scorers" && styles.viewTabActive,
-          ]}
-          onPress={() => setStandingsView("scorers")}
-        >
-          <Text
-            style={[
-              styles.viewTabText,
-              standingsView === "scorers" && styles.viewTabTextActive,
-            ]}
-          >
-            {t("fixture.standings.tabScorers")}
-          </Text>
-        </Pressable>
-      </View>
+            <Text style={[styles.viewTabText, standingsView === key && styles.viewTabTextActive]}>
+              {label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
       {/* Standings Table - Only show when NOT on scorers tab */}
       {standingsView !== "scorers" && (
@@ -1386,6 +1349,13 @@ const FixtureScreen = () => {
             <Text style={styles.headerTitle}>{t("fixture.title")}</Text>
             <Text style={styles.headerSubtitle}>{t("fixture.subtitle")}</Text>
           </View>
+          <Pressable
+            style={styles.squadBtn}
+            onPress={() => navigation.navigate("Players")}
+          >
+            <Ionicons name="people-outline" size={16} color={colors.primary} />
+            <Text style={styles.squadBtnText}>Kadro</Text>
+          </Pressable>
         </View>
 
         {/* Live Match Section - AT THE TOP */}
@@ -1454,6 +1424,23 @@ const styles = StyleSheet.create({
   headerTextBlock: {
     flex: 1,
   },
+  squadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: `${colors.primary}50`,
+    backgroundColor: `${colors.primary}12`,
+  },
+  squadBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: 0.3,
+  },
   headerTitle: {
     fontSize: fontSizes.xxl,
     fontFamily: typography.bold,
@@ -1498,15 +1485,18 @@ const styles = StyleSheet.create({
   },
 
   // View Tabs
+  viewTabsScroll: {
+    flexGrow: 0,
+    marginBottom: spacing.md,
+  },
   viewTabs: {
     flexDirection: "row",
-    marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
   viewTab: {
-    flex: 1,
     paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 12,
@@ -1806,7 +1796,8 @@ const styles = StyleSheet.create({
 
   // Match Card
   matchCard: {
-    padding: spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: spacing.xs,
     backgroundColor: colors.card,
     borderRadius: 14,
     borderWidth: 1,
@@ -1827,18 +1818,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: spacing.sm,
+    gap: 4,
   },
   teamWithLogo: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: 4,
   },
   matchTeamLogo: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
   },
   matchTeam: {
     flex: 1,
@@ -1853,8 +1844,8 @@ const styles = StyleSheet.create({
   matchScore: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
+    gap: 4,
+    paddingHorizontal: 6,
   },
   matchScoreText: {
     fontSize: fontSizes.xl,
@@ -1866,7 +1857,7 @@ const styles = StyleSheet.create({
     color: colors.mutedText,
   },
   matchVs: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: 6,
   },
   matchVsText: {
     fontSize: fontSizes.xs,

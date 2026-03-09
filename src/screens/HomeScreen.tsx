@@ -211,8 +211,14 @@ const HomeScreen: React.FC = () => {
     setDetailModalVisible(true);
   }, []);
 
-  // Wrap openShareModal with ban check
+  // Wrap openShareModal with auth + ban check
   const handleOpenShareModal = useCallback(async () => {
+    // Auth check first
+    if (authState !== 'authenticated') {
+      navigation.navigate('Auth');
+      return;
+    }
+
     // Quick check from local state
     if (isBanned) {
       showBanAlert();
@@ -226,7 +232,7 @@ const HomeScreen: React.FC = () => {
     }
 
     openShareModal();
-  }, [isBanned, showBanAlert, openShareModal]);
+  }, [authState, navigation, isBanned, showBanAlert, openShareModal]);
 
   const handleAddMoment = useCallback(
     async (imageUri?: string) => {
@@ -442,7 +448,14 @@ const HomeScreen: React.FC = () => {
   const handleLikeMoment = useCallback(
     async (moment: FanMomentDto) => {
       if (authState !== 'authenticated') {
-        navigation.navigate('Auth');
+        Alert.alert(
+          'Giriş Gerekli',
+          'Beğenmek için giriş yapman gerekiyor.',
+          [
+            { text: 'Vazgeç', style: 'cancel' },
+            { text: 'Giriş Yap', onPress: () => navigation.navigate('Auth') },
+          ]
+        );
         return;
       }
 

@@ -8,6 +8,7 @@ import ConsentScreen from '../screens/ConsentScreen';
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import AuthScreen from '../screens/auth/AuthScreen';
+import PlayersScreen from '../screens/PlayersScreen';
 import { colors } from '../theme/colors';
 import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
@@ -145,6 +146,11 @@ const RootNavigator: React.FC = () => {
         }}
       >
         <Stack.Screen name="MainTabs" component={BottomTabs} />
+        <Stack.Screen
+          name="Players"
+          component={PlayersScreen}
+          options={{ headerShown: false, animation: 'slide_from_right' }}
+        />
         <Stack.Screen
           name="Auth"
           component={AuthScreen}

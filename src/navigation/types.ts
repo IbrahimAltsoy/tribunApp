@@ -9,5 +9,6 @@ export type RootStackParamList = {
   Terms: undefined;
   Privacy: undefined;
   Auth: undefined;
+  Players: undefined;
 };
 

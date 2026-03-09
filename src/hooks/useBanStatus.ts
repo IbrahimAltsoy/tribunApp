@@ -9,7 +9,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { userSafetyService, BanCheckResult, BanStatus } from '../services/userSafetyService';
 import { logger } from '../utils/logger';
 
-const SESSION_ID_KEY = '@tribun_session_id';
 const DEVICE_ID_KEY = '@tribun_device_id';
 
 interface UseBanStatusResult {
@@ -27,17 +26,11 @@ export const useBanStatus = (): UseBanStatusResult => {
 
   const checkBanStatus = useCallback(async (): Promise<boolean> => {
     try {
-      const sessionId = await AsyncStorage.getItem(SESSION_ID_KEY);
       const deviceId = await AsyncStorage.getItem(DEVICE_ID_KEY);
 
-      if (!sessionId) {
-        logger.warn('useBanStatus: No session ID found');
-        setIsBanned(false);
-        setIsLoading(false);
-        return false;
-      }
-
-      const result = await userSafetyService.checkBanStatus(sessionId, deviceId || undefined);
+      // JWT auth header is included automatically via buildHeaders() in userSafetyService.
+      // sessionId is no longer required — backend identifies user from JWT.
+      const result = await userSafetyService.checkBanStatus(undefined, deviceId || undefined);
 
       if (result.success && result.data) {
         const banned = result.data.isBanned;
@@ -128,14 +121,9 @@ export const useBanStatus = (): UseBanStatusResult => {
 export const checkBanBeforeAction = async (
   onBanned?: () => void
 ): Promise<boolean> => {
-  const sessionId = await AsyncStorage.getItem(SESSION_ID_KEY);
   const deviceId = await AsyncStorage.getItem(DEVICE_ID_KEY);
 
-  if (!sessionId) {
-    return true; // Allow action if no session
-  }
-
-  const result = await userSafetyService.checkBanStatus(sessionId, deviceId || undefined);
+  const result = await userSafetyService.checkBanStatus(undefined, deviceId || undefined);
 
   if (result.success && result.data?.isBanned) {
     // Show alert

@@ -75,17 +75,28 @@ export const useShareMomentForm = () => {
       // Use authenticated user's display name or fall back to default
       const nickname = user?.displayName || user?.username || t("home.momentDefaults.user");
 
-      // Upload image first if provided
+      // Detect whether the selected file is a video based on extension
+      const videoExtensions = ['mp4', 'mov', 'm4v', 'avi', 'webm', 'mkv', '3gp'];
+      const fileExtension = imageUri?.split('.').pop()?.toLowerCase() ?? '';
+      const isVideo = videoExtensions.includes(fileExtension);
+
+      // Upload media file if provided
       let uploadedImageUrl: string | undefined = undefined;
+      let uploadedVideoUrl: string | undefined = undefined;
       if (imageUri) {
-        logger.log("📤 Uploading image before creating moment...");
+        logger.log(`📤 Uploading ${isVideo ? 'video' : 'image'} before creating moment...`);
         const uploadResponse = await mediaService.uploadImageAnonymous(imageUri);
 
         if (uploadResponse.success && uploadResponse.data?.url) {
-          uploadedImageUrl = uploadResponse.data.url;
-          logger.log("✅ Image uploaded:", uploadedImageUrl);
+          if (isVideo) {
+            uploadedVideoUrl = uploadResponse.data.url;
+            logger.log("✅ Video uploaded:", uploadedVideoUrl);
+          } else {
+            uploadedImageUrl = uploadResponse.data.url;
+            logger.log("✅ Image uploaded:", uploadedImageUrl);
+          }
         } else {
-          logger.warn("⚠️ Image upload failed, creating moment without image:", uploadResponse.error);
+          logger.warn("⚠️ Upload failed, creating moment without media:", uploadResponse.error);
         }
       }
 
@@ -94,7 +105,8 @@ export const useShareMomentForm = () => {
         nickname,
         city: trimmedCity || t("home.momentDefaults.city"),
         caption: trimmedCaption || t("home.momentDefaults.caption"),
-        imageUrl: uploadedImageUrl, // Use uploaded URL instead of local URI
+        imageUrl: uploadedImageUrl,
+        videoUrl: uploadedVideoUrl,
         source: "App",
       });
 

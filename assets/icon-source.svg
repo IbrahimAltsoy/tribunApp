@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Black background -->
+  <rect width="1024" height="1024" fill="#000000"/>
+
+  <!-- Outermost dark maroon ring -->
+  <circle cx="512" cy="390" r="355" fill="#3B0000"/>
+
+  <!-- Dark red ring -->
+  <circle cx="512" cy="390" r="295" fill="#6E0000"/>
+
+  <!-- Medium red -->
+  <circle cx="512" cy="390" r="230" fill="#B30000"/>
+
+  <!-- Inner bright red -->
+  <circle cx="512" cy="390" r="168" fill="#CC1010"/>
+
+  <!-- Center orange oval (egg shape) -->
+  <ellipse cx="512" cy="375" rx="75" ry="100" fill="#FF8C00"/>
+
+  <!-- Oval inner highlight -->
+  <ellipse cx="504" cy="352" rx="36" ry="52" fill="#FFD000"/>
+
+  <!-- GS text -->
+  <text
+    x="512"
+    y="690"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="148"
+    font-weight="900"
+    fill="#FFC72C"
+    letter-spacing="-2"
+  >GS</text>
+
+  <!-- TRIBUN text -->
+  <text
+    x="512"
+    y="840"
+    text-anchor="middle"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="108"
+    font-weight="900"
+    fill="#FFFFFF"
+    letter-spacing="10"
+  >TRIBUN</text>
+</svg>

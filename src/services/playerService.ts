@@ -3,20 +3,24 @@ import { getApiBaseUrl, joinUrl } from "../utils/apiBaseUrl";
 export type PlayerDto = {
   id: string;
   name: string;
+  commonName?: string | null;
   jerseyNumber: number;
+  position: string;
   age?: number | null;
   birthDate?: string | null;
+  birthPlace?: string | null;
   height?: number | null;
   weight?: number | null;
   preferredFoot?: string | null;
   marketValue?: string | null;
   imageUrl?: string | null;
+  nationalityName?: string | null;
+  countryCode?: string | null;
+  injuryStatus?: string | null;
+  isActive?: boolean;
+  isLegend?: boolean;
   instagramUrl?: string | null;
   twitterUrl?: string | null;
-  position: string;
-  detailedPosition?: string | null;
-  birthPlace?: string | null;
-  nationality?: string | null;
   biography?: string | null;
 };
 

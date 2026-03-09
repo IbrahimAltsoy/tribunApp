@@ -46,7 +46,11 @@ const uploadImageAnonymous = async (
     // Get filename from URI
     const filename = imageUri.split('/').pop() || `moment-${Date.now()}.jpg`;
     const fileExtension = filename.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`;
+    const videoExtensions = ['mp4', 'mov', 'm4v', 'avi', 'webm', 'mkv', '3gp'];
+    const isVideo = videoExtensions.includes(fileExtension);
+    const mimeType = isVideo
+      ? (fileExtension === 'mov' ? 'video/quicktime' : `video/${fileExtension}`)
+      : `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`;
 
     // Create file object for FormData
     const file = {
@@ -73,14 +77,15 @@ const uploadImageAnonymous = async (
 
     const json = await response.json();
 
-    // Backend returns camelCase: { success: true, data: { publicUrl, objectName, ... } }
-    const publicUrl = json.data?.publicUrl || json.publicUrl;
+    // Backend returns: { success: true, data: { url: objectName, publicUrl: fullUrl, ... } }
+    // Store objectName so backend can generate a fresh signed URL on each read.
+    const objectName = json.data?.url;
 
     return {
       success: true,
       data: {
         ...json.data,
-        url: publicUrl,  // publicUrl her zaman öncelikli
+        url: objectName,
       },
     };
   } catch (error) {

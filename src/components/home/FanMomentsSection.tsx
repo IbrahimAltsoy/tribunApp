@@ -99,15 +99,17 @@ const AnimatedMomentCard: React.FC<{
         return;
       }
 
+      let resolvedUri: string | null = null;
+
       if (/^https?:\/\//i.test(moment.videoUrl)) {
-        if (isActive) setVideoUri(moment.videoUrl);
-        return;
+        resolvedUri = moment.videoUrl;
+      } else {
+        const result = await mediaService.getSignedUrl(moment.videoUrl);
+        resolvedUri = result.success ? result.url ?? null : null;
       }
 
-      const result = await mediaService.getSignedUrl(moment.videoUrl);
-      if (isActive) {
-        setVideoUri(result.success ? result.url ?? null : null);
-      }
+      if (!isActive || !resolvedUri) return;
+      setVideoUri(resolvedUri);
     };
 
     loadVideo();
@@ -117,7 +119,6 @@ const AnimatedMomentCard: React.FC<{
   const player = useVideoPlayer(videoUri ? { uri: videoUri } : null, (p) => {
     p.loop = true;
     p.muted = true;
-    p.play();
   });
 
   useEffect(() => {
@@ -271,17 +272,18 @@ const AnimatedMomentCard: React.FC<{
         {moment.imageUrl ? (
           /* — Image card: full-bleed with gradient overlay — */
           <ImageBackground
-            source={imageUri ? { uri: imageUri } : undefined}
+            source={{ uri: imageUri ?? moment.imageUrl }}
             style={styles.momentHero}
-            resizeMode="contain"
+            resizeMode="cover"
           >
             {ownerActionsNode}
             {mediaOverlay}
           </ImageBackground>
 
         ) : moment.videoUrl ? (
-          /* — Video card: VideoView with gradient overlay — */
+          /* — Video card: dark placeholder + VideoView when active — */
           <View style={styles.momentHero}>
+            {/* VideoView always rendered when URL is ready — shows first frame for paused cards */}
             {videoUri && player ? (
               <VideoView
                 player={player}
@@ -291,25 +293,34 @@ const AnimatedMomentCard: React.FC<{
                 useExoShutter={false}
               />
             ) : null}
-            {/* Sound toggle — top left to avoid owner actions */}
-            <Pressable
-              onPress={(e) => {
-                e.stopPropagation();
-                if (activeMomentId !== moment.id) return;
-                if (activeAudioMomentId === moment.id) {
-                  setActiveAudioMomentId(null);
-                } else {
-                  setActiveAudioMomentId(moment.id);
-                }
-              }}
-              style={({ pressed }) => [styles.soundToggle, pressed && styles.soundTogglePressed]}
-            >
-              <Ionicons
-                name={activeAudioMomentId === moment.id ? "volume-high" : "volume-mute"}
-                size={14}
-                color={colors.white}
-              />
-            </Pressable>
+            {/* Play icon overlay shown for non-active cards */}
+            {activeMomentId !== moment.id && (
+              <View style={styles.playIconContainer}>
+                <View style={styles.playIconCircle}>
+                  <Ionicons name="play" size={22} color={colors.white} />
+                </View>
+              </View>
+            )}
+            {/* Sound toggle — top left, only shown when active */}
+            {activeMomentId === moment.id && (
+              <Pressable
+                onPress={(e) => {
+                  e.stopPropagation();
+                  if (activeAudioMomentId === moment.id) {
+                    setActiveAudioMomentId(null);
+                  } else {
+                    setActiveAudioMomentId(moment.id);
+                  }
+                }}
+                style={({ pressed }) => [styles.soundToggle, pressed && styles.soundTogglePressed]}
+              >
+                <Ionicons
+                  name={activeAudioMomentId === moment.id ? "volume-high" : "volume-mute"}
+                  size={14}
+                  color={colors.white}
+                />
+              </Pressable>
+            )}
             {ownerActionsNode}
             {mediaOverlay}
           </View>
@@ -768,6 +779,23 @@ const styles = StyleSheet.create({
   },
 
   // ─── Sound Toggle (video, top-left) ─────────────────────────────────────
+  playIconContainer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingLeft: 3, // optical center for play icon
+  },
+
   soundToggle: {
     position: "absolute",
     top: spacing.sm,

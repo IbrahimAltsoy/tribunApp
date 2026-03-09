@@ -7,6 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   TextInput,
@@ -15,18 +16,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
-import { Ionicons, Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import ChatBubble, { Message } from "../components/ChatBubble";
 import EulaModal from "../components/EulaModal";
 import ReportBlockModal from "../components/ReportBlockModal";
 import { colors } from "../theme/colors";
 import { spacing, radii } from "../theme/spacing";
 import { fontSizes, typography } from "../theme/typography";
-import { generateAmedNickname } from "../utils/amedNameGenerator";
-import { initializeSession, updateNickname, UserSession } from "../utils/sessionManager";
+import { initializeSession, type UserSession } from "../utils/sessionManager";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/types";
 import { useAuth } from "../contexts/AuthContext";
 import { chatService, type ChatMessageDto, type ChatRoomDto, type ChatScheduleDto } from "../services/chatService";
-import { chatHubService, BanNotification } from "../services/chatHubService";
+import { chatHubService, BanNotification, ConnectionStatus } from "../services/chatHubService";
 import { userSafetyService } from "../services/userSafetyService";
 import { useBanStatus, handlePossibleBanError } from "../hooks/useBanStatus";
 import { useTranslation } from "react-i18next";
@@ -52,6 +55,7 @@ const isScheduleOpen = (schedule: ChatScheduleDto | null) => {
 
 const ChatScreen: React.FC = () => {
   const { t } = useTranslation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user, authState } = useAuth();
   const isAuthenticated = authState === "authenticated" && !!user;
   const [session, setSession] = useState<UserSession | null>(null);
@@ -74,6 +78,8 @@ const ChatScreen: React.FC = () => {
 
   // Ban status
   const { isBanned, checkBanStatus, showBanAlert } = useBanStatus();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const flatListRef = useRef<FlatList<Message>>(null);
   const sendButtonScale = useRef(new Animated.Value(1)).current;
@@ -150,23 +156,13 @@ const ChatScreen: React.FC = () => {
       }
     };
 
-    const loadSchedule = async () => {
-      const response = await chatService.getChatStatus();
-      if (!isActive) return;
-
-      if (response.success && response.data) {
-        setChatSchedule(response.data);
-        setIsChatOpen(isScheduleOpen(response.data));
-      }
-    };
-
     loadRooms();
     loadSchedule();
 
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [loadSchedule]);
 
   useEffect(() => {
     setMessages((prev) =>
@@ -176,6 +172,20 @@ const ChatScreen: React.FC = () => {
       }))
     );
   }, [nickname]);
+
+  const loadSchedule = useCallback(async () => {
+    const response = await chatService.getChatStatus();
+    if (response.success && response.data) {
+      setChatSchedule(response.data);
+      setIsChatOpen(isScheduleOpen(response.data));
+    }
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadSchedule();
+    setIsRefreshing(false);
+  }, [loadSchedule]);
 
   const scrollToBottom = useCallback(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
@@ -216,6 +226,13 @@ const ChatScreen: React.FC = () => {
       setIsChatOpen(isScheduleOpen(status));
     });
 
+    // Re-sync schedule after reconnect (handles missed events while disconnected)
+    chatHubService.onConnectionStatus((status) => {
+      if (status === ConnectionStatus.Connected) {
+        loadSchedule();
+      }
+    });
+
     // Handle ban notification from server
     chatHubService.onBan((_ban: BanNotification) => {
       checkBanStatus();
@@ -240,7 +257,7 @@ const ChatScreen: React.FC = () => {
     return () => {
       chatHubService.stop();
     };
-  }, [scrollToBottom]);
+  }, [scrollToBottom, loadSchedule]);
 
   useEffect(() => {
     let isActive = true;
@@ -289,9 +306,21 @@ const ChatScreen: React.FC = () => {
     };
   }, [selectedRoom, scrollToBottom]);
 
+  // Reload schedule whenever user navigates back to this tab
+  useFocusEffect(
+    useCallback(() => {
+      loadSchedule();
+    }, [loadSchedule])
+  );
+
   const handleSendText = useCallback(async () => {
     const trimmed = inputText.trim();
     if (!trimmed || !session || !selectedRoom || !isChatOpen) return;
+
+    if (!isAuthenticated) {
+      navigation.navigate('Auth');
+      return;
+    }
 
     // Check ban status before sending
     if (isBanned) {
@@ -358,6 +387,8 @@ const ChatScreen: React.FC = () => {
     session,
     selectedRoom,
     isChatOpen,
+    isAuthenticated,
+    navigation,
     isBanned,
     sendButtonScale,
     scrollToBottom,
@@ -368,6 +399,11 @@ const ChatScreen: React.FC = () => {
   const handleQuickReaction = useCallback(
     async (emoji: string) => {
       if (!session || !selectedRoom || !isChatOpen) return;
+
+      if (!isAuthenticated) {
+        navigation.navigate('Auth');
+        return;
+      }
 
       // Check ban status before sending reaction
       if (isBanned) {
@@ -404,7 +440,7 @@ const ChatScreen: React.FC = () => {
       }
       setTimeout(scrollToBottom, 80);
     },
-    [isChatOpen, isBanned, nickname, scrollToBottom, selectedRoom, session, showBanAlert, checkBanStatus]
+    [isChatOpen, isAuthenticated, navigation, isBanned, nickname, scrollToBottom, selectedRoom, session, showBanAlert, checkBanStatus]
   );
 
   const handleMessageLongPress = useCallback((message: Message) => {
@@ -548,57 +584,6 @@ const ChatScreen: React.FC = () => {
       </LinearGradient>
 
       <SafeAreaView style={styles.safeArea} edges={["top"]}>
-        {/* Premium Nickname Bar */}
-        <View style={styles.nickBarWrapper}>
-          <BlurView
-            intensity={IS_IOS ? 30 : 22}
-            tint="dark"
-            style={styles.nickBar}
-          >
-            <View style={styles.avatarWrapper}>
-              <LinearGradient
-                colors={[colors.primary, colors.accent]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.avatarGradient}
-              >
-                <Ionicons name="person" size={18} color={colors.white} />
-              </LinearGradient>
-            </View>
-            {isAuthenticated ? (
-              <Text style={styles.nickInputAuthenticated} numberOfLines={1}>
-                {user?.displayName || user?.username}
-              </Text>
-            ) : (
-              <TextInput
-                style={styles.nickInput}
-                value={nickname}
-                onChangeText={setNickname}
-                placeholder={t("chat.nicknamePlaceholder")}
-                placeholderTextColor={colors.textSecondary}
-              />
-            )}
-            {!isAuthenticated && (
-              <Pressable
-                onPress={async () => {
-                  const newNick = generateAmedNickname();
-                  setNickname(newNick);
-                  await updateNickname(newNick);
-                }}
-                style={styles.shuffleButton}
-              >
-                <BlurView
-                  intensity={IS_IOS ? 15 : 10}
-                  tint="dark"
-                  style={styles.shuffleBlur}
-                >
-                  <Feather name="shuffle" size={16} color={colors.primary} />
-                </BlurView>
-              </Pressable>
-            )}
-          </BlurView>
-        </View>
-
         {/* Messages List */}
         <FlatList
           ref={flatListRef}
@@ -610,6 +595,14 @@ const ChatScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           onContentSizeChange={scrollToBottom}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyStateContainer}>
               <View style={styles.emptyIconWrapper}>
@@ -673,6 +666,17 @@ const ChatScreen: React.FC = () => {
             tint="dark"
             style={styles.inputBoxBlur}
           >
+            {!isAuthenticated ? (
+              /* Auth gate — shown instead of input when not logged in */
+              <Pressable
+                style={styles.authGate}
+                onPress={() => navigation.navigate('Auth')}
+              >
+                <Ionicons name="person-circle-outline" size={20} color={colors.textSecondary} />
+                <Text style={styles.authGateText}>Sohbete katılmak için </Text>
+                <Text style={styles.authGateLink}>giriş yap</Text>
+              </Pressable>
+            ) : (
             <View style={styles.inputBox}>
               <TextInput
                 placeholder={editingMessage ? "Mesajı düzenle..." : (isChatOpen ? t("chat.placeholder") : closedNote)}
@@ -716,6 +720,7 @@ const ChatScreen: React.FC = () => {
                 </Pressable>
               </Animated.View>
             </View>
+            )}
           </BlurView>
         </View>
       </SafeAreaView>
@@ -850,72 +855,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
   },
 
-  // Premium Nickname Bar
-  nickBarWrapper: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-    borderRadius: radii.xl,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.glassStroke,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.shadowSoft,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  nickBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    backgroundColor: "rgba(19, 30, 19, 0.5)",
-  },
-  avatarWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: "hidden",
-  },
-  avatarGradient: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nickInput: {
-    flex: 1,
-    color: colors.white,
-    fontSize: fontSizes.md,
-    fontFamily: typography.semiBold,
-  },
-  nickInputAuthenticated: {
-    flex: 1,
-    color: colors.white,
-    fontSize: fontSizes.md,
-    fontFamily: typography.semiBold,
-  },
-  shuffleButton: {
-    borderRadius: radii.md,
-    overflow: "hidden",
-  },
-  shuffleBlur: {
-    width: 32,
-    height: 32,
-    borderRadius: radii.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(0, 191, 71, 0.1)",
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-
   // Messages
   chatList: {
     flex: 1,
@@ -975,6 +914,26 @@ const styles = StyleSheet.create({
   },
   reactionEmoji: {
     fontSize: 24,
+  },
+
+  // Auth gate (shown instead of input when not logged in)
+  authGate: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    gap: 6,
+  },
+  authGateText: {
+    color: colors.textSecondary,
+    fontFamily: typography.medium,
+    fontSize: fontSizes.sm,
+  },
+  authGateLink: {
+    color: colors.primary,
+    fontFamily: typography.semiBold,
+    fontSize: fontSizes.sm,
   },
 
   // Premium Input Box
