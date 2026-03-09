@@ -1,8 +1,6 @@
 /**
- * PlayersScreen — Premium redesign
- * Renk sistemi: tek aksan renk (GS Altın #FFC72C), koyu monokromatik zemin
- * Kart: photo-first, alt koyu bant, altın forma numarası
- * Modal: sinematik full-width hero
+ * PlayersScreen — Circular Avatar List redesign
+ * Dairesel fotoğraf + pozisyon renkli halka + full-width cam kartlar
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
@@ -12,50 +10,41 @@ import {
   Dimensions, Linking, StatusBar, Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons }     from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import { playerService, PlayerDto } from "../services/playerService";
+import { colors } from "../theme/colors";
 
-// ─── Ölçüler ───────────────────────────────────────────────────────────────────
+// ─── Sabitler ────────────────────────────────────────────────────────────────
 const { width: SW } = Dimensions.get("window");
-const PAD  = 14;
-const GAP  = 8;
-const CW   = (SW - PAD * 2 - GAP) / 2;
-const CH   = CW * 1.72;
+const PAD  = 16;
+const AVATAR = 72;
 
-// ─── Renk paleti (monokromatik + GS altın) ─────────────────────────────────────
-const C = {
-  bg:       "#080810",      // en koyu zemin
-  surf1:    "#0E0E18",      // kart arka planı
-  surf2:    "#14141E",      // ikincil yüzey
-  surf3:    "#1C1C28",      // üçüncül yüzey (tab, badge)
-  border:   "rgba(255,255,255,0.07)",
-  border2:  "rgba(255,255,255,0.12)",
-  gold:     "#FFC72C",      // GS altın — TEK aksan rengi
-  goldDim:  "#9A7010",      // soluk altın
-  gsRed:    "#E8111A",      // GS kırmızı (sadece header stripe)
-  white:    "#FFFFFF",
-  t1:       "#FFFFFF",
-  t2:       "#9898A8",
-  t3:       "#484858",
+// ─── Pozisyon renk sistemi ────────────────────────────────────────────────────
+const POS_COLOR: Record<string, string> = {
+  KALECİ:     "#5B9CF6",
+  DEFANS:      "#34D399",
+  "ORTA SAHA": "#FBBF24",
+  FORVET:      "#F87171",
+  EFSANELER:   colors.primary,
 };
 
-// ─── Pozisyon tipleri ──────────────────────────────────────────────────────────
+// ─── Tipler & yardımcılar ─────────────────────────────────────────────────────
 type PF = "TÜM" | "KALECİ" | "DEFANS" | "ORTA SAHA" | "FORVET" | "EFSANELER";
 
-const GROUPS: { key: PF; plural: string }[] = [
-  { key: "KALECİ",    plural: "KALECİLER"     },
-  { key: "DEFANS",    plural: "DEFANS"         },
-  { key: "ORTA SAHA", plural: "ORTA SAHA"      },
-  { key: "FORVET",    plural: "FORVETLER"      },
-  { key: "EFSANELER", plural: "EFSANELER"      },
+const GROUPS: { key: PF; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { key: "KALECİ",    label: "Kaleci",   icon: "hand-left-outline" },
+  { key: "DEFANS",    label: "Defans",   icon: "shield-outline"    },
+  { key: "ORTA SAHA", label: "Orta",     icon: "sync-outline"      },
+  { key: "FORVET",    label: "Forvet",   icon: "football-outline"  },
+  { key: "EFSANELER", label: "Efsane",   icon: "star-outline"      },
 ];
 
-const TABS: PF[] = ["TÜM","KALECİ","DEFANS","ORTA SAHA","FORVET","EFSANELER"];
+const TABS: PF[] = ["TÜM", "KALECİ", "DEFANS", "ORTA SAHA", "FORVET", "EFSANELER"];
 const TAB_LABEL: Record<PF, string> = {
   TÜM: "Tümü", KALECİ: "Kaleci", DEFANS: "Defans",
-  "ORTA SAHA": "O.Saha", FORVET: "Forvet", EFSANELER: "Efsane",
+  "ORTA SAHA": "Orta", FORVET: "Forvet", EFSANELER: "Efsane",
 };
 
 const KW: Record<string, string[]> = {
@@ -66,14 +55,24 @@ const KW: Record<string, string[]> = {
 };
 
 const inGroup = (p: PlayerDto, key: PF) =>
-  key === "EFSANELER" ? !!p.isLegend
-  : (KW[key] || []).some(kw => (p.position || "").toLowerCase().includes(kw));
+  key === "EFSANELER"
+    ? !!p.isLegend
+    : (KW[key] || []).some(kw => (p.position || "").toLowerCase().includes(kw));
 
-const posLabel = (pos: string) => {
+const posKey = (pos: string): string => {
   const p = pos.toLowerCase();
-  if (p.includes("kaleci") || p.includes("goalkeeper"))  return "Kaleci";
+  if (p.includes("kaleci") || p.includes("goalkeeper")) return "KALECİ";
+  if (p.includes("defans") || p.includes("bek") || p.includes("defender")) return "DEFANS";
+  if (p.includes("orta") || p.includes("midfielder")) return "ORTA SAHA";
+  if (p.includes("forvet") || p.includes("forward") || p.includes("striker")) return "FORVET";
+  return "";
+};
+
+const posLabel = (pos: string): string => {
+  const p = pos.toLowerCase();
+  if (p.includes("kaleci") || p.includes("goalkeeper")) return "Kaleci";
   if (p.includes("defans") || p.includes("bek") || p.includes("defender")) return "Defans";
-  if (p.includes("orta")   || p.includes("midfielder"))  return "Orta Saha";
+  if (p.includes("orta") || p.includes("midfielder")) return "Orta Saha";
   if (p.includes("forvet") || p.includes("forward") || p.includes("striker")) return "Forvet";
   return pos;
 };
@@ -81,71 +80,60 @@ const posLabel = (pos: string) => {
 const ini = (n: string) => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const ageOf = (bd?: string | null) =>
   bd ? Math.floor((Date.now() - new Date(bd).getTime()) / 3.15576e10) : null;
-const pairs = <T,>(arr: T[]): [T, T | null][] =>
-  arr.reduce<[T, T | null][]>((a, x, i) => {
-    if (i % 2 === 0) a.push([x, arr[i + 1] ?? null]);
-    return a;
-  }, []);
 
 // ══════════════════════════════════════════════════════════════════════════════
-// OYUNCU KARTI
-// ──────────────────────────────────────────────────────────────────────────────
-// Fotoğraf → koyu gradient geçişi → koyu alt bilgi bandı
-// Aksan: sadece ALTIN (#FFC72C) — forma numarası, ince üst çizgi
+// OYUNCU KARTI — yatay, dairesel avatar
 // ══════════════════════════════════════════════════════════════════════════════
 const PlayerCard: React.FC<{ player: PlayerDto; onPress: () => void }> = ({ player, onPress }) => {
-  const letters = ini(player.name);
-  const display = (player.commonName || player.name).toUpperCase();
+  const pk     = player.isLegend ? "EFSANELER" : posKey(player.position || "");
+  const accent = POS_COLOR[pk] || colors.textTertiary;
+  const label  = player.isLegend ? "Efsane" : posLabel(player.position || "");
+  const name   = player.commonName || player.name;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        $.card,
-        pressed && { opacity: 0.72, transform: [{ scale: 0.955 }] },
+        card.wrap,
+        pressed && { opacity: 0.75, transform: [{ scale: 0.975 }] },
       ]}
     >
-      {/* ── Fotoğraf ya da baş-harf ── */}
-      {player.imageUrl ? (
-        <Image
-          source={{ uri: player.imageUrl }}
-          style={StyleSheet.absoluteFillObject}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFillObject, $.cardFallback]}>
-          <Text style={$.cardIni}>{letters}</Text>
+      {/* Sol renkli çubuk */}
+      <View style={[card.stripe, { backgroundColor: accent }]} />
+
+      {/* Dairesel avatar */}
+      <View style={[card.ring, { borderColor: `${accent}70` }]}>
+        <View style={[card.ringInner, { borderColor: `${accent}30` }]}>
+          {player.imageUrl ? (
+            <Image source={{ uri: player.imageUrl }} style={card.photo} resizeMode="cover" />
+          ) : (
+            <LinearGradient colors={[`${accent}35`, `${accent}12`]} style={card.avatarFallback}>
+              <Text style={[card.ini, { color: accent }]}>{ini(player.name)}</Text>
+            </LinearGradient>
+          )}
         </View>
-      )}
-
-      {/* ── Üst-alt köşe karartması (vignette) ── */}
-      <LinearGradient
-        colors={["rgba(8,8,16,0.45)", "transparent", "transparent", "rgba(8,8,16,0.72)", "rgba(8,8,16,0.97)"]}
-        locations={[0, 0.08, 0.45, 0.72, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
-      {/* ── Altın üst çizgi ── */}
-      <View style={$.cardTopLine} />
-
-      {/* ── Forma numarası (sağ üst) ── */}
-      <View style={$.numBadge}>
-        <Text style={$.numText}>{player.jerseyNumber}</Text>
       </View>
 
-      {/* ── Sakatlık ikonu (sol üst) ── */}
-      {player.injuryStatus ? (
-        <View style={$.injuryDot}>
-          <Ionicons name="medical" size={8} color={C.white} />
+      {/* Bilgi */}
+      <View style={card.info}>
+        <Text style={card.name} numberOfLines={1}>{name}</Text>
+        <View style={card.meta}>
+          <View style={[card.posBadge, { backgroundColor: `${accent}18`, borderColor: `${accent}40` }]}>
+            <Text style={[card.posText, { color: accent }]}>{label}</Text>
+          </View>
+          {player.nationalityName ? (
+            <Text style={card.nat} numberOfLines={1}>{player.nationalityName}</Text>
+          ) : null}
         </View>
-      ) : null}
+      </View>
 
-      {/* ── Alt bilgi ── */}
-      <View style={$.cardBottom}>
-        <Text style={$.cardName} numberOfLines={1}>{display}</Text>
-        <Text style={$.cardPos} numberOfLines={1}>{posLabel(player.position || "")}</Text>
-        {player.nationalityName ? (
-          <Text style={$.cardNat} numberOfLines={1}>{player.nationalityName}</Text>
+      {/* Sağ — forma no */}
+      <View style={card.right}>
+        <View style={[card.numCircle, { borderColor: `${accent}35`, backgroundColor: `${accent}10` }]}>
+          <Text style={[card.numText, { color: accent }]}>{player.jerseyNumber}</Text>
+        </View>
+        {player.injuryStatus ? (
+          <Ionicons name="medical" size={11} color={colors.error} style={{ marginTop: 4 }} />
         ) : null}
       </View>
     </Pressable>
@@ -162,100 +150,107 @@ const Detail: React.FC<{
 }> = ({ player, visible, onClose }) => {
   if (!player) return null;
 
-  const a = player.age ?? ageOf(player.birthDate);
+  const pk     = player.isLegend ? "EFSANELER" : posKey(player.position || "");
+  const accent = POS_COLOR[pk] || colors.textTertiary;
+  const age    = player.age ?? ageOf(player.birthDate);
+  const name   = player.commonName || player.name;
 
-  const stats: { label: string; val: string; gold?: boolean }[] = [
-    { label: "FORMA",   val: `#${player.jerseyNumber}`,              gold: true },
-    { label: "YAŞ",     val: a ? String(a) : "—"                               },
-    { label: "BOY",     val: player.height   ? `${player.height}cm`  : "—"     },
-    { label: "KİLO",    val: player.weight   ? `${player.weight}kg`  : "—"     },
-    { label: "AYAK",    val: player.preferredFoot  || "—"                       },
-    { label: "UYRUK",   val: player.nationalityName || "—"                      },
-    { label: "DOĞUM",   val: player.birthPlace || "—"                           },
-    { label: "DEĞER",   val: player.marketValue  || "—",             gold: true },
+  const stats: { label: string; val: string; hi?: boolean }[] = [
+    { label: "FORMA",  val: `#${player.jerseyNumber}`,           hi: true },
+    { label: "YAŞ",    val: age ? `${age}` : "—"                         },
+    { label: "BOY",    val: player.height ? `${player.height} cm` : "—"  },
+    { label: "KİLO",   val: player.weight ? `${player.weight} kg` : "—"  },
+    { label: "AYAK",   val: player.preferredFoot   || "—"                 },
+    { label: "UYRUK",  val: player.nationalityName || "—"                 },
+    { label: "DOĞUM",  val: player.birthPlace || "—"                      },
+    { label: "DEĞER",  val: player.marketValue || "—",            hi: true },
   ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={m.root}>
-        <View style={m.handle} />
+      <View style={md.root}>
+        {/* Handle */}
+        <View style={md.handle} />
 
-        <ScrollView showsVerticalScrollIndicator={false} bounces>
+        {/* Kapat */}
+        <Pressable style={md.closeBtn} onPress={onClose} hitSlop={14}>
+          <Ionicons name="close" size={16} color={colors.textSecondary} />
+        </Pressable>
 
-          {/* ── Hero ── */}
-          <View style={m.hero}>
-            {player.imageUrl ? (
-              <Image source={{ uri: player.imageUrl }} style={StyleSheet.absoluteFillObject} resizeMode="cover" />
-            ) : (
-              <View style={[StyleSheet.absoluteFillObject, m.heroFallback]}>
-                <Text style={m.heroIni}>{ini(player.name)}</Text>
+        <ScrollView showsVerticalScrollIndicator={false} bounces contentContainerStyle={{ paddingBottom: 60 }}>
+
+          {/* ── Hero alanı: gradient zemin + büyük dairesel fotoğraf ── */}
+          <LinearGradient
+            colors={[`${accent}28`, `${accent}08`, colors.background]}
+            locations={[0, 0.55, 1]}
+            style={md.hero}
+          >
+            {/* Büyük dairesel avatar */}
+            <View style={[md.bigRing, { borderColor: `${accent}60` }]}>
+              <View style={[md.bigRingInner, { borderColor: `${accent}28` }]}>
+                {player.imageUrl ? (
+                  <Image source={{ uri: player.imageUrl }} style={md.bigPhoto} resizeMode="cover" />
+                ) : (
+                  <LinearGradient colors={[`${accent}40`, `${accent}15`]} style={md.bigFallback}>
+                    <Text style={[md.bigIni, { color: accent }]}>{ini(player.name)}</Text>
+                  </LinearGradient>
+                )}
               </View>
-            )}
-
-            {/* Hero gradient */}
-            <LinearGradient
-              colors={["rgba(8,8,16,0.3)","transparent","rgba(8,8,16,0.55)","rgba(8,8,16,0.97)"]}
-              locations={[0, 0.25, 0.65, 1]}
-              style={StyleSheet.absoluteFill}
-            />
-
-            {/* Altın üst çizgi */}
-            <View style={m.heroTopLine} />
-
-            {/* Forma no watermark */}
-            <Text style={m.heroWm}>{player.jerseyNumber}</Text>
-
-            {/* Kapat */}
-            <Pressable style={m.closeBtn} onPress={onClose} hitSlop={16}>
-              <Ionicons name="close" size={17} color={C.t1} />
-            </Pressable>
-
-            {/* İsim overlay */}
-            <View style={m.heroOverlay}>
-              <View style={m.heroBadges}>
-                <View style={m.posBadge}>
-                  <Text style={m.posText}>{posLabel(player.position || "—").toUpperCase()}</Text>
-                </View>
-                {player.nationalityName ? (
-                  <View style={m.natBadge}>
-                    <Text style={m.natText}>{player.nationalityName}</Text>
-                  </View>
-                ) : null}
-                {player.isLegend ? (
-                  <View style={[m.natBadge, { backgroundColor: `${C.gold}18`, borderColor: `${C.gold}40` }]}>
-                    <Ionicons name="star" size={10} color={C.gold} />
-                    <Text style={[m.natText, { color: C.gold }]}>Efsane</Text>
-                  </View>
-                ) : null}
-                {player.injuryStatus ? (
-                  <View style={[m.natBadge, { backgroundColor: "#EF444418", borderColor: "#EF444440" }]}>
-                    <Ionicons name="medical" size={10} color="#EF4444" />
-                    <Text style={[m.natText, { color: "#EF4444" }]}>{player.injuryStatus}</Text>
-                  </View>
-                ) : null}
-              </View>
-              <Text style={m.heroName}>{player.name.toUpperCase()}</Text>
-              {player.commonName && player.commonName !== player.name ? (
-                <Text style={m.heroSub}>{player.commonName}</Text>
-              ) : null}
             </View>
-          </View>
+
+            {/* Jersey watermark */}
+            <Text style={[md.jersey, { color: `${accent}12` }]}>{player.jerseyNumber}</Text>
+
+            {/* İsim & rozetler */}
+            <View style={md.heroInfo}>
+              <Text style={md.heroName}>{name.toUpperCase()}</Text>
+              {player.commonName && player.commonName !== player.name && (
+                <Text style={md.heroFull}>{player.name}</Text>
+              )}
+              <View style={md.badgeRow}>
+                <View style={[md.badge, { backgroundColor: `${accent}20`, borderColor: `${accent}50` }]}>
+                  <Text style={[md.badgeText, { color: accent }]}>
+                    {player.isLegend ? "EFSANE" : posLabel(player.position || "").toUpperCase()}
+                  </Text>
+                </View>
+                {player.nationalityName && (
+                  <View style={md.badgeNeutral}>
+                    <Text style={md.badgeNeutralText}>{player.nationalityName}</Text>
+                  </View>
+                )}
+                {player.isLegend && (
+                  <View style={[md.badge, { backgroundColor: `${colors.primary}20`, borderColor: `${colors.primary}50` }]}>
+                    <Ionicons name="star" size={9} color={colors.primary} />
+                    <Text style={[md.badgeText, { color: colors.primary, marginLeft: 3 }]}>Efsane</Text>
+                  </View>
+                )}
+                {player.injuryStatus && (
+                  <View style={[md.badge, { backgroundColor: "rgba(248,113,113,0.18)", borderColor: "rgba(248,113,113,0.45)" }]}>
+                    <Ionicons name="medical" size={9} color={colors.error} />
+                    <Text style={[md.badgeText, { color: colors.error, marginLeft: 3 }]}>{player.injuryStatus}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </LinearGradient>
 
           {/* ── İstatistikler ── */}
-          <View style={m.section}>
-            <View style={m.sHead}>
-              <View style={m.sLine} />
-              <Text style={m.sTitle}>OYUNCU BİLGİLERİ</Text>
-            </View>
-            <View style={m.statsGrid}>
+          <View style={md.section}>
+            <ModalSecHead title="OYUNCU BİLGİLERİ" accent={accent} />
+            <View style={md.statsGrid}>
               {[0, 1].map(row => (
-                <View key={row} style={[m.statsRow, row === 0 && m.statsRowBorder]}>
-                  {stats.slice(row * 4, row * 4 + 4).map((st, ci) => (
-                    <View key={ci} style={[m.statsCell, ci < 3 && m.statsBorder]}>
-                      <Text style={[m.statsVal, st.gold && { color: C.gold }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.65}>
-                        {st.val}
+                <View key={row} style={[md.statsRow, row === 0 && md.statsRowDiv]}>
+                  {stats.slice(row * 4, row * 4 + 4).map((s, ci) => (
+                    <View key={ci} style={[md.statsCell, ci < 3 && md.statsCellDiv]}>
+                      <Text
+                        style={[md.statsVal, s.hi && { color: accent }]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.65}
+                      >
+                        {s.val}
                       </Text>
-                      <Text style={m.statsLabel}>{st.label}</Text>
+                      <Text style={md.statsKey}>{s.label}</Text>
                     </View>
                   ))}
                 </View>
@@ -265,51 +260,61 @@ const Detail: React.FC<{
 
           {/* ── Biyografi ── */}
           {player.biography ? (
-            <View style={m.section}>
-              <View style={m.sHead}>
-                <View style={m.sLine} />
-                <Text style={m.sTitle}>BİYOGRAFİ</Text>
+            <View style={md.section}>
+              <ModalSecHead title="BİYOGRAFİ" accent={accent} />
+              <View style={md.bioBox}>
+                <Text style={md.bioText}>{player.biography}</Text>
               </View>
-              <Text style={m.bio}>{player.biography}</Text>
             </View>
           ) : null}
 
           {/* ── Sosyal medya ── */}
           {(player.instagramUrl || player.twitterUrl) ? (
-            <View style={m.section}>
-              <View style={m.sHead}>
-                <View style={m.sLine} />
-                <Text style={m.sTitle}>SOSYAL MEDYA</Text>
-              </View>
-              <View style={m.socialWrap}>
-                {player.instagramUrl ? (
-                  <Pressable style={m.socialBtn} onPress={() => Linking.openURL(player.instagramUrl!)}>
-                    <View style={[m.socialIcon, { backgroundColor: "#E1306C20" }]}>
-                      <Ionicons name="logo-instagram" size={20} color="#E1306C" />
-                    </View>
-                    <Text style={[m.socialLabel, { color: "#E1306C" }]}>Instagram</Text>
-                    <Ionicons name="chevron-forward" size={15} color={C.t3} style={{ marginLeft: "auto" }} />
-                  </Pressable>
-                ) : null}
-                {player.twitterUrl ? (
-                  <Pressable style={m.socialBtn} onPress={() => Linking.openURL(player.twitterUrl!)}>
-                    <View style={[m.socialIcon, { backgroundColor: "#1DA1F220" }]}>
-                      <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
-                    </View>
-                    <Text style={[m.socialLabel, { color: "#1DA1F2" }]}>Twitter / X</Text>
-                    <Ionicons name="chevron-forward" size={15} color={C.t3} style={{ marginLeft: "auto" }} />
-                  </Pressable>
-                ) : null}
+            <View style={md.section}>
+              <ModalSecHead title="SOSYAL MEDYA" accent={accent} />
+              <View style={{ gap: 8 }}>
+                {player.instagramUrl && (
+                  <SocialBtn icon="logo-instagram" label="Instagram" color="#E1306C" onPress={() => Linking.openURL(player.instagramUrl!)} />
+                )}
+                {player.twitterUrl && (
+                  <SocialBtn icon="logo-twitter" label="Twitter / X" color="#1DA1F2" onPress={() => Linking.openURL(player.twitterUrl!)} />
+                )}
               </View>
             </View>
           ) : null}
-
-          <View style={{ height: 56 }} />
         </ScrollView>
       </View>
     </Modal>
   );
 };
+
+// ─── Modal bölüm başlığı ──────────────────────────────────────────────────────
+const ModalSecHead: React.FC<{ title: string; accent: string }> = ({ title, accent }) => (
+  <View style={msh.row}>
+    <View style={[msh.bar, { backgroundColor: accent }]} />
+    <Text style={msh.title}>{title}</Text>
+    <View style={msh.line} />
+  </View>
+);
+
+// ─── Sosyal buton ────────────────────────────────────────────────────────────
+const SocialBtn: React.FC<{
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  color: string;
+  onPress: () => void;
+}> = ({ icon, label, color, onPress }) => (
+  <Pressable
+    style={({ pressed }) => [sb.row, pressed && { opacity: 0.7 }]}
+    onPress={onPress}
+  >
+    <View style={[sb.icon, { backgroundColor: `${color}18` }]}>
+      <Ionicons name={icon} size={18} color={color} />
+    </View>
+    <Text style={[sb.label, { color }]}>{label}</Text>
+    <Ionicons name="open-outline" size={14} color={colors.textQuaternary} style={{ marginLeft: "auto" }} />
+  </Pressable>
+);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ANA EKRAN
@@ -333,7 +338,9 @@ export default function PlayersScreen() {
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true); await load(); setRefreshing(false);
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
   }, [load]);
 
   const openDetail = useCallback((p: PlayerDto) => {
@@ -358,103 +365,119 @@ export default function PlayersScreen() {
   }, [sections, players.length]);
 
   return (
-    <View style={p.root}>
+    <View style={scr.root}>
       <StatusBar barStyle="light-content" />
 
-      {/* ── Header ── */}
-      <View style={p.hdr}>
-        {/* GS stripe */}
-        <View style={p.gsStripe}>
-          <View style={[p.stripe, { backgroundColor: C.gsRed }]} />
-          <View style={[p.stripe, { backgroundColor: C.gold  }]} />
-        </View>
-
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={[`${colors.primary}10`, colors.backgroundElevated, colors.backgroundElevated]}
+        locations={[0, 0.5, 1]}
+        style={scr.headerWrap}
+      >
         <SafeAreaView edges={["top"]}>
-          <View style={p.hdrRow}>
-            <Pressable style={p.backBtn} onPress={() => nav.goBack()} hitSlop={14}>
-              <Ionicons name="chevron-back" size={22} color={C.t1} />
+          <View style={scr.headerRow}>
+            <Pressable style={scr.backBtn} onPress={() => nav.goBack()} hitSlop={14}>
+              <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
-            <View style={p.hdrMid}>
-              <Text style={p.hdrSup}>GALATASARAY A.Ş.</Text>
-              <Text style={p.hdrTitle}>KADRO</Text>
+
+            <View style={scr.headerMid}>
+              <Text style={scr.headerSup}>GALATASARAY A.Ş.</Text>
+              <Text style={scr.headerTitle}>KADRO</Text>
             </View>
-            <View style={p.cntPill}>
-              <Text style={p.cntNum}>{players.length}</Text>
-              <Text style={p.cntLbl}>oyuncu</Text>
+
+            <View style={scr.countPill}>
+              <Text style={scr.countNum}>{players.length}</Text>
+              <Text style={scr.countLbl}>oyuncu</Text>
             </View>
           </View>
         </SafeAreaView>
 
-        <View style={p.div} />
+        <View style={scr.divider} />
 
         {/* ── Filtre tabları ── */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={p.tabsWrap}
-          style={p.tabsScroll}
+          contentContainerStyle={scr.tabsInner}
+          style={{ paddingVertical: 10 }}
         >
           {TABS.map(key => {
             const active = filter === key;
+            const col    = key === "TÜM" ? colors.primary : (POS_COLOR[key] ?? colors.primary);
+            const g      = GROUPS.find(x => x.key === key);
             return (
               <Pressable
                 key={key}
                 onPress={() => setFilter(key)}
-                style={[p.tab, active && p.tabActive]}
+                style={[scr.tab, active && { backgroundColor: `${col}18`, borderColor: `${col}55` }]}
               >
-                <Text style={[p.tabTxt, active && p.tabTxtActive]}>
+                {g && (
+                  <Ionicons name={g.icon} size={11} color={active ? col : colors.textQuaternary} />
+                )}
+                <Text style={[scr.tabTxt, active && { color: col }]}>
                   {TAB_LABEL[key]}
                 </Text>
-                {active && (
-                  <View style={p.tabCntWrap}>
-                    <Text style={p.tabCntTxt}>{counts[key] ?? 0}</Text>
+                {active && counts[key] != null && (
+                  <View style={[scr.tabBadge, { backgroundColor: `${col}25` }]}>
+                    <Text style={[scr.tabBadgeTxt, { color: col }]}>{counts[key]}</Text>
                   </View>
                 )}
               </Pressable>
             );
           })}
         </ScrollView>
-      </View>
+      </LinearGradient>
 
-      {/* ── İçerik ── */}
+      {/* ── İÇERİK ── */}
       {loading ? (
-        <View style={p.center}>
-          <ActivityIndicator size="large" color={C.gold} />
-          <Text style={p.stateText}>Kadro yükleniyor…</Text>
+        <View style={scr.center}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={scr.stateText}>Kadro yükleniyor…</Text>
         </View>
       ) : activeSections.length === 0 ? (
-        <View style={p.center}>
-          <View style={p.emptyCircle}>
-            <Ionicons name="shirt-outline" size={32} color={C.t3} />
+        <View style={scr.center}>
+          <View style={scr.emptyCircle}>
+            <Ionicons name="shirt-outline" size={28} color={colors.textQuaternary} />
           </View>
-          <Text style={p.emptyTitle}>Oyuncu bulunamadı</Text>
-          <Text style={p.stateText}>Bu filtre için kayıtlı oyuncu yok</Text>
+          <Text style={scr.emptyTitle}>Oyuncu bulunamadı</Text>
+          <Text style={scr.stateText}>Bu filtre için kayıtlı oyuncu yok</Text>
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={p.list}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} colors={[C.gold]} />}
+          contentContainerStyle={scr.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
         >
-          {activeSections.map(sec => (
-            <View key={sec.key} style={p.section}>
-              {filter === "TÜM" && (
-                <View style={p.secHdr}>
-                  <View style={p.secGold} />
-                  <Text style={p.secLabel}>{sec.plural}</Text>
-                  <Text style={p.secCount}>{sec.players.length}</Text>
-                  <View style={p.secLine} />
+          {activeSections.map(sec => {
+            const secCol = POS_COLOR[sec.key] ?? colors.primary;
+            return (
+              <View key={sec.key} style={scr.section}>
+                {filter === "TÜM" && (
+                  <View style={scr.secHdr}>
+                    <View style={[scr.secDot, { backgroundColor: secCol }]} />
+                    <Text style={[scr.secLabel, { color: secCol }]}>{sec.label.toUpperCase()}</Text>
+                    <View style={[scr.secBadge, { backgroundColor: `${secCol}18`, borderColor: `${secCol}38` }]}>
+                      <Text style={[scr.secBadgeTxt, { color: secCol }]}>{sec.players.length}</Text>
+                    </View>
+                    <View style={scr.secLine} />
+                  </View>
+                )}
+                <View style={scr.cards}>
+                  {sec.players.map(p => (
+                    <PlayerCard key={p.id} player={p} onPress={() => openDetail(p)} />
+                  ))}
                 </View>
-              )}
-              {pairs(sec.players).map(([a, b], i) => (
-                <View key={i} style={p.row}>
-                  <PlayerCard player={a} onPress={() => openDetail(a)} />
-                  {b ? <PlayerCard player={b} onPress={() => openDetail(b!)} /> : <View style={{ width: CW }} />}
-                </View>
-              ))}
-            </View>
-          ))}
-          <View style={{ height: 40 }} />
+              </View>
+            );
+          })}
+          <View style={{ height: 48 }} />
         </ScrollView>
       )}
 
@@ -467,280 +490,541 @@ export default function PlayersScreen() {
 // STİLLER
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── Kart stilleri ──────────────────────────────────────────────────────────────
-const $ = StyleSheet.create({
-  card: {
-    width: CW, height: CH,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: C.surf1,
+// ── Kart ──────────────────────────────────────────────────────────────────────
+const card = StyleSheet.create({
+  wrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: colors.border,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 14,
+    overflow: "hidden",
     ...Platform.select({
-      ios:     { shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.6, shadowRadius: 16 },
-      android: { elevation: 14 },
+      ios:     { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.22, shadowRadius: 10 },
+      android: { elevation: 5 },
     }),
   },
-  cardFallback: {
-    backgroundColor: C.surf2,
+  stripe: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  // Dış halka
+  ring: {
+    width: AVATAR + 6,
+    height: AVATAR + 6,
+    borderRadius: (AVATAR + 6) / 2,
+    borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  cardIni: {
-    fontSize: 52,
-    fontWeight: "900",
-    color: C.t3,
-    letterSpacing: -2,
+  // İç halkası
+  ringInner: {
+    width: AVATAR + 1,
+    height: AVATAR + 1,
+    borderRadius: (AVATAR + 1) / 2,
+    borderWidth: 1,
+    overflow: "hidden",
   },
-
-  cardTopLine: {
-    position: "absolute",
-    top: 0, left: 0, right: 0,
-    height: 2,
-    backgroundColor: C.gold,
-    zIndex: 10,
+  photo: {
+    width: AVATAR + 1,
+    height: AVATAR + 1,
+    borderRadius: (AVATAR + 1) / 2,
   },
-
-  numBadge: {
-    position: "absolute",
-    top: 10, right: 10,
-    zIndex: 10,
-  },
-  numText: {
-    fontSize: 13,
-    fontWeight: "900",
-    color: C.gold,
-    letterSpacing: -0.5,
-    textShadowColor: "rgba(0,0,0,0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-
-  injuryDot: {
-    position: "absolute",
-    top: 10, left: 10,
-    width: 18, height: 18,
-    borderRadius: 9,
-    backgroundColor: "#EF4444",
+  avatarFallback: {
+    width: AVATAR + 1,
+    height: AVATAR + 1,
+    borderRadius: (AVATAR + 1) / 2,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 10,
   },
-
-  cardBottom: {
-    position: "absolute",
-    bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 11,
-    paddingBottom: 12,
-    paddingTop: 6,
-    zIndex: 5,
+  ini: {
+    fontSize: 26,
+    fontWeight: "900",
+    letterSpacing: -1,
   },
-  cardName: {
-    fontSize: 13,
+  info: {
+    flex: 1,
+    gap: 6,
+  },
+  name: {
+    fontSize: 15,
     fontWeight: "800",
-    color: C.t1,
-    letterSpacing: 0.4,
-    marginBottom: 3,
-    textShadowColor: "rgba(0,0,0,0.9)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  cardPos: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: C.t2,
+    color: colors.text,
     letterSpacing: 0.2,
   },
-  cardNat: {
-    fontSize: 9,
-    color: C.t3,
+  meta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    flexWrap: "wrap",
+  },
+  posBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  posText: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.4,
+  },
+  nat: {
+    fontSize: 11,
+    color: colors.textTertiary,
     fontWeight: "500",
-    marginTop: 1,
+  },
+  right: {
+    alignItems: "center",
+    gap: 4,
+  },
+  numCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  numText: {
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
 });
 
-// ── Ekran stilleri ─────────────────────────────────────────────────────────────
-const p = StyleSheet.create({
-  root:  { flex: 1, backgroundColor: C.bg },
+// ── Ekran ──────────────────────────────────────────────────────────────────────
+const scr = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
 
   // Header
-  hdr:     { backgroundColor: C.surf1, borderBottomWidth: 1, borderBottomColor: C.border },
-  gsStripe:{ flexDirection: "row", height: 3 },
-  stripe:  { flex: 1 },
-
-  hdrRow: {
-    flexDirection: "row", alignItems: "center",
-    paddingHorizontal: PAD, paddingTop: 8, paddingBottom: 12,
+  headerWrap: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: PAD,
+    paddingTop: 8,
+    paddingBottom: 14,
   },
   backBtn: {
-    width: 38, height: 38, borderRadius: 11,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1, borderColor: C.border,
-    alignItems: "center", justifyContent: "center",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  hdrMid:  { flex: 1, alignItems: "center" },
-  hdrSup:  { fontSize: 9,  fontWeight: "600", color: C.t3, letterSpacing: 2.5, marginBottom: 2 },
-  hdrTitle:{ fontSize: 22, fontWeight: "900", color: C.t1, letterSpacing: 6   },
-
-  cntPill: {
-    width: 46, alignItems: "center",
-    backgroundColor: "rgba(255,199,44,0.08)",
-    borderWidth: 1, borderColor: "rgba(255,199,44,0.2)",
-    borderRadius: 10, paddingVertical: 5,
+  headerMid: {
+    flex: 1,
+    alignItems: "center",
   },
-  cntNum: { fontSize: 14, fontWeight: "800", color: C.gold },
-  cntLbl: { fontSize: 8,  fontWeight: "600", color: C.goldDim, letterSpacing: 0.3 },
+  headerSup: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: colors.textQuaternary,
+    letterSpacing: 2.5,
+    marginBottom: 2,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: colors.text,
+    letterSpacing: 7,
+  },
+  countPill: {
+    width: 46,
+    alignItems: "center",
+    backgroundColor: `${colors.primary}12`,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+    borderRadius: 14,
+    paddingVertical: 5,
+  },
+  countNum: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  countLbl: {
+    fontSize: 8,
+    fontWeight: "600",
+    color: `${colors.primary}80`,
+    letterSpacing: 0.3,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.borderLight,
+    marginHorizontal: PAD,
+  },
 
-  div: { height: StyleSheet.hairlineWidth, backgroundColor: C.border },
-
-  // Tabs
-  tabsScroll: { paddingVertical: 10 },
-  tabsWrap:   { paddingHorizontal: PAD, gap: 6 },
-
+  // Filtre tabları
+  tabsInner: {
+    paddingHorizontal: PAD,
+    gap: 7,
+  },
   tab: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
+    gap: 5,
+    paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 9,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.surf2,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
   },
-  tabActive: {
-    backgroundColor: "rgba(255,199,44,0.1)",
-    borderColor: "rgba(255,199,44,0.35)",
+  tabTxt: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.textTertiary,
   },
-  tabTxt:       { fontSize: 12, fontWeight: "600", color: C.t3 },
-  tabTxtActive: { fontWeight: "700", color: C.gold },
-  tabCntWrap: {
-    minWidth: 18, height: 17,
-    borderRadius: 9,
-    backgroundColor: "rgba(255,199,44,0.2)",
+  tabBadge: {
+    minWidth: 18,
+    height: 16,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
   },
-  tabCntTxt: { fontSize: 9, fontWeight: "800", color: C.gold },
+  tabBadgeTxt: {
+    fontSize: 9,
+    fontWeight: "800",
+  },
 
   // Liste
-  list:    { paddingHorizontal: PAD, paddingTop: 14 },
-  section: { marginBottom: 4 },
-  row:     { flexDirection: "row", gap: GAP, marginBottom: GAP },
+  list: {
+    paddingHorizontal: PAD,
+    paddingTop: 14,
+  },
+  section: {
+    marginBottom: 8,
+  },
+  cards: {
+    gap: 9,
+  },
 
   // Bölüm başlığı
-  secHdr:  { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 },
-  secGold: { width: 3, height: 15, borderRadius: 2, backgroundColor: C.gold },
-  secLabel:{ fontSize: 11, fontWeight: "800", color: C.t2, letterSpacing: 1.8 },
-  secCount:{ fontSize: 11, fontWeight: "800", color: C.goldDim },
-  secLine: { flex: 1, height: 1, backgroundColor: C.border },
+  secHdr: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    marginTop: 6,
+  },
+  secDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  secLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 2,
+  },
+  secBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  secBadgeTxt: {
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  secLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.borderLight,
+  },
 
   // Durum
-  center:      { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  emptyCircle: {
-    width: 68, height: 68, borderRadius: 34,
-    backgroundColor: C.surf2, borderWidth: 1, borderColor: C.border,
-    alignItems: "center", justifyContent: "center",
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
-  emptyTitle: { fontSize: 15, fontWeight: "700", color: C.t1 },
-  stateText:  { fontSize: 13, color: C.t3 },
+  emptyCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  stateText: {
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
 });
 
-// ── Modal stilleri ─────────────────────────────────────────────────────────────
-const m = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: C.bg, paddingTop: 10 },
+// ── Modal ──────────────────────────────────────────────────────────────────────
+const md = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: 10,
+  },
   handle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    alignSelf: "center", marginBottom: 4,
-  },
-
-  hero: {
-    width: "100%",
-    height: SW * 0.76,
-    overflow: "hidden",
-    backgroundColor: C.surf1,
-  },
-  heroFallback: { alignItems: "center", justifyContent: "center" },
-  heroIni: { fontSize: 88, fontWeight: "900", color: C.t3 },
-
-  heroTopLine: {
-    position: "absolute", top: 0, left: 0, right: 0,
-    height: 3, backgroundColor: C.gold, zIndex: 10,
-  },
-  heroWm: {
-    position: "absolute", right: -8, top: -8,
-    fontSize: 200, fontWeight: "900", letterSpacing: -12,
-    lineHeight: 200, color: "rgba(255,255,255,0.04)", zIndex: 1,
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.glassStrong,
+    alignSelf: "center",
+    marginBottom: 4,
   },
   closeBtn: {
-    position: "absolute", top: 14, right: PAD, zIndex: 30,
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
-    alignItems: "center", justifyContent: "center",
+    position: "absolute",
+    top: 18,
+    right: PAD,
+    zIndex: 30,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  heroOverlay: {
-    position: "absolute", bottom: 0, left: 0, right: 0,
-    paddingHorizontal: PAD, paddingBottom: 20, zIndex: 10,
-  },
-  heroBadges: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 8 },
-  posBadge: {
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,199,44,0.15)",
-    borderWidth: 1, borderColor: "rgba(255,199,44,0.35)",
-  },
-  posText: { fontSize: 10, fontWeight: "800", color: C.gold, letterSpacing: 1 },
-  natBadge: {
-    flexDirection: "row", alignItems: "center", gap: 4,
-    paddingHorizontal: 9, paddingVertical: 4,
-    borderRadius: 4,
-    backgroundColor: "rgba(255,255,255,0.08)",
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
-  },
-  natText: { fontSize: 10, color: C.t2, fontWeight: "600" },
 
+  // Hero — gradient zemin + büyük dairesel avatar
+  hero: {
+    alignItems: "center",
+    paddingTop: 36,
+    paddingBottom: 28,
+    paddingHorizontal: PAD,
+    overflow: "hidden",
+  },
+  bigRing: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios:     { shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20 },
+      android: { elevation: 12 },
+    }),
+  },
+  bigRingInner: {
+    width: 138,
+    height: 138,
+    borderRadius: 69,
+    borderWidth: 2,
+    overflow: "hidden",
+  },
+  bigPhoto: {
+    width: 138,
+    height: 138,
+    borderRadius: 69,
+  },
+  bigFallback: {
+    width: 138,
+    height: 138,
+    borderRadius: 69,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bigIni: {
+    fontSize: 48,
+    fontWeight: "900",
+    letterSpacing: -2,
+  },
+  jersey: {
+    position: "absolute",
+    right: 10,
+    top: 10,
+    fontSize: 120,
+    fontWeight: "900",
+    letterSpacing: -8,
+    lineHeight: 130,
+    zIndex: 0,
+  },
+  heroInfo: {
+    alignItems: "center",
+    marginTop: 18,
+    gap: 8,
+  },
   heroName: {
-    fontSize: 28, fontWeight: "900", color: C.t1,
-    letterSpacing: 0.8, marginBottom: 2,
+    fontSize: 24,
+    fontWeight: "900",
+    color: colors.text,
+    letterSpacing: 1,
+    textAlign: "center",
   },
-  heroSub: { fontSize: 13, color: C.t2, fontWeight: "500" },
+  heroFull: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: "500",
+    marginTop: -4,
+  },
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+  },
+  badgeNeutral: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: colors.glass,
+    borderWidth: 1,
+    borderColor: colors.glassStroke,
+  },
+  badgeNeutralText: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    fontWeight: "600",
+  },
 
-  // Section
-  section: { paddingHorizontal: PAD, marginTop: 24, marginBottom: 4 },
-  sHead:   { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 14 },
-  sLine:   { width: 3, height: 12, borderRadius: 2, backgroundColor: C.gold },
-  sTitle:  { fontSize: 10, fontWeight: "800", color: C.t3, letterSpacing: 2.4 },
+  // Bölüm
+  section: {
+    paddingHorizontal: PAD,
+    marginTop: 22,
+  },
 
-  // İstatistik tablosu
+  // Stats
   statsGrid: {
-    borderRadius: 14, overflow: "hidden",
-    borderWidth: 1, borderColor: C.border,
-    backgroundColor: C.surf2,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundElevated,
   },
-  statsRow:       { flexDirection: "row" },
-  statsRowBorder: { borderBottomWidth: 1, borderBottomColor: C.border },
-  statsCell:      { flex: 1, paddingVertical: 17, alignItems: "center", paddingHorizontal: 4 },
-  statsBorder:    { borderRightWidth: 1, borderRightColor: C.border },
-  statsVal:       { fontSize: 15, fontWeight: "800", color: C.t1, marginBottom: 5, textAlign: "center" },
-  statsLabel:     { fontSize: 8,  fontWeight: "700", color: C.t3, letterSpacing: 0.8, textAlign: "center" },
+  statsRow: { flexDirection: "row" },
+  statsRowDiv: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderLight,
+  },
+  statsCell: {
+    flex: 1,
+    paddingVertical: 18,
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  statsCellDiv: {
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: colors.borderLight,
+  },
+  statsVal: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.text,
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  statsKey: {
+    fontSize: 8,
+    fontWeight: "700",
+    color: colors.textQuaternary,
+    letterSpacing: 0.8,
+    textAlign: "center",
+  },
 
-  bio: {
-    fontSize: 14, color: C.t2, lineHeight: 23,
-    backgroundColor: C.surf2, borderRadius: 14,
-    padding: 16, borderWidth: 1, borderColor: C.border,
+  // Biyografi
+  bioBox: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
+  bioText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+});
 
-  // Sosyal
-  socialWrap: { gap: 8 },
-  socialBtn: {
-    flexDirection: "row", alignItems: "center", gap: 12,
-    paddingVertical: 14, paddingHorizontal: 16,
-    borderRadius: 14, borderWidth: 1, borderColor: C.border,
-    backgroundColor: C.surf2, overflow: "hidden",
+// ── Modal bölüm başlığı ───────────────────────────────────────────────────────
+const msh = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 14,
   },
-  socialIcon:  { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  socialLabel: { fontSize: 14, fontWeight: "700" },
+  bar: {
+    width: 3,
+    height: 14,
+    borderRadius: 2,
+  },
+  title: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: colors.textQuaternary,
+    letterSpacing: 2.4,
+  },
+  line: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.borderLight,
+  },
+});
+
+// ── Sosyal buton ──────────────────────────────────────────────────────────────
+const sb = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.backgroundElevated,
+  },
+  icon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });
