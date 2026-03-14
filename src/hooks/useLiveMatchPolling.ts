@@ -483,7 +483,14 @@ export const useLiveMatchPolling = ({
       } else {
         seedMinute = estimateMinute(match, secondHalfDetectedAtRef.current);
       }
-      clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
+      // Only update seed if new value is HIGHER than what timer is currently showing.
+      // This lets the 1-second timer count up naturally between events (ratchet effect).
+      const currentShown = clockSeedRef.current
+        ? clockSeedRef.current.minute + (Date.now() - clockSeedRef.current.seedMs) / 60000
+        : -1;
+      if (seedMinute > currentShown) {
+        clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
+      }
 
       // ── Update display immediately (then 1s timer refines it) ──
       const isSecondHalfLike = SECOND_HALF_STATES.has(stateId ?? -1);
