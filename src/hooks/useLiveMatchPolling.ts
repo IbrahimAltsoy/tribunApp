@@ -129,10 +129,14 @@ const getPollingInterval = (match: LiveScoreDto): number => {
 
 /**
  * Estimate current match minute from start time when clock data unavailable.
- * 1st half: elapsed since startTime, capped at 45.
- * 2nd half: elapsed since estimated 2nd half start (startTime + 60min).
+ * 1st half : elapsed since startTime, capped at 45.
+ * 2nd half : use secondHalfDetectedAt timestamp if available (most accurate),
+ *            otherwise fall back to startTime + 63 min constant.
  */
-const estimateMinute = (match: LiveScoreDto): number => {
+const estimateMinute = (
+  match: LiveScoreDto,
+  secondHalfDetectedAt: number | null,
+): number => {
   if (!match.startTime) return 0;
   const startMs = new Date(match.startTime).getTime();
   const nowMs = Date.now();
@@ -141,7 +145,13 @@ const estimateMinute = (match: LiveScoreDto): number => {
     return Math.min(Math.max(1, Math.floor(elapsed)), 45);
   }
   if (SECOND_HALF_STATES.has(match.stateId ?? -1)) {
-    const est2ndStart = startMs + 60 * 60000; // startTime + 60 min
+    if (secondHalfDetectedAt !== null) {
+      // Most accurate: count from when we first saw 2nd half start
+      const elapsed2nd = (nowMs - secondHalfDetectedAt) / 60000;
+      return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
+    }
+    // Fallback: startTime + 63 min (45 min 1H + ~3 min stoppage + 15 min HT)
+    const est2ndStart = startMs + 63 * 60000;
     const elapsed2nd = (nowMs - est2ndStart) / 60000;
     return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
   }
@@ -177,6 +187,8 @@ export const useLiveMatchPolling = ({
   // Clock refs
   const clockSeedRef = useRef<{ minute: number; seedMs: number } | null>(null);
   const currentStateIdRef = useRef<number | null>(null);
+  // Timestamp of when we first detected 2nd half — used for accurate minute estimation
+  const secondHalfDetectedAtRef = useRef<number | null>(null);
 
   // Notification dedup refs
   const preMatchNotifMatchRef = useRef<number | null>(null);
@@ -333,7 +345,12 @@ export const useLiveMatchPolling = ({
         sendEventNotification({ type: "half_time" }, currentMatch);
       }
       if (prevState === MATCH_STATES.HALF_TIME && SECOND_HALF_STATES.has(currentState ?? -1)) {
+        secondHalfDetectedAtRef.current = Date.now(); // Record 2nd half start for accurate minute
         sendEventNotification({ type: "second_half_start" }, currentMatch);
+      }
+      // Also set if first time we see 2nd half (app opened mid-game after halftime)
+      if (SECOND_HALF_STATES.has(currentState ?? -1) && secondHalfDetectedAtRef.current === null) {
+        secondHalfDetectedAtRef.current = null; // stays null → fallback estimation will be used
       }
       if (prevState !== MATCH_STATES.FINISHED && currentState === MATCH_STATES.FINISHED) {
         sendEventNotification({ type: "match_end" }, currentMatch);
@@ -436,6 +453,7 @@ export const useLiveMatchPolling = ({
         setDisplayMinute(0);
         setExtraTime(null);
         prevStateRef.current = null;
+        secondHalfDetectedAtRef.current = null;
         return null;
       }
 
@@ -444,7 +462,7 @@ export const useLiveMatchPolling = ({
 
       // ── Update clock seed ──
       const apiMinute = match.clock?.minutes ?? null;
-      const seedMinute = apiMinute !== null ? apiMinute : estimateMinute(match);
+      const seedMinute = apiMinute !== null ? apiMinute : estimateMinute(match, secondHalfDetectedAtRef.current);
       clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
 
       // ── Update display immediately (then 1s timer refines it) ──
