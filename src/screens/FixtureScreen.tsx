@@ -1204,8 +1204,8 @@ const FixtureScreen = () => {
     const stateLabel =
       stateId === 2 ? "1. YARI" :
       stateId === 3 ? "DEVRE ARASI" :
-      (stateId === 5 || stateId === 22) ? "2. YARI" :
-      stateId === 6 ? "MAÇ BİTTİ" : "CANLI";
+      stateId === 22 ? "2. YARI" :
+      (stateId === 5 || stateId === 6) ? "MAÇ BİTTİ" : "CANLI";
 
     // Filter & sort important events
     const importantTypeIds = [14, 15, 16, 18, 19, 20, 21];
@@ -1312,9 +1312,9 @@ const FixtureScreen = () => {
         <View style={styles.liveIndicatorRow}>
           <View style={styles.liveDot} />
           <Text style={styles.liveLabel}>
-            {stateId === 6 ? "MAÇ BİTTİ" : stateId === 3 ? "DEVRE ARASI" : "CANLI"}
+            {(stateId === 5 || stateId === 6) ? "MAÇ BİTTİ" : stateId === 3 ? "DEVRE ARASI" : "CANLI"}
           </Text>
-          {(stateId === 2 || stateId === 5 || stateId === 22) && (
+          {(stateId === 2 || stateId === 22) && (
             <Text style={styles.liveMinuteBadge}>
               {formatMinute(displayMinute, extraTime)}
             </Text>

@@ -7,19 +7,24 @@ import { logger } from "../utils/logger";
 import type { LiveScoreDto } from "../types/football";
 
 // ─── Match States (SportMonks v3 state_ids) ───────────────────────────────────
+// Confirmed from live match data (GS vs Başakşehir 14.03.2026):
+//   1=NS, 2=1H, 3=HT, 22=2H(LIVE), 5=FT
+// NOTE: 5 is Full Time in SportMonks v3, NOT second half!
 const MATCH_STATES = {
   NOT_STARTED: 1,
   FIRST_HALF: 2,   // 1H
   HALF_TIME: 3,    // HT
-  SECOND_HALF: 5,  // 2H
-  LIVE: 22,        // SportMonks generic "LIVE" state (observed during 2nd half)
-  FINISHED: 6,     // FT
+  LIVE: 22,        // 2nd half live (confirmed)
+  FINISHED: 5,     // FT — confirmed SportMonks stateId for Full Time
 } as const;
 
+// stateId values that represent a finished/ended match (FT, AET, Pen, etc.)
+const FINISHED_STATES = new Set([5, 6, 7, 8, 9]);
+
 // stateId values that represent active in-play (1st or 2nd half)
-const LIVE_PLAY_STATES = new Set([MATCH_STATES.FIRST_HALF, MATCH_STATES.SECOND_HALF, MATCH_STATES.LIVE]);
+const LIVE_PLAY_STATES = new Set([MATCH_STATES.FIRST_HALF, MATCH_STATES.LIVE]);
 // stateId values that are 2nd-half-like (for minute estimation and label)
-const SECOND_HALF_STATES = new Set([MATCH_STATES.SECOND_HALF, MATCH_STATES.LIVE]);
+const SECOND_HALF_STATES = new Set([MATCH_STATES.LIVE]);
 
 // ─── Event Types (SportMonks) — confirmed from live match data ────────────────
 // 14=Goal, 15=PenaltyGoal, 16=OwnGoal
@@ -116,7 +121,7 @@ const getTeamNames = (match: LiveScoreDto): { home: string; away: string } => {
 
 const getPollingInterval = (match: LiveScoreDto): number => {
   const stateId = match.stateId;
-  if (stateId === MATCH_STATES.FINISHED) return 0;
+  if (FINISHED_STATES.has(stateId ?? -1)) return 0;
   if (LIVE_PLAY_STATES.has(stateId ?? -1)) return POLL.LIVE;
   if (stateId === MATCH_STATES.HALF_TIME) return POLL.HALF_TIME;
   if (stateId === MATCH_STATES.NOT_STARTED && match.startTime) {
@@ -189,6 +194,9 @@ export const useLiveMatchPolling = ({
   const currentStateIdRef = useRef<number | null>(null);
   // Timestamp of when we first detected 2nd half — used for accurate minute estimation
   const secondHalfDetectedAtRef = useRef<number | null>(null);
+
+  // Last known match — used to send match_end when match disappears from inplay
+  const lastKnownMatchRef = useRef<LiveScoreDto | null>(null);
 
   // Notification dedup refs
   const preMatchNotifMatchRef = useRef<number | null>(null);
@@ -352,7 +360,7 @@ export const useLiveMatchPolling = ({
       if (SECOND_HALF_STATES.has(currentState ?? -1) && secondHalfDetectedAtRef.current === null) {
         secondHalfDetectedAtRef.current = null; // stays null → fallback estimation will be used
       }
-      if (prevState !== MATCH_STATES.FINISHED && currentState === MATCH_STATES.FINISHED) {
+      if (!FINISHED_STATES.has(prevState ?? -1) && FINISHED_STATES.has(currentState ?? -1)) {
         sendEventNotification({ type: "match_end" }, currentMatch);
       }
 
@@ -448,6 +456,11 @@ export const useLiveMatchPolling = ({
       );
 
       if (!match) {
+        // If we were tracking a live game that just vanished from inplay → it ended
+        if (LIVE_PLAY_STATES.has(prevStateRef.current ?? -1) && lastKnownMatchRef.current) {
+          sendEventNotification({ type: "match_end" }, lastKnownMatchRef.current);
+        }
+        lastKnownMatchRef.current = null;
         setLiveMatch(null);
         stopLocalTimer();
         setDisplayMinute(0);
@@ -534,6 +547,7 @@ export const useLiveMatchPolling = ({
         isFirstFetchRef.current = false;
       }
 
+      lastKnownMatchRef.current = match;
       setLiveMatch(match);
       setLastUpdate(new Date());
       return match;
