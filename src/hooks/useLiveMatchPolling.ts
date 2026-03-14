@@ -21,17 +21,17 @@ const LIVE_PLAY_STATES = new Set([MATCH_STATES.FIRST_HALF, MATCH_STATES.SECOND_H
 // stateId values that are 2nd-half-like (for minute estimation and label)
 const SECOND_HALF_STATES = new Set([MATCH_STATES.SECOND_HALF, MATCH_STATES.LIVE]);
 
-// ─── Event Types (SportMonks) ─────────────────────────────────────────────────
-// typeId 18 & 19 = yellow card variants (confirmed from live data)
-// typeId 20 = direct red card
+// ─── Event Types (SportMonks) — confirmed from live match data ────────────────
+// 14=Goal, 15=PenaltyGoal, 16=OwnGoal
+// 18=Substitution, 19=YellowCard, 20=DirectRedCard, 21=YellowRedCard (2nd yellow)
 const EVENT_TYPES = {
   GOAL: 14,
   PENALTY_GOAL: 15,
   OWN_GOAL: 16,
-  SUBSTITUTION: 17,
-  YELLOW_CARD: 18,
-  YELLOW_CARD_2: 19, // 2nd yellow or yellow card variant
-  RED_CARD: 20,
+  SUBSTITUTION: 18,   // confirmed: typeId 18 = substitution
+  YELLOW_CARD: 19,    // confirmed: typeId 19 = yellow card
+  RED_CARD: 20,       // direct red card
+  YELLOW_RED: 21,     // confirmed: typeId 21 = yellow/red (2nd yellow)
 } as const;
 
 // ─── Polling Intervals ────────────────────────────────────────────────────────
@@ -366,7 +366,7 @@ export const useLiveMatchPolling = ({
 
         const isGoal = event.typeId === EVENT_TYPES.GOAL || event.typeId === EVENT_TYPES.PENALTY_GOAL;
         const isOwnGoal = event.typeId === EVENT_TYPES.OWN_GOAL;
-        const isRedCard = event.typeId === EVENT_TYPES.RED_CARD;
+        const isRedCard = event.typeId === EVENT_TYPES.RED_CARD || event.typeId === EVENT_TYPES.YELLOW_RED;
 
         if (isGoal || isOwnGoal) {
           const isHomeTeam = event.participantId === homeTeam?.id;
@@ -462,7 +462,27 @@ export const useLiveMatchPolling = ({
 
       // ── Update clock seed ──
       const apiMinute = match.clock?.minutes ?? null;
-      const seedMinute = apiMinute !== null ? apiMinute : estimateMinute(match, secondHalfDetectedAtRef.current);
+      let seedMinute: number;
+      if (apiMinute !== null) {
+        seedMinute = apiMinute;
+      } else if (SECOND_HALF_STATES.has(stateId ?? -1)) {
+        // Best available proxy: max event minute in 2nd half (e.g. last goal/card at 70' → seed=70)
+        const maxEventMin = (match.events ?? [])
+          .filter((e) => !e.rescinded && (e.minute ?? 0) > 45)
+          .reduce((max, e) => Math.max(max, e.minute ?? 0), 0);
+        if (maxEventMin > 45) {
+          seedMinute = maxEventMin;
+        } else {
+          // No 2nd-half events yet — count from detection timestamp
+          if (secondHalfDetectedAtRef.current === null) {
+            secondHalfDetectedAtRef.current = Date.now();
+          }
+          const elapsed2nd = (Date.now() - secondHalfDetectedAtRef.current) / 60000;
+          seedMinute = Math.min(45 + Math.floor(elapsed2nd), 90);
+        }
+      } else {
+        seedMinute = estimateMinute(match, secondHalfDetectedAtRef.current);
+      }
       clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
 
       // ── Update display immediately (then 1s timer refines it) ──

@@ -1208,7 +1208,7 @@ const FixtureScreen = () => {
       stateId === 6 ? "MAÇ BİTTİ" : "CANLI";
 
     // Filter & sort important events
-    const importantTypeIds = [14, 15, 16, 17, 18, 19, 20];
+    const importantTypeIds = [14, 15, 16, 18, 19, 20, 21];
     const allEvents = (liveMatch.events ?? [])
       .filter((e) => importantTypeIds.includes(e.typeId ?? 0) && !e.rescinded)
       .sort((a, b) => {
@@ -1231,12 +1231,13 @@ const FixtureScreen = () => {
       let iconColor = "#AAAAAA";
       if (event.typeId === 14 || event.typeId === 15) { iconName = "football"; iconColor = "#FFFFFF"; }
       else if (event.typeId === 16) { iconName = "football"; iconColor = "#FF6B6B"; }
-      else if (event.typeId === 18 || event.typeId === 19) { iconName = "square"; iconColor = "#F59E0B"; } // yellow card (18) or 2nd yellow (19)
-      else if (event.typeId === 20) { iconName = "square"; iconColor = "#EF4444"; } // direct red card
-      else if (event.typeId === 17) { iconName = "swap-horizontal-outline"; iconColor = "#4ADE80"; } // sub
+      else if (event.typeId === 19) { iconName = "square"; iconColor = "#F59E0B"; }       // yellow card
+      else if (event.typeId === 21) { iconName = "square"; iconColor = "#EF4444"; }       // yellow-red (2nd yellow)
+      else if (event.typeId === 20) { iconName = "square"; iconColor = "#EF4444"; }       // direct red card
+      else if (event.typeId === 18) { iconName = "swap-horizontal-outline"; iconColor = "#4ADE80"; } // substitution
 
       const isGoal = event.typeId === 14 || event.typeId === 15 || event.typeId === 16;
-      const isSub = event.typeId === 17;
+      const isSub = event.typeId === 18;
 
       // Score at this moment (for goals only)
       const scoreAtGoal = isGoal ? calcScoreAt(min, extra) : null;
