@@ -496,18 +496,11 @@ export const useLiveMatchPolling = ({
       const isSecondHalfLike = SECOND_HALF_STATES.has(stateId ?? -1);
       if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
         const addedTime = match.clock?.addedTime ?? null;
-        if (seedMinute >= 45 && stateId === MATCH_STATES.FIRST_HALF) {
-          setDisplayMinute((prev) => Math.max(prev, 45));
-          setExtraTime(addedTime ?? Math.floor(seedMinute - 45));
-        } else if (seedMinute >= 90 && isSecondHalfLike) {
-          setDisplayMinute((prev) => Math.max(prev, 90));
-          setExtraTime(addedTime ?? Math.floor(seedMinute - 90));
-        } else {
-          // Never go backwards — only update display if new seed is higher
-          setDisplayMinute((prev) => Math.max(prev, Math.max(isSecondHalfLike ? 45 : 0, Math.floor(seedMinute))));
-          setExtraTime(null);
-        }
-        // Only start timer if not already running
+        // Extra time display is driven by clock data only (no clock = null)
+        setExtraTime(addedTime);
+        // Let the 1-second timer be the SOLE source of displayMinute updates.
+        // Only start if not already running — prevents restart every 2 s poll cycle.
+        // The timer reads currentStateIdRef so it handles 1H→2H transitions automatically.
         if (!localTimerRef.current) {
           startLocalTimer(stateId ?? 0);
         }
