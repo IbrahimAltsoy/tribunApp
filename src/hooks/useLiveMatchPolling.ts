@@ -497,16 +497,20 @@ export const useLiveMatchPolling = ({
       if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
         const addedTime = match.clock?.addedTime ?? null;
         if (seedMinute >= 45 && stateId === MATCH_STATES.FIRST_HALF) {
-          setDisplayMinute(45);
+          setDisplayMinute((prev) => Math.max(prev, 45));
           setExtraTime(addedTime ?? Math.floor(seedMinute - 45));
         } else if (seedMinute >= 90 && isSecondHalfLike) {
-          setDisplayMinute(90);
+          setDisplayMinute((prev) => Math.max(prev, 90));
           setExtraTime(addedTime ?? Math.floor(seedMinute - 90));
         } else {
-          setDisplayMinute(Math.max(isSecondHalfLike ? 45 : 0, seedMinute));
+          // Never go backwards — only update display if new seed is higher
+          setDisplayMinute((prev) => Math.max(prev, Math.max(isSecondHalfLike ? 45 : 0, Math.floor(seedMinute))));
           setExtraTime(null);
         }
-        startLocalTimer(stateId ?? 0);
+        // Only start timer if not already running
+        if (!localTimerRef.current) {
+          startLocalTimer(stateId ?? 0);
+        }
       } else {
         stopLocalTimer();
         setDisplayMinute(0);
