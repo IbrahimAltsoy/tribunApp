@@ -44,6 +44,7 @@ import ShareableMomentCard from "../components/home/ShareableMomentCard";
 import { openURLSafely } from "../utils/urlValidator";
 import { EXTERNAL_LINKS } from "../constants/app";
 import { fanMomentService } from "../services/fanMomentService";
+import { fanMomentHubService } from "../services/fanMomentHubService";
 import { pollService } from "../services/pollService";
 import { notificationService } from "../services/notificationService";
 import { userSafetyService } from "../services/userSafetyService";
@@ -76,7 +77,7 @@ const HomeScreen: React.FC = () => {
   const [editImage, setEditImage] = useState<string | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
   const [authorProfileVisible, setAuthorProfileVisible] = useState(false);
-  const [selectedAuthor, setSelectedAuthor] = useState<{ userId: string; username: string } | null>(null);
+  const [selectedAuthor, setSelectedAuthor] = useState<{ userId: string; username: string; avatarUrl?: string } | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [momentToReport, setMomentToReport] = useState<FanMomentDto | null>(null);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
@@ -183,6 +184,15 @@ const HomeScreen: React.FC = () => {
     loadAllData();
   }, [loadAllData]);
 
+  // Re-fetch when user authenticates so hasLiked is populated correctly via JWT
+  const prevAuthStateRef = useRef<string>('loading');
+  useEffect(() => {
+    if (authState === 'authenticated' && prevAuthStateRef.current !== 'authenticated') {
+      loadAllData();
+    }
+    prevAuthStateRef.current = authState;
+  }, [authState, loadAllData]);
+
   // Auto-refresh notification count every 30 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -205,6 +215,29 @@ const HomeScreen: React.FC = () => {
 
   // Prevent double-like while API request is in-flight
   const likingMomentIds = useRef(new Set<string>());
+
+  // Real-time FanMoment like updates via WebSocket
+  useEffect(() => {
+    fanMomentHubService.onLikeUpdated((update) => {
+      // Skip updates for moments where our own API call is still in-flight
+      // (optimistic update already handled it; WS arrival order is unpredictable)
+      if (likingMomentIds.current.has(update.fanMomentId)) return;
+
+      setMoments((prev) =>
+        prev.map((m) =>
+          // Only update likeCount — hasLiked is managed locally via optimistic updates
+          m.id === update.fanMomentId ? { ...m, likeCount: update.likeCount } : m
+        )
+      );
+    });
+
+    fanMomentHubService.start();
+
+    return () => {
+      fanMomentHubService.offLikeUpdated();
+      fanMomentHubService.stop();
+    };
+  }, []);
 
   const handleOpenDetail = useCallback((moment: FanMomentDto) => {
     setSelectedMoment(moment);
@@ -254,8 +287,8 @@ const HomeScreen: React.FC = () => {
     setNotificationModalVisible(true);
   }, []);
 
-  const handlePressAuthor = useCallback((userId: string, username: string) => {
-    setSelectedAuthor({ userId, username });
+  const handlePressAuthor = useCallback((userId: string, username: string, avatarUrl?: string) => {
+    setSelectedAuthor({ userId, username, avatarUrl });
     setAuthorProfileVisible(true);
   }, []);
 
@@ -331,33 +364,60 @@ const HomeScreen: React.FC = () => {
           source={storeImage}
           resizeMode="cover"
           style={styles.supportImage}
+          imageStyle={{ opacity: 0.18 }}
         >
-          {/* Gradient: transparent top → dark bottom */}
+          {/* Deep luxury overlay */}
           <LinearGradient
-            colors={["rgba(0,0,0,0.05)", "transparent", "rgba(0,0,0,0.88)"]}
-            locations={[0, 0.35, 1]}
+            colors={["rgba(6,0,0,0.82)", "rgba(12,2,2,0.88)", "rgba(18,2,2,0.96)"]}
             style={StyleSheet.absoluteFill}
           />
-          {/* Red top accent stripe */}
-          <View style={styles.supportTopStripe} />
-          {/* Bottom content */}
-          <View style={styles.supportContent}>
-            <View style={styles.supportHeaderRow}>
-              <View style={styles.supportPillWrapper}>
-                <Ionicons name="storefront-outline" size={12} color="#E8111A" />
-                <Text style={styles.supportPill}>{t("home.supportPill")}</Text>
-              </View>
-              <View style={styles.supportArrowCircle}>
-                <Ionicons name="arrow-forward" size={16} color={colors.white} />
-              </View>
+
+          {/* Gold shimmer — top edge */}
+          <LinearGradient
+            colors={["transparent", "rgba(212,175,55,0.6)", "transparent"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.storeGoldLineTop}
+          />
+
+          {/* Header row: official badge + arrow */}
+          <View style={styles.storeHeaderRow}>
+            <View style={styles.storeBadge}>
+              <Ionicons name="shield-checkmark" size={11} color="#D4AF37" />
+              <Text style={styles.storeBadgeText}>RESMİ MAĞAZA</Text>
             </View>
-            <Text style={styles.supportTitle} numberOfLines={1}>
-              {t("home.supportStore")}
-            </Text>
-            <Text style={styles.supportSubtitle} numberOfLines={1}>
-              {t("home.supportSubtitle")}
-            </Text>
+            <View style={styles.storeArrowCircle}>
+              <Ionicons name="arrow-forward" size={15} color={colors.white} />
+            </View>
           </View>
+
+          {/* Center: icon + name + url */}
+          <View style={styles.storeCenter}>
+            <View style={styles.storeIconRing}>
+              <Ionicons name="storefront" size={34} color="#D4AF37" />
+            </View>
+            <Text style={styles.storeMainTitle}>GS Store</Text>
+            <Text style={styles.storeUrlText}>gsstore.org</Text>
+          </View>
+
+          {/* CTA button */}
+          <LinearGradient
+            colors={["#9B0D12", "#E8111A", "#C41018"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.storeCtaGradient}
+          >
+            <Text style={styles.storeCtaText}>MAĞAZAYA GİT</Text>
+            <Ionicons name="arrow-forward-circle" size={18} color={colors.white} />
+          </LinearGradient>
+
+          {/* Gold shimmer — bottom edge */}
+          <LinearGradient
+            colors={["transparent", "rgba(212,175,55,0.4)", "transparent"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.storeGoldLineBottom}
+          />
         </ImageBackground>
       </Pressable>
     </View>
@@ -593,6 +653,7 @@ const HomeScreen: React.FC = () => {
         visible={authorProfileVisible}
         userId={selectedAuthor?.userId ?? null}
         username={selectedAuthor?.username ?? ''}
+        initialAvatarUrl={selectedAuthor?.avatarUrl}
         onClose={() => setAuthorProfileVisible(false)}
       />
 
@@ -606,6 +667,7 @@ const HomeScreen: React.FC = () => {
           contentId={momentToReport.id}
           onBlockSuccess={handleReportBlockSuccess}
           onReportSuccess={() => { setReportModalVisible(false); setMomentToReport(null); }}
+          onAuthRequired={() => navigation.navigate('Auth')}
         />
       )}
 
@@ -898,91 +960,146 @@ const styles = StyleSheet.create({
   },
   supportCard: {
     marginTop: spacing.md,
+    borderRadius: 20,
     overflow: "hidden",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "rgba(232,17,26,0.22)",
+    borderWidth: 1,
+    borderColor: "rgba(212,175,55,0.28)",
     ...Platform.select({
       ios: {
-        shadowColor: "#E8111A",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 14,
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.22,
+        shadowRadius: 18,
       },
-      android: { elevation: 6 },
+      android: { elevation: 8 },
     }),
   },
   supportCardPressed: {
-    opacity: 0.92,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.9,
+    transform: [{ scale: 0.975 }],
   },
   supportImage: {
-    height: 210,
+    height: 252,
     justifyContent: "flex-end",
     overflow: "hidden",
   },
-  supportTopStripe: {
+  storeGoldLineTop: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 3,
-    backgroundColor: "#E8111A",
+    height: 2,
   },
-  supportContent: {
-    padding: spacing.md,
-    gap: spacing.xs,
+  storeGoldLineBottom: {
+    height: 1,
   },
-  supportHeaderRow: {
+  storeHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
-  supportPillWrapper: {
+  storeBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: "rgba(232,17,26,0.15)",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    backgroundColor: "rgba(212,175,55,0.1)",
     borderWidth: 1,
-    borderColor: "rgba(232,17,26,0.35)",
+    borderColor: "rgba(212,175,55,0.38)",
   },
-  supportPill: {
-    color: "#E8111A",
+  storeBadgeText: {
+    color: "#D4AF37",
     fontFamily: typography.bold,
-    fontSize: fontSizes.xs,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+    fontSize: 10,
+    letterSpacing: 1.4,
   },
-  supportTitle: {
-    color: colors.primary,
-    fontFamily: typography.bold,
-    fontSize: 22,
-  },
-  supportSubtitle: {
-    color: "rgba(255,255,255,0.55)",
-    fontFamily: typography.medium,
-    fontSize: fontSizes.xs,
-  },
-  supportArrowCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  storeArrowCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#E8111A",
     alignItems: "center",
     justifyContent: "center",
     ...Platform.select({
       ios: {
         shadowColor: "#E8111A",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.55,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.6,
+        shadowRadius: 8,
+      },
+      android: { elevation: 6 },
+    }),
+  },
+  storeCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xl,
+    gap: 6,
+  },
+  storeIconRing: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "rgba(212,175,55,0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(212,175,55,0.38)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
       },
       android: { elevation: 4 },
     }),
+  },
+  storeMainTitle: {
+    color: colors.white,
+    fontFamily: typography.bold,
+    fontSize: 30,
+    letterSpacing: 1.5,
+    textShadowColor: "rgba(0,0,0,0.6)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
+  storeUrlText: {
+    color: "rgba(212,175,55,0.75)",
+    fontFamily: typography.medium,
+    fontSize: 13,
+    letterSpacing: 0.8,
+  },
+  storeCtaGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingVertical: 13,
+    borderRadius: 14,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#E8111A",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.55,
+        shadowRadius: 10,
+      },
+      android: { elevation: 6 },
+    }),
+  },
+  storeCtaText: {
+    color: colors.white,
+    fontFamily: typography.bold,
+    fontSize: 14,
+    letterSpacing: 2,
   },
 
   modalOverlay: {

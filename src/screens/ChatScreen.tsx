@@ -40,7 +40,9 @@ const MESSAGE_PAGE_SIZE = 50;
 
 const formatTimestamp = (value?: string) => {
   if (!value) return "";
-  const date = new Date(value);
+  // Append 'Z' so JS treats server UTC strings as UTC (not local time)
+  const utcValue = /Z$|[+-]\d{2}:\d{2}$/.test(value) ? value : value + 'Z';
+  const date = new Date(utcValue);
   if (Number.isNaN(date.getTime())) return "";
   return date.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 };
@@ -137,6 +139,14 @@ const ChatScreen: React.FC = () => {
     }).start();
   }, []);
 
+  const loadSchedule = useCallback(async () => {
+    const response = await chatService.getChatStatus();
+    if (response.success && response.data) {
+      setChatSchedule(response.data);
+      setIsChatOpen(isScheduleOpen(response.data));
+    }
+  }, []);
+
   useEffect(() => {
     let isActive = true;
 
@@ -173,22 +183,15 @@ const ChatScreen: React.FC = () => {
     );
   }, [nickname]);
 
-  const loadSchedule = useCallback(async () => {
-    const response = await chatService.getChatStatus();
-    if (response.success && response.data) {
-      setChatSchedule(response.data);
-      setIsChatOpen(isScheduleOpen(response.data));
-    }
-  }, []);
-
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await loadSchedule();
     setIsRefreshing(false);
   }, [loadSchedule]);
 
+  // With inverted FlatList, "scroll to bottom" = scroll to offset 0 (index 0 is visually at bottom)
   const scrollToBottom = useCallback(() => {
-    flatListRef.current?.scrollToEnd({ animated: true });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
   useEffect(() => {
@@ -212,7 +215,7 @@ const ChatScreen: React.FC = () => {
       setMessages((prev) => {
         const exists = prev.some((msg) => msg.id === message.id);
         if (exists) return prev;
-        return [...prev, message];
+        return [message, ...prev]; // newest first — inverted FlatList shows index 0 at bottom
       });
       setTimeout(scrollToBottom, 80);
     });
@@ -284,9 +287,9 @@ const ChatScreen: React.FC = () => {
             isEdited: msg.isEdited,
             sessionId: msg.sessionId,
             userId: msg.userId,
-          }));
+          }))
+          .reverse(); // newest first — inverted FlatList shows index 0 at bottom
         setMessages(mapped);
-        setTimeout(scrollToBottom, 80);
       } else {
         setMessages([]);
       }
@@ -371,7 +374,7 @@ const ChatScreen: React.FC = () => {
           timestamp: formatTimestamp(response.data.createdAt),
           isMine: response.data.username === nickname,
         };
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => [message, ...prev]);
       } else if (response.error && handlePossibleBanError(response.error)) {
         await checkBanStatus();
         return;
@@ -432,7 +435,7 @@ const ChatScreen: React.FC = () => {
             timestamp: formatTimestamp(response.data.createdAt),
             isMine: response.data.username === nickname,
           };
-          setMessages((prev) => [...prev, message]);
+          setMessages((prev) => [message, ...prev]);
         } else if (response.error && handlePossibleBanError(response.error)) {
           await checkBanStatus();
           return;
@@ -593,7 +596,7 @@ const ChatScreen: React.FC = () => {
           style={styles.chatList}
           contentContainerStyle={styles.messagesContainer}
           showsVerticalScrollIndicator={false}
-          onContentSizeChange={scrollToBottom}
+          inverted
           keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
@@ -740,6 +743,7 @@ const ChatScreen: React.FC = () => {
           contentType="ChatMessage"
           contentId={selectedMessage.id}
           onBlockSuccess={handleBlockSuccess}
+          onAuthRequired={() => navigation.navigate('Auth')}
         />
       )}
     </KeyboardAvoidingView>

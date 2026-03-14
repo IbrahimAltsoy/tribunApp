@@ -233,11 +233,11 @@ const FeedScreen: React.FC = () => {
             </View>
           ) : (
             news.map((newsItem) => {
-              // Calculate time ago
+              // Calculate time ago — append 'Z' so JS treats UTC strings correctly
+              const toUtc = (s: string) => /Z$|[+-]\d{2}:\d{2}$/.test(s) ? s : s + 'Z';
               const getTimeAgo = () => {
-                const date = new Date(
-                  newsItem.publishedAt || newsItem.createdAt
-                );
+                const raw = newsItem.publishedAt || newsItem.createdAt;
+                const date = new Date(toUtc(raw));
                 const now = new Date();
                 const diffMs = now.getTime() - date.getTime();
                 const diffMins = Math.floor(diffMs / 60000);

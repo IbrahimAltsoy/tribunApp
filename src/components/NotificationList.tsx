@@ -49,6 +49,8 @@ const NotificationList: React.FC<NotificationListProps> = ({
     news: true,
     announcements: true,
     polls: true,
+    pollResults: true,
+    fanMomentLikes: true,
   });
 
   // Load notifications
@@ -192,9 +194,10 @@ const NotificationList: React.FC<NotificationListProps> = ({
     }
   };
 
-  // Format date
+  // Format date — append 'Z' so JS treats server UTC strings as UTC (not local time)
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
+    const utcString = /Z$|[+-]\d{2}:\d{2}$/.test(dateString) ? dateString : dateString + 'Z';
+    const date = new Date(utcString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -308,6 +311,78 @@ const NotificationList: React.FC<NotificationListProps> = ({
 
       {/* Individual Categories */}
       <View style={styles.settingSection}>
+        {/* Chat Rooms */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: '#8B5CF620' }]}>
+              <Ionicons name="chatbubbles" size={20} color="#8B5CF6" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.chatRooms') || 'Sohbet Odaları'}
+              </Text>
+              <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.chatRoomsDescription') || 'Sohbet odalarından bildirim al'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={preferences.chatRooms}
+            onValueChange={(value) => handlePreferenceToggle('chatRooms', value)}
+            disabled={!preferences.enabled}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.white}
+          />
+        </View>
+
+        {/* Live Matches */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: '#EF444420' }]}>
+              <Ionicons name="football" size={20} color="#EF4444" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.liveMatches') || 'Canlı Maçlar'}
+              </Text>
+              <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.liveMatchesDescription') || 'Maç olayları için bildirim al'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={preferences.liveMatches}
+            onValueChange={(value) => handlePreferenceToggle('liveMatches', value)}
+            disabled={!preferences.enabled}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.white}
+          />
+        </View>
+
+        {/* Match Goals */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: '#F59E0B20' }]}>
+              <Ionicons name="trophy" size={20} color="#F59E0B" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.matchGoals') || 'Gol Bildirimleri'}
+              </Text>
+              <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
+                {t('settings.notifications.matchGoalsDescription') || 'Gol atıldığında bildirim al'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={preferences.matchGoals}
+            onValueChange={(value) => handlePreferenceToggle('matchGoals', value)}
+            disabled={!preferences.enabled}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.white}
+          />
+        </View>
+
         {/* News */}
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
@@ -316,10 +391,10 @@ const NotificationList: React.FC<NotificationListProps> = ({
             </View>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.news') || 'News'}
+                {t('settings.notifications.news') || 'Haberler'}
               </Text>
               <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.newsDescription') || 'Get notified when new articles are published'}
+                {t('settings.notifications.newsDescription') || 'Yeni haberler yayınlandığında bildirim al'}
               </Text>
             </View>
           </View>
@@ -340,11 +415,10 @@ const NotificationList: React.FC<NotificationListProps> = ({
             </View>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.announcements') || 'Announcements'}
+                {t('settings.notifications.announcements') || 'Duyurular'}
               </Text>
               <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.announcementsDescription') ||
-                  'Get notified when your announcement is approved'}
+                {t('settings.notifications.announcementsDescription') || 'Duyurular onaylandığında bildirim al'}
               </Text>
             </View>
           </View>
@@ -365,10 +439,10 @@ const NotificationList: React.FC<NotificationListProps> = ({
             </View>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.polls') || 'Polls'}
+                {t('settings.notifications.polls') || 'Anketler'}
               </Text>
               <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.pollsDescription') || 'Get notified when new polls are created'}
+                {t('settings.notifications.pollsDescription') || 'Yeni anket oluşturulduğunda bildirim al'}
               </Text>
             </View>
           </View>
@@ -381,24 +455,48 @@ const NotificationList: React.FC<NotificationListProps> = ({
           />
         </View>
 
-        {/* Live Matches */}
+        {/* Poll Results */}
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
-            <View style={[styles.settingIcon, { backgroundColor: '#EF444420' }]}>
-              <Ionicons name="football" size={20} color="#EF4444" />
+            <View style={[styles.settingIcon, { backgroundColor: '#10B98120' }]}>
+              <Ionicons name="podium" size={20} color="#10B981" />
             </View>
             <View style={styles.settingContent}>
               <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.liveMatches') || 'Live Matches'}
+                Anket Sonuçları
               </Text>
               <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
-                {t('settings.notifications.liveMatchesDescription') || 'Get notified for match events (goals, red cards, etc.)'}
+                Oy verdiğin anket bittiğinde sonuçları bildirim olarak al
               </Text>
             </View>
           </View>
           <Switch
-            value={preferences.liveMatches}
-            onValueChange={(value) => handlePreferenceToggle('liveMatches', value)}
+            value={preferences.pollResults}
+            onValueChange={(value) => handlePreferenceToggle('pollResults', value)}
+            disabled={!preferences.enabled}
+            trackColor={{ false: colors.border, true: colors.primary }}
+            thumbColor={colors.white}
+          />
+        </View>
+
+        {/* Fan Moment Likes */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <View style={[styles.settingIcon, { backgroundColor: `${colors.primary}15` }]}>
+              <Ionicons name="heart" size={20} color={colors.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={[styles.settingTitle, !preferences.enabled && styles.settingDisabled]}>
+                Fan Moment Beğenileri
+              </Text>
+              <Text style={[styles.settingDescription, !preferences.enabled && styles.settingDisabled]}>
+                Biri fan moment'ini beğenince bildirim al
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={preferences.fanMomentLikes}
+            onValueChange={(value) => handlePreferenceToggle('fanMomentLikes', value)}
             disabled={!preferences.enabled}
             trackColor={{ false: colors.border, true: colors.primary }}
             thumbColor={colors.white}

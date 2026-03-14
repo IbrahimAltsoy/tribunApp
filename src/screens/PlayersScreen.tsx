@@ -1,13 +1,12 @@
 /**
- * PlayersScreen — Circular Avatar List redesign
- * Dairesel fotoğraf + pozisyon renkli halka + full-width cam kartlar
+ * PlayersScreen — Premium V2
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View, Text, StyleSheet, Pressable, Image, Modal,
   ScrollView, ActivityIndicator, RefreshControl,
-  Dimensions, Linking, StatusBar, Platform,
+  Linking, StatusBar, Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,29 +15,29 @@ import { useNavigation } from "@react-navigation/native";
 import { playerService, PlayerDto } from "../services/playerService";
 import { colors } from "../theme/colors";
 
-// ─── Sabitler ────────────────────────────────────────────────────────────────
-const { width: SW } = Dimensions.get("window");
-const PAD  = 16;
-const AVATAR = 72;
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const PAD        = 16;
+const AVATAR     = 62;
+const LEG_AVATAR = 80;
+const GOLD       = "#C8A84B";
 
-// ─── Pozisyon renk sistemi ────────────────────────────────────────────────────
-const POS_COLOR: Record<string, string> = {
-  KALECİ:     "#5B9CF6",
-  DEFANS:      "#34D399",
-  "ORTA SAHA": "#FBBF24",
-  FORVET:      "#F87171",
-  EFSANELER:   colors.primary,
+const POS: Record<string, string> = {
+  KALECİ:      "#5490F5",
+  DEFANS:       "#27BF77",
+  "ORTA SAHA":  "#EFAA2A",
+  FORVET:       "#F05252",
+  EFSANELER:    GOLD,
 };
 
-// ─── Tipler & yardımcılar ─────────────────────────────────────────────────────
+// ─── Types & constants ────────────────────────────────────────────────────────
 type PF = "TÜM" | "KALECİ" | "DEFANS" | "ORTA SAHA" | "FORVET" | "EFSANELER";
 
 const GROUPS: { key: PF; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: "KALECİ",    label: "Kaleci",   icon: "hand-left-outline" },
-  { key: "DEFANS",    label: "Defans",   icon: "shield-outline"    },
-  { key: "ORTA SAHA", label: "Orta",     icon: "sync-outline"      },
-  { key: "FORVET",    label: "Forvet",   icon: "football-outline"  },
-  { key: "EFSANELER", label: "Efsane",   icon: "star-outline"      },
+  { key: "KALECİ",    label: "Kaleci",  icon: "hand-left-outline" },
+  { key: "DEFANS",    label: "Defans",  icon: "shield-outline"    },
+  { key: "ORTA SAHA", label: "Orta",    icon: "sync-outline"      },
+  { key: "FORVET",    label: "Forvet",  icon: "football-outline"  },
+  { key: "EFSANELER", label: "Efsane",  icon: "star-outline"      },
 ];
 
 const TABS: PF[] = ["TÜM", "KALECİ", "DEFANS", "ORTA SAHA", "FORVET", "EFSANELER"];
@@ -48,16 +47,17 @@ const TAB_LABEL: Record<PF, string> = {
 };
 
 const KW: Record<string, string[]> = {
-  KALECİ:      ["kaleci","goalkeeper"],
-  DEFANS:      ["defans","bek","stoper","defender","back"],
-  "ORTA SAHA": ["orta saha","midfielder","orta","mid"],
-  FORVET:      ["forvet","forward","striker","winger","kanat","attacker"],
+  KALECİ:      ["kaleci", "goalkeeper"],
+  DEFANS:      ["defans", "bek", "stoper", "defender", "back"],
+  "ORTA SAHA": ["orta saha", "midfielder", "orta", "mid"],
+  FORVET:      ["forvet", "forward", "striker", "winger", "kanat", "attacker"],
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const inGroup = (p: PlayerDto, key: PF) =>
   key === "EFSANELER"
     ? !!p.isLegend
-    : (KW[key] || []).some(kw => (p.position || "").toLowerCase().includes(kw));
+    : !p.isLegend && (KW[key] || []).some(kw => (p.position || "").toLowerCase().includes(kw));
 
 const posKey = (pos: string): string => {
   const p = pos.toLowerCase();
@@ -77,71 +77,134 @@ const posLabel = (pos: string): string => {
   return pos;
 };
 
-const ini = (n: string) => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+const ini   = (n: string) => n.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 const ageOf = (bd?: string | null) =>
   bd ? Math.floor((Date.now() - new Date(bd).getTime()) / 3.15576e10) : null;
 
 // ══════════════════════════════════════════════════════════════════════════════
-// OYUNCU KARTI — yatay, dairesel avatar
+// PLAYER CARD
 // ══════════════════════════════════════════════════════════════════════════════
 const PlayerCard: React.FC<{ player: PlayerDto; onPress: () => void }> = ({ player, onPress }) => {
   const pk     = player.isLegend ? "EFSANELER" : posKey(player.position || "");
-  const accent = POS_COLOR[pk] || colors.textTertiary;
-  const label  = player.isLegend ? "Efsane" : posLabel(player.position || "");
+  const accent = POS[pk] || colors.textTertiary;
+  const label  = posLabel(player.position || "");
   const name   = player.commonName || player.name;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        card.wrap,
-        pressed && { opacity: 0.75, transform: [{ scale: 0.975 }] },
+        pc.wrap,
+        pressed && { opacity: 0.78, transform: [{ scale: 0.982 }] },
       ]}
     >
-      {/* Sol renkli çubuk */}
-      <View style={[card.stripe, { backgroundColor: accent }]} />
+      {/* Position-tinted gradient wash */}
+      <LinearGradient
+        colors={[`${accent}1C`, "transparent"]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 0.5, y: 0.5 }}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {/* Dairesel avatar */}
-      <View style={[card.ring, { borderColor: `${accent}70` }]}>
-        <View style={[card.ringInner, { borderColor: `${accent}30` }]}>
+      {/* Left accent strip */}
+      <View style={[pc.strip, { backgroundColor: accent }]} />
+
+      {/* Avatar */}
+      <View style={[pc.av, { borderColor: `${accent}55` }]}>
+        {player.imageUrl ? (
+          <Image source={{ uri: player.imageUrl }} style={pc.avImg} resizeMode="cover" />
+        ) : (
+          <LinearGradient colors={[`${accent}38`, `${accent}0C`]} style={pc.avFb}>
+            <Text style={[pc.avIni, { color: accent }]}>{ini(player.name)}</Text>
+          </LinearGradient>
+        )}
+      </View>
+
+      {/* Info */}
+      <View style={pc.info}>
+        <Text style={pc.name} numberOfLines={1}>{name}</Text>
+        <View style={pc.posRow}>
+          <View style={[pc.posDot, { backgroundColor: accent }]} />
+          <Text style={[pc.posText, { color: `${accent}CC` }]}>{label}</Text>
+        </View>
+      </View>
+
+      {/* Jersey number */}
+      <Text style={[pc.num, { color: `${accent}90` }]}>{player.jerseyNumber}</Text>
+    </Pressable>
+  );
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LEGEND CARD
+// ══════════════════════════════════════════════════════════════════════════════
+const LegendCard: React.FC<{ player: PlayerDto; onPress: () => void }> = ({ player, onPress }) => {
+  const name = player.commonName || player.name;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        lc.wrap,
+        pressed && { opacity: 0.78, transform: [{ scale: 0.982 }] },
+      ]}
+    >
+      {/* Gold gradient background */}
+      <LinearGradient
+        colors={[`${GOLD}22`, `${GOLD}08`, "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      {/* Top gold line */}
+      <LinearGradient
+        colors={[GOLD, `${GOLD}00`]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={lc.topBar}
+      />
+
+      {/* Left strip */}
+      <View style={[lc.strip, { backgroundColor: GOLD }]} />
+
+      {/* Star watermark */}
+      <Text style={lc.starWm}>★</Text>
+
+      {/* Main row */}
+      <View style={lc.row}>
+        {/* Avatar */}
+        <View style={[lc.av, { borderColor: `${GOLD}60` }]}>
           {player.imageUrl ? (
-            <Image source={{ uri: player.imageUrl }} style={card.photo} resizeMode="cover" />
+            <Image source={{ uri: player.imageUrl }} style={lc.avImg} resizeMode="cover" />
           ) : (
-            <LinearGradient colors={[`${accent}35`, `${accent}12`]} style={card.avatarFallback}>
-              <Text style={[card.ini, { color: accent }]}>{ini(player.name)}</Text>
+            <LinearGradient colors={[`${GOLD}45`, `${GOLD}15`]} style={lc.avFb}>
+              <Text style={[lc.avIni, { color: GOLD }]}>{ini(player.name)}</Text>
             </LinearGradient>
           )}
         </View>
-      </View>
 
-      {/* Bilgi */}
-      <View style={card.info}>
-        <Text style={card.name} numberOfLines={1}>{name}</Text>
-        <View style={card.meta}>
-          <View style={[card.posBadge, { backgroundColor: `${accent}18`, borderColor: `${accent}40` }]}>
-            <Text style={[card.posText, { color: accent }]}>{label}</Text>
+        {/* Info */}
+        <View style={lc.info}>
+          <View style={lc.badge}>
+            <Ionicons name="star" size={8} color={GOLD} />
+            <Text style={lc.badgeTxt}>EFSANE</Text>
           </View>
-          {player.nationalityName ? (
-            <Text style={card.nat} numberOfLines={1}>{player.nationalityName}</Text>
+          <Text style={lc.name} numberOfLines={1}>{name}</Text>
+          {player.biography ? (
+            <Text style={lc.bio} numberOfLines={2}>{player.biography}</Text>
           ) : null}
         </View>
-      </View>
 
-      {/* Sağ — forma no */}
-      <View style={card.right}>
-        <View style={[card.numCircle, { borderColor: `${accent}35`, backgroundColor: `${accent}10` }]}>
-          <Text style={[card.numText, { color: accent }]}>{player.jerseyNumber}</Text>
-        </View>
-        {player.injuryStatus ? (
-          <Ionicons name="medical" size={11} color={colors.error} style={{ marginTop: 4 }} />
-        ) : null}
+        {/* Jersey number */}
+        <Text style={lc.num}>{player.jerseyNumber}</Text>
       </View>
     </Pressable>
   );
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DETAY MODALİ
+// DETAIL MODAL
 // ══════════════════════════════════════════════════════════════════════════════
 const Detail: React.FC<{
   player: PlayerDto | null;
@@ -151,164 +214,162 @@ const Detail: React.FC<{
   if (!player) return null;
 
   const pk     = player.isLegend ? "EFSANELER" : posKey(player.position || "");
-  const accent = POS_COLOR[pk] || colors.textTertiary;
+  const accent = POS[pk] || colors.textTertiary;
   const age    = player.age ?? ageOf(player.birthDate);
   const name   = player.commonName || player.name;
 
+  const birthDateFmt = player.birthDate
+    ? new Date(player.birthDate).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : "—";
+
   const stats: { label: string; val: string; hi?: boolean }[] = [
-    { label: "FORMA",  val: `#${player.jerseyNumber}`,           hi: true },
-    { label: "YAŞ",    val: age ? `${age}` : "—"                         },
-    { label: "BOY",    val: player.height ? `${player.height} cm` : "—"  },
-    { label: "KİLO",   val: player.weight ? `${player.weight} kg` : "—"  },
-    { label: "AYAK",   val: player.preferredFoot   || "—"                 },
-    { label: "UYRUK",  val: player.nationalityName || "—"                 },
-    { label: "DOĞUM",  val: player.birthPlace || "—"                      },
-    { label: "DEĞER",  val: player.marketValue || "—",            hi: true },
+    { label: "FORMA",  val: `#${player.jerseyNumber}`,                   hi: true },
+    { label: "MEVKİ",  val: player.isLegend ? "Efsane" : posLabel(player.position || "") },
+    { label: "BOY",    val: player.height ? `${player.height} cm` : "—" },
+    { label: "KİLO",   val: player.weight ? `${player.weight} kg` : "—" },
+    { label: "YAŞ",    val: age ? `${age}` : "—"                        },
+    { label: "ÜLKE",   val: player.nationalityName || "—"                },
+    { label: "DOĞUM",  val: birthDateFmt                                 },
   ];
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={md.root}>
-        {/* Handle */}
-        <View style={md.handle} />
-
-        {/* Kapat */}
-        <Pressable style={md.closeBtn} onPress={onClose} hitSlop={14}>
+      <View style={dm.root}>
+        <View style={dm.handle} />
+        <Pressable style={dm.closeBtn} onPress={onClose} hitSlop={16}>
           <Ionicons name="close" size={16} color={colors.textSecondary} />
         </Pressable>
 
         <ScrollView showsVerticalScrollIndicator={false} bounces contentContainerStyle={{ paddingBottom: 60 }}>
 
-          {/* ── Hero alanı: gradient zemin + büyük dairesel fotoğraf ── */}
+          {/* ── Hero ── */}
           <LinearGradient
-            colors={[`${accent}28`, `${accent}08`, colors.background]}
-            locations={[0, 0.55, 1]}
-            style={md.hero}
+            colors={[`${accent}30`, `${accent}0E`, colors.background]}
+            locations={[0, 0.5, 1]}
+            style={dm.hero}
           >
-            {/* Büyük dairesel avatar */}
-            <View style={[md.bigRing, { borderColor: `${accent}60` }]}>
-              <View style={[md.bigRingInner, { borderColor: `${accent}28` }]}>
+            <Text style={[dm.jerseyWm, { color: `${accent}0D` }]}>{player.jerseyNumber}</Text>
+
+            <View style={[dm.avRing, { borderColor: `${accent}55` }]}>
+              <View style={[dm.avInner, { borderColor: `${accent}22` }]}>
                 {player.imageUrl ? (
-                  <Image source={{ uri: player.imageUrl }} style={md.bigPhoto} resizeMode="cover" />
+                  <Image source={{ uri: player.imageUrl }} style={dm.avImg} resizeMode="cover" />
                 ) : (
-                  <LinearGradient colors={[`${accent}40`, `${accent}15`]} style={md.bigFallback}>
-                    <Text style={[md.bigIni, { color: accent }]}>{ini(player.name)}</Text>
+                  <LinearGradient colors={[`${accent}42`, `${accent}12`]} style={dm.avFb}>
+                    <Text style={[dm.avIni, { color: accent }]}>{ini(player.name)}</Text>
                   </LinearGradient>
                 )}
               </View>
             </View>
 
-            {/* Jersey watermark */}
-            <Text style={[md.jersey, { color: `${accent}12` }]}>{player.jerseyNumber}</Text>
-
-            {/* İsim & rozetler */}
-            <View style={md.heroInfo}>
-              <Text style={md.heroName}>{name.toUpperCase()}</Text>
+            <View style={dm.heroInfo}>
+              <Text style={dm.heroName}>{name.toUpperCase()}</Text>
               {player.commonName && player.commonName !== player.name && (
-                <Text style={md.heroFull}>{player.name}</Text>
+                <Text style={dm.heroSubName}>{player.name}</Text>
               )}
-              <View style={md.badgeRow}>
-                <View style={[md.badge, { backgroundColor: `${accent}20`, borderColor: `${accent}50` }]}>
-                  <Text style={[md.badgeText, { color: accent }]}>
+              <View style={dm.badgeRow}>
+                <View style={[dm.badge, { backgroundColor: `${accent}1E`, borderColor: `${accent}45` }]}>
+                  <Text style={[dm.badgeTxt, { color: accent }]}>
                     {player.isLegend ? "EFSANE" : posLabel(player.position || "").toUpperCase()}
                   </Text>
                 </View>
-                {player.nationalityName && (
-                  <View style={md.badgeNeutral}>
-                    <Text style={md.badgeNeutralText}>{player.nationalityName}</Text>
+                {player.nationalityName ? (
+                  <View style={dm.badgeGlass}>
+                    <Text style={dm.badgeGlassTxt}>{player.nationalityName}</Text>
                   </View>
-                )}
-                {player.isLegend && (
-                  <View style={[md.badge, { backgroundColor: `${colors.primary}20`, borderColor: `${colors.primary}50` }]}>
-                    <Ionicons name="star" size={9} color={colors.primary} />
-                    <Text style={[md.badgeText, { color: colors.primary, marginLeft: 3 }]}>Efsane</Text>
+                ) : null}
+                {player.isLegend ? (
+                  <View style={[dm.badge, { backgroundColor: `${GOLD}1E`, borderColor: `${GOLD}45` }]}>
+                    <Ionicons name="star" size={9} color={GOLD} />
+                    <Text style={[dm.badgeTxt, { color: GOLD, marginLeft: 3 }]}>Efsane</Text>
                   </View>
-                )}
-                {player.injuryStatus && (
-                  <View style={[md.badge, { backgroundColor: "rgba(248,113,113,0.18)", borderColor: "rgba(248,113,113,0.45)" }]}>
+                ) : null}
+                {player.injuryStatus ? (
+                  <View style={[dm.badge, { backgroundColor: "rgba(240,82,82,0.18)", borderColor: "rgba(240,82,82,0.40)" }]}>
                     <Ionicons name="medical" size={9} color={colors.error} />
-                    <Text style={[md.badgeText, { color: colors.error, marginLeft: 3 }]}>{player.injuryStatus}</Text>
+                    <Text style={[dm.badgeTxt, { color: colors.error, marginLeft: 3 }]}>{player.injuryStatus}</Text>
                   </View>
-                )}
+                ) : null}
               </View>
             </View>
           </LinearGradient>
 
-          {/* ── İstatistikler ── */}
-          <View style={md.section}>
-            <ModalSecHead title="OYUNCU BİLGİLERİ" accent={accent} />
-            <View style={md.statsGrid}>
-              {[0, 1].map(row => (
-                <View key={row} style={[md.statsRow, row === 0 && md.statsRowDiv]}>
-                  {stats.slice(row * 4, row * 4 + 4).map((s, ci) => (
-                    <View key={ci} style={[md.statsCell, ci < 3 && md.statsCellDiv]}>
-                      <Text
-                        style={[md.statsVal, s.hi && { color: accent }]}
-                        numberOfLines={1}
-                        adjustsFontSizeToFit
-                        minimumFontScale={0.65}
-                      >
-                        {s.val}
-                      </Text>
-                      <Text style={md.statsKey}>{s.label}</Text>
-                    </View>
-                  ))}
-                </View>
-              ))}
+          {/* ── Stats ── */}
+          <View style={dm.section}>
+            <SecHead title="OYUNCU BİLGİLERİ" accent={accent} />
+            <View style={dm.grid}>
+              {(() => {
+                const half = Math.ceil(stats.length / 2);
+                return [stats.slice(0, half), stats.slice(half)].map((row, ri) => (
+                  <View key={ri} style={[dm.gridRow, ri === 0 && dm.gridRowDiv]}>
+                    {row.map((s, ci) => (
+                      <View key={ci} style={[dm.gridCell, ci < row.length - 1 && dm.gridCellDiv]}>
+                        <Text
+                          style={[dm.cellVal, s.hi && { color: accent }]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.65}
+                        >
+                          {s.val}
+                        </Text>
+                        <Text style={dm.cellKey}>{s.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ));
+              })()}
             </View>
           </View>
 
-          {/* ── Biyografi ── */}
+          {/* ── Biography ── */}
           {player.biography ? (
-            <View style={md.section}>
-              <ModalSecHead title="BİYOGRAFİ" accent={accent} />
-              <View style={md.bioBox}>
-                <Text style={md.bioText}>{player.biography}</Text>
+            <View style={dm.section}>
+              <SecHead title="BİYOGRAFİ" accent={accent} />
+              <View style={dm.bioBox}>
+                <Text style={dm.bioTxt}>{player.biography}</Text>
               </View>
             </View>
           ) : null}
 
-          {/* ── Sosyal medya ── */}
+          {/* ── Social ── */}
           {(player.instagramUrl || player.twitterUrl) ? (
-            <View style={md.section}>
-              <ModalSecHead title="SOSYAL MEDYA" accent={accent} />
+            <View style={dm.section}>
+              <SecHead title="SOSYAL MEDYA" accent={accent} />
               <View style={{ gap: 8 }}>
-                {player.instagramUrl && (
+                {player.instagramUrl ? (
                   <SocialBtn icon="logo-instagram" label="Instagram" color="#E1306C" onPress={() => Linking.openURL(player.instagramUrl!)} />
-                )}
-                {player.twitterUrl && (
+                ) : null}
+                {player.twitterUrl ? (
                   <SocialBtn icon="logo-twitter" label="Twitter / X" color="#1DA1F2" onPress={() => Linking.openURL(player.twitterUrl!)} />
-                )}
+                ) : null}
               </View>
             </View>
           ) : null}
+
         </ScrollView>
       </View>
     </Modal>
   );
 };
 
-// ─── Modal bölüm başlığı ──────────────────────────────────────────────────────
-const ModalSecHead: React.FC<{ title: string; accent: string }> = ({ title, accent }) => (
-  <View style={msh.row}>
-    <View style={[msh.bar, { backgroundColor: accent }]} />
-    <Text style={msh.title}>{title}</Text>
-    <View style={msh.line} />
+// ─── Section head ─────────────────────────────────────────────────────────────
+const SecHead: React.FC<{ title: string; accent: string }> = ({ title, accent }) => (
+  <View style={sh.row}>
+    <View style={[sh.bar, { backgroundColor: accent }]} />
+    <Text style={sh.title}>{title}</Text>
+    <View style={sh.line} />
   </View>
 );
 
-// ─── Sosyal buton ────────────────────────────────────────────────────────────
+// ─── Social button ────────────────────────────────────────────────────────────
 const SocialBtn: React.FC<{
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   color: string;
   onPress: () => void;
 }> = ({ icon, label, color, onPress }) => (
-  <Pressable
-    style={({ pressed }) => [sb.row, pressed && { opacity: 0.7 }]}
-    onPress={onPress}
-  >
-    <View style={[sb.icon, { backgroundColor: `${color}18` }]}>
+  <Pressable style={({ pressed }) => [sb.row, pressed && { opacity: 0.7 }]} onPress={onPress}>
+    <View style={[sb.iconWrap, { backgroundColor: `${color}18` }]}>
       <Ionicons name={icon} size={18} color={color} />
     </View>
     <Text style={[sb.label, { color }]}>{label}</Text>
@@ -317,7 +378,7 @@ const SocialBtn: React.FC<{
 );
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ANA EKRAN
+// MAIN SCREEN
 // ══════════════════════════════════════════════════════════════════════════════
 export default function PlayersScreen() {
   const nav = useNavigation();
@@ -355,14 +416,16 @@ export default function PlayersScreen() {
   [players]);
 
   const activeSections = useMemo(() =>
-    filter === "TÜM" ? sections : sections.filter(s => s.key === filter),
+    filter === "TÜM"
+      ? sections.filter(s => s.key !== "EFSANELER")
+      : sections.filter(s => s.key === filter),
   [sections, filter]);
 
   const counts = useMemo(() => {
-    const m: Record<string, number> = { TÜM: players.length };
+    const m: Record<string, number> = { TÜM: players.filter(p => !p.isLegend).length };
     sections.forEach(s => { m[s.key] = s.players.length; });
     return m;
-  }, [sections, players.length]);
+  }, [sections, players]);
 
   return (
     <View style={scr.root}>
@@ -370,31 +433,31 @@ export default function PlayersScreen() {
 
       {/* ── HEADER ── */}
       <LinearGradient
-        colors={[`${colors.primary}10`, colors.backgroundElevated, colors.backgroundElevated]}
-        locations={[0, 0.5, 1]}
-        style={scr.headerWrap}
+        colors={[`${colors.primary}16`, colors.backgroundElevated, colors.backgroundElevated]}
+        locations={[0, 0.55, 1]}
+        style={scr.header}
       >
         <SafeAreaView edges={["top"]}>
           <View style={scr.headerRow}>
-            <Pressable style={scr.backBtn} onPress={() => nav.goBack()} hitSlop={14}>
+            <Pressable style={scr.backBtn} onPress={() => nav.goBack()} hitSlop={16}>
               <Ionicons name="chevron-back" size={20} color={colors.text} />
             </Pressable>
 
-            <View style={scr.headerMid}>
-              <Text style={scr.headerSup}>GALATASARAY A.Ş.</Text>
+            <View style={scr.headerCenter}>
+              <Text style={scr.headerEyebrow}>GALATASARAY A.Ş.</Text>
               <Text style={scr.headerTitle}>KADRO</Text>
             </View>
 
-            <View style={scr.countPill}>
-              <Text style={scr.countNum}>{players.length}</Text>
+            <View style={scr.countBadge}>
+              <Text style={scr.countNum}>{players.filter(p => !p.isLegend).length}</Text>
               <Text style={scr.countLbl}>oyuncu</Text>
             </View>
           </View>
         </SafeAreaView>
 
-        <View style={scr.divider} />
+        <View style={scr.headerDivider} />
 
-        {/* ── Filtre tabları ── */}
+        {/* Filter tabs */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -403,23 +466,32 @@ export default function PlayersScreen() {
         >
           {TABS.map(key => {
             const active = filter === key;
-            const col    = key === "TÜM" ? colors.primary : (POS_COLOR[key] ?? colors.primary);
+            const col    = key === "TÜM" ? colors.primary : (POS[key] ?? colors.primary);
             const g      = GROUPS.find(x => x.key === key);
             return (
               <Pressable
                 key={key}
                 onPress={() => setFilter(key)}
-                style={[scr.tab, active && { backgroundColor: `${col}18`, borderColor: `${col}55` }]}
+                style={[
+                  scr.tab,
+                  active
+                    ? { backgroundColor: col, borderColor: col }
+                    : { backgroundColor: "transparent", borderColor: colors.border },
+                ]}
               >
                 {g && (
-                  <Ionicons name={g.icon} size={11} color={active ? col : colors.textQuaternary} />
+                  <Ionicons
+                    name={g.icon}
+                    size={11}
+                    color={active ? "#FFFFFF" : colors.textQuaternary}
+                  />
                 )}
-                <Text style={[scr.tabTxt, active && { color: col }]}>
+                <Text style={[scr.tabTxt, active && scr.tabTxtActive]}>
                   {TAB_LABEL[key]}
                 </Text>
                 {active && counts[key] != null && (
-                  <View style={[scr.tabBadge, { backgroundColor: `${col}25` }]}>
-                    <Text style={[scr.tabBadgeTxt, { color: col }]}>{counts[key]}</Text>
+                  <View style={scr.tabCount}>
+                    <Text style={scr.tabCountTxt}>{counts[key]}</Text>
                   </View>
                 )}
               </Pressable>
@@ -428,7 +500,7 @@ export default function PlayersScreen() {
         </ScrollView>
       </LinearGradient>
 
-      {/* ── İÇERİK ── */}
+      {/* ── CONTENT ── */}
       {loading ? (
         <View style={scr.center}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -436,7 +508,7 @@ export default function PlayersScreen() {
         </View>
       ) : activeSections.length === 0 ? (
         <View style={scr.center}>
-          <View style={scr.emptyCircle}>
+          <View style={scr.emptyIcon}>
             <Ionicons name="shirt-outline" size={28} color={colors.textQuaternary} />
           </View>
           <Text style={scr.emptyTitle}>Oyuncu bulunamadı</Text>
@@ -456,23 +528,27 @@ export default function PlayersScreen() {
           }
         >
           {activeSections.map(sec => {
-            const secCol = POS_COLOR[sec.key] ?? colors.primary;
+            const secCol = POS[sec.key] ?? colors.primary;
             return (
               <View key={sec.key} style={scr.section}>
                 {filter === "TÜM" && (
                   <View style={scr.secHdr}>
                     <View style={[scr.secDot, { backgroundColor: secCol }]} />
-                    <Text style={[scr.secLabel, { color: secCol }]}>{sec.label.toUpperCase()}</Text>
-                    <View style={[scr.secBadge, { backgroundColor: `${secCol}18`, borderColor: `${secCol}38` }]}>
-                      <Text style={[scr.secBadgeTxt, { color: secCol }]}>{sec.players.length}</Text>
+                    <Text style={[scr.secLabel, { color: secCol }]}>
+                      {sec.label.toUpperCase()}
+                    </Text>
+                    <View style={[scr.secCount, { backgroundColor: `${secCol}15`, borderColor: `${secCol}32` }]}>
+                      <Text style={[scr.secCountTxt, { color: secCol }]}>{sec.players.length}</Text>
                     </View>
-                    <View style={scr.secLine} />
+                    <View style={[scr.secLine, { backgroundColor: `${secCol}18` }]} />
                   </View>
                 )}
                 <View style={scr.cards}>
-                  {sec.players.map(p => (
-                    <PlayerCard key={p.id} player={p} onPress={() => openDetail(p)} />
-                  ))}
+                  {sec.players.map(p =>
+                    p.isLegend
+                      ? <LegendCard key={p.id} player={p} onPress={() => openDetail(p)} />
+                      : <PlayerCard key={p.id} player={p} onPress={() => openDetail(p)} />
+                  )}
                 </View>
               </View>
             );
@@ -487,69 +563,58 @@ export default function PlayersScreen() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// STİLLER
+// STYLES
 // ══════════════════════════════════════════════════════════════════════════════
 
-// ── Kart ──────────────────────────────────────────────────────────────────────
-const card = StyleSheet.create({
+// ── Player card ───────────────────────────────────────────────────────────────
+const pc = StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.backgroundElevated,
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 13,
+    paddingRight: 16,
+    paddingLeft: 18,
     gap: 14,
     overflow: "hidden",
     ...Platform.select({
-      ios:     { shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.22, shadowRadius: 10 },
-      android: { elevation: 5 },
+      ios:     { shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.18, shadowRadius: 10 },
+      android: { elevation: 4 },
     }),
   },
-  stripe: {
+  strip: {
     position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
+    left: 0, top: 0, bottom: 0,
     width: 3,
-    borderTopLeftRadius: 20,
-    borderBottomLeftRadius: 20,
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
   },
-  // Dış halka
-  ring: {
-    width: AVATAR + 6,
-    height: AVATAR + 6,
-    borderRadius: (AVATAR + 6) / 2,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  // İç halkası
-  ringInner: {
-    width: AVATAR + 1,
-    height: AVATAR + 1,
-    borderRadius: (AVATAR + 1) / 2,
-    borderWidth: 1,
+  av: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
+    borderWidth: 1.5,
     overflow: "hidden",
   },
-  photo: {
-    width: AVATAR + 1,
-    height: AVATAR + 1,
-    borderRadius: (AVATAR + 1) / 2,
+  avImg: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
   },
-  avatarFallback: {
-    width: AVATAR + 1,
-    height: AVATAR + 1,
-    borderRadius: (AVATAR + 1) / 2,
+  avFb: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  ini: {
-    fontSize: 26,
+  avIni: {
+    fontSize: 22,
     fontWeight: "900",
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   info: {
     flex: 1,
@@ -559,58 +624,151 @@ const card = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     color: colors.text,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
-  meta: {
+  posRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    flexWrap: "wrap",
+    gap: 6,
   },
-  posBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-    borderWidth: 1,
+  posDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   posText: {
-    fontSize: 10,
-    fontWeight: "700",
-    letterSpacing: 0.4,
-  },
-  nat: {
     fontSize: 11,
-    color: colors.textTertiary,
-    fontWeight: "500",
+    fontWeight: "600",
+    letterSpacing: 0.2,
   },
-  right: {
-    alignItems: "center",
-    gap: 4,
-  },
-  numCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  numText: {
-    fontSize: 15,
+  num: {
+    fontSize: 30,
     fontWeight: "900",
-    letterSpacing: -0.5,
+    letterSpacing: -1.5,
+    minWidth: 36,
+    textAlign: "right",
   },
 });
 
-// ── Ekran ──────────────────────────────────────────────────────────────────────
+// ── Legend card ───────────────────────────────────────────────────────────────
+const lc = StyleSheet.create({
+  wrap: {
+    backgroundColor: colors.backgroundElevated,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: `${GOLD}42`,
+    overflow: "hidden",
+    ...Platform.select({
+      ios:     { shadowColor: GOLD, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.22, shadowRadius: 14 },
+      android: { elevation: 7 },
+    }),
+  },
+  topBar: {
+    position: "absolute",
+    top: 0, left: 0, right: 0,
+    height: 2,
+  },
+  strip: {
+    position: "absolute",
+    left: 0, top: 0, bottom: 0,
+    width: 3,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  starWm: {
+    position: "absolute",
+    right: 8,
+    top: -8,
+    fontSize: 100,
+    color: `${GOLD}0A`,
+    fontWeight: "900",
+    lineHeight: 110,
+    zIndex: 0,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 16,
+    paddingLeft: 20,
+    paddingRight: 16,
+    zIndex: 1,
+  },
+  av: {
+    width: LEG_AVATAR,
+    height: LEG_AVATAR,
+    borderRadius: LEG_AVATAR / 2,
+    borderWidth: 2,
+    overflow: "hidden",
+  },
+  avImg: {
+    width: LEG_AVATAR,
+    height: LEG_AVATAR,
+    borderRadius: LEG_AVATAR / 2,
+  },
+  avFb: {
+    width: LEG_AVATAR,
+    height: LEG_AVATAR,
+    borderRadius: LEG_AVATAR / 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avIni: {
+    fontSize: 28,
+    fontWeight: "900",
+    letterSpacing: -1,
+  },
+  info: {
+    flex: 1,
+    gap: 5,
+  },
+  badge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 20,
+    backgroundColor: `${GOLD}18`,
+    borderWidth: 1,
+    borderColor: `${GOLD}40`,
+  },
+  badgeTxt: {
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: GOLD,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.text,
+    letterSpacing: 0.1,
+  },
+  bio: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    fontStyle: "italic",
+  },
+  num: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: `${GOLD}70`,
+    letterSpacing: -2,
+    minWidth: 40,
+    textAlign: "right",
+  },
+});
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 const scr = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
   },
-
-  // Header
-  headerWrap: {
+  header: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -631,11 +789,11 @@ const scr = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  headerMid: {
+  headerCenter: {
     flex: 1,
     alignItems: "center",
   },
-  headerSup: {
+  headerEyebrow: {
     fontSize: 9,
     fontWeight: "700",
     color: colors.textQuaternary,
@@ -648,33 +806,32 @@ const scr = StyleSheet.create({
     color: colors.text,
     letterSpacing: 7,
   },
-  countPill: {
+  countBadge: {
     width: 46,
     alignItems: "center",
     backgroundColor: `${colors.primary}12`,
     borderWidth: 1,
-    borderColor: `${colors.primary}30`,
+    borderColor: `${colors.primary}28`,
     borderRadius: 14,
     paddingVertical: 5,
   },
   countNum: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "800",
     color: colors.primary,
+    lineHeight: 18,
   },
   countLbl: {
     fontSize: 8,
     fontWeight: "600",
-    color: `${colors.primary}80`,
-    letterSpacing: 0.3,
+    color: `${colors.primary}70`,
+    letterSpacing: 0.2,
   },
-  divider: {
+  headerDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.borderLight,
     marginHorizontal: PAD,
   },
-
-  // Filtre tabları
   tabsInner: {
     paddingHorizontal: PAD,
     gap: 7,
@@ -684,31 +841,33 @@ const scr = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 13,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
   },
   tabTxt: {
     fontSize: 12,
     fontWeight: "600",
     color: colors.textTertiary,
   },
-  tabBadge: {
+  tabTxtActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  tabCount: {
     minWidth: 18,
     height: 16,
     borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.22)",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
   },
-  tabBadgeTxt: {
+  tabCountTxt: {
     fontSize: 9,
     fontWeight: "800",
+    color: "#FFFFFF",
   },
-
-  // Liste
   list: {
     paddingHorizontal: PAD,
     paddingTop: 14,
@@ -719,49 +878,44 @@ const scr = StyleSheet.create({
   cards: {
     gap: 9,
   },
-
-  // Bölüm başlığı
   secHdr: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 10,
-    marginTop: 6,
+    marginBottom: 12,
+    marginTop: 8,
   },
   secDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   secLabel: {
     fontSize: 10,
     fontWeight: "800",
-    letterSpacing: 2,
+    letterSpacing: 2.2,
   },
-  secBadge: {
+  secCount: {
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 1,
   },
-  secBadgeTxt: {
+  secCountTxt: {
     fontSize: 10,
     fontWeight: "800",
   },
   secLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: colors.borderLight,
   },
-
-  // Durum
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
   },
-  emptyCircle: {
+  emptyIcon: {
     width: 68,
     height: 68,
     borderRadius: 34,
@@ -782,8 +936,8 @@ const scr = StyleSheet.create({
   },
 });
 
-// ── Modal ──────────────────────────────────────────────────────────────────────
-const md = StyleSheet.create({
+// ── Detail modal ──────────────────────────────────────────────────────────────
+const dm = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
@@ -811,8 +965,6 @@ const md = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
-  // Hero — gradient zemin + büyük dairesel avatar
   hero: {
     alignItems: "center",
     paddingTop: 36,
@@ -820,65 +972,65 @@ const md = StyleSheet.create({
     paddingHorizontal: PAD,
     overflow: "hidden",
   },
-  bigRing: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
-    borderWidth: 3,
-    alignItems: "center",
-    justifyContent: "center",
-    ...Platform.select({
-      ios:     { shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.5, shadowRadius: 20 },
-      android: { elevation: 12 },
-    }),
-  },
-  bigRingInner: {
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-    borderWidth: 2,
-    overflow: "hidden",
-  },
-  bigPhoto: {
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-  },
-  bigFallback: {
-    width: 138,
-    height: 138,
-    borderRadius: 69,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bigIni: {
-    fontSize: 48,
-    fontWeight: "900",
-    letterSpacing: -2,
-  },
-  jersey: {
+  jerseyWm: {
     position: "absolute",
-    right: 10,
-    top: 10,
+    right: 8,
+    top: 8,
     fontSize: 120,
     fontWeight: "900",
     letterSpacing: -8,
     lineHeight: 130,
     zIndex: 0,
   },
+  avRing: {
+    width: 152,
+    height: 152,
+    borderRadius: 76,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Platform.select({
+      ios:     { shadowOpacity: 0.45, shadowRadius: 20, shadowOffset: { width: 0, height: 0 } },
+      android: { elevation: 12 },
+    }),
+  },
+  avInner: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    borderWidth: 2,
+    overflow: "hidden",
+  },
+  avImg: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+  },
+  avFb: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avIni: {
+    fontSize: 50,
+    fontWeight: "900",
+    letterSpacing: -2,
+  },
   heroInfo: {
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 20,
     gap: 8,
   },
   heroName: {
     fontSize: 24,
     fontWeight: "900",
     color: colors.text,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
     textAlign: "center",
   },
-  heroFull: {
+  heroSubName: {
     fontSize: 13,
     color: colors.textSecondary,
     fontWeight: "500",
@@ -899,12 +1051,12 @@ const md = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
-  badgeText: {
+  badgeTxt: {
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 0.6,
   },
-  badgeNeutral: {
+  badgeGlass: {
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
@@ -912,73 +1064,67 @@ const md = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.glassStroke,
   },
-  badgeNeutralText: {
+  badgeGlassTxt: {
     fontSize: 10,
     color: colors.textSecondary,
     fontWeight: "600",
   },
-
-  // Bölüm
   section: {
     paddingHorizontal: PAD,
-    marginTop: 22,
+    marginTop: 24,
   },
-
-  // Stats
-  statsGrid: {
+  grid: {
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.backgroundElevated,
   },
-  statsRow: { flexDirection: "row" },
-  statsRowDiv: {
+  gridRow: { flexDirection: "row" },
+  gridRowDiv: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.borderLight,
   },
-  statsCell: {
+  gridCell: {
     flex: 1,
     paddingVertical: 18,
     alignItems: "center",
     paddingHorizontal: 4,
   },
-  statsCellDiv: {
+  gridCellDiv: {
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: colors.borderLight,
   },
-  statsVal: {
+  cellVal: {
     fontSize: 15,
     fontWeight: "800",
     color: colors.text,
     marginBottom: 5,
     textAlign: "center",
   },
-  statsKey: {
+  cellKey: {
     fontSize: 8,
     fontWeight: "700",
     color: colors.textQuaternary,
     letterSpacing: 0.8,
     textAlign: "center",
   },
-
-  // Biyografi
   bioBox: {
     backgroundColor: colors.backgroundElevated,
     borderRadius: 18,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  bioText: {
+  bioTxt: {
     fontSize: 14,
     color: colors.textSecondary,
     lineHeight: 22,
   },
 });
 
-// ── Modal bölüm başlığı ───────────────────────────────────────────────────────
-const msh = StyleSheet.create({
+// ── Section head ──────────────────────────────────────────────────────────────
+const sh = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -1003,7 +1149,7 @@ const msh = StyleSheet.create({
   },
 });
 
-// ── Sosyal buton ──────────────────────────────────────────────────────────────
+// ── Social button ─────────────────────────────────────────────────────────────
 const sb = StyleSheet.create({
   row: {
     flexDirection: "row",
@@ -1016,7 +1162,7 @@ const sb = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.backgroundElevated,
   },
-  icon: {
+  iconWrap: {
     width: 38,
     height: 38,
     borderRadius: 19,

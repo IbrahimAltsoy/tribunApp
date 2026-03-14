@@ -3,6 +3,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { authService } from '../services/authService';
+import { notificationService } from '../services/notificationService';
 import type { UserDto, AuthResponse } from '../types/auth';
 
 // Lazy-load GoogleSignin — not bundled in Expo Go runtime
@@ -69,12 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (refreshed) {
             setUser(refreshed.user);
             setAuthState('authenticated');
+            notificationService.initialize().catch(() => {});
           } else {
             setAuthState('unauthenticated');
           }
         } else {
           setUser(storedUser);
           setAuthState('authenticated');
+          notificationService.initialize().catch(() => {});
         }
       } catch {
         setAuthState('unauthenticated');
@@ -85,6 +88,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleAuthResponse = (response: AuthResponse) => {
     setUser(response.user);
     setAuthState('authenticated');
+    // Re-register push token with the now-authenticated user's JWT
+    notificationService.initialize().catch(() => {});
   };
 
   const login = useCallback(async (emailOrUsername: string, password: string) => {

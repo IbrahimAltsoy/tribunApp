@@ -33,7 +33,7 @@ type Props = {
   onDeleteMoment?: (moment: FanMomentDto) => void;
   onShareMoment?: (moment: FanMomentDto) => void;
   onLikeMoment?: (moment: FanMomentDto) => void;
-  onPressAuthor?: (userId: string, username: string) => void;
+  onPressAuthor?: (userId: string, username: string, avatarUrl?: string) => void;
   slot?: React.ReactNode;
   headerNode?: React.ReactNode;
   refreshing?: boolean;
@@ -50,7 +50,7 @@ const AnimatedMomentCard: React.FC<{
   onDelete?: () => void;
   onShare?: () => void;
   onLike?: () => void;
-  onPressAuthor?: (userId: string, username: string) => void;
+  onPressAuthor?: (userId: string, username: string, avatarUrl?: string) => void;
   activeAudioMomentId: string | null;
   activeMomentId: string | null;
   setActiveAudioMomentId: (id: string | null) => void;
@@ -214,7 +214,7 @@ const AnimatedMomentCard: React.FC<{
           onPress={(e) => {
             e.stopPropagation();
             if (onPressAuthor && moment.creatorUserId) {
-              onPressAuthor(moment.creatorUserId, moment.username);
+              onPressAuthor(moment.creatorUserId, moment.username, moment.creatorAvatarUrl ?? undefined);
             }
           }}
           style={({ pressed }) => [styles.overlayAuthorRow, pressed && styles.authorPressed]}
@@ -339,7 +339,7 @@ const AnimatedMomentCard: React.FC<{
                 onPress={(e) => {
                   e.stopPropagation();
                   if (onPressAuthor && moment.creatorUserId) {
-                    onPressAuthor(moment.creatorUserId, moment.username);
+                    onPressAuthor(moment.creatorUserId, moment.username, moment.creatorAvatarUrl ?? undefined);
                   }
                 }}
                 style={({ pressed }) => [styles.fallbackAuthorRow, pressed && styles.authorPressed]}

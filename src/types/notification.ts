@@ -3,6 +3,7 @@ export enum NotificationType {
   AnnouncementApproved = 1,
   PollCreated = 2,
   System = 3,
+  PollCompleted = 9,
 }
 
 export interface NotificationDto {

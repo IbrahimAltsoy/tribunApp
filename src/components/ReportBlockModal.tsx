@@ -9,6 +9,10 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -22,6 +26,7 @@ import {
   ReportCategory,
   ContentType,
 } from '../services/userSafetyService';
+import { useAuth } from '../contexts/AuthContext';
 
 const IS_IOS = Platform.OS === 'ios';
 
@@ -34,6 +39,7 @@ interface ReportBlockModalProps {
   showBlockOption?: boolean;
   onBlockSuccess?: () => void;
   onReportSuccess?: () => void;
+  onAuthRequired?: () => void;
 }
 
 type ReportCategoryItem = {
@@ -60,9 +66,12 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
   showBlockOption,
   onBlockSuccess,
   onReportSuccess,
+  onAuthRequired,
 }) => {
   const canBlock = showBlockOption ?? !!targetUserId;
   const { t } = useTranslation();
+  const { authState } = useAuth();
+  const isAuthenticated = authState === 'authenticated';
   const [mode, setMode] = useState<'menu' | 'report' | 'block'>('menu');
   const [selectedCategory, setSelectedCategory] = useState<ReportCategory | null>(
     null
@@ -119,6 +128,7 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
       return;
     }
 
+    Keyboard.dismiss();
     setIsLoading(true);
     try {
       const response = await userSafetyService.reportContent(
@@ -151,6 +161,41 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
       setIsLoading(false);
     }
   };
+
+  const renderAuthRequired = () => (
+    <View style={styles.authContainer}>
+      <LinearGradient
+        colors={['rgba(239,68,68,0.15)', 'rgba(220,38,38,0.05)']}
+        style={styles.authIconWrapper}
+      >
+        <Ionicons name="lock-closed" size={36} color="#ef4444" />
+      </LinearGradient>
+
+      <Text style={styles.authTitle}>Giriş Gerekiyor</Text>
+      <Text style={styles.authDesc}>
+        Raporlama ve engelleme yapabilmek için{'\n'}hesabına giriş yapman gerekiyor.
+      </Text>
+
+      <Pressable
+        style={styles.authLoginButton}
+        onPress={() => { handleClose(); onAuthRequired?.(); }}
+      >
+        <LinearGradient
+          colors={[colors.primary, '#00a83e']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.authLoginGradient}
+        >
+          <Ionicons name="log-in-outline" size={20} color={colors.white} />
+          <Text style={styles.authLoginText}>Giriş Yap</Text>
+        </LinearGradient>
+      </Pressable>
+
+      <Pressable style={styles.cancelButton} onPress={handleClose}>
+        <Text style={styles.cancelText}>İptal</Text>
+      </Pressable>
+    </View>
+  );
 
   const renderMenu = () => (
     <View style={styles.menuContainer}>
@@ -197,84 +242,93 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
   );
 
   const renderReport = () => (
-    <View style={styles.reportContainer}>
-      <View style={styles.reportHeader}>
-        <Pressable onPress={() => setMode('menu')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.white} />
-        </Pressable>
-        <Text style={styles.title}>{t('report.title', 'Icerigi Raporla')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <Text style={styles.subtitle}>
-        {t('report.selectReason', 'Raporlama sebebini secin:')}
-      </Text>
-
-      <View style={styles.categoriesContainer}>
-        {REPORT_CATEGORIES.map((category) => (
-          <Pressable
-            key={category.id}
-            style={[
-              styles.categoryItem,
-              selectedCategory === category.id && styles.categoryItemSelected,
-            ]}
-            onPress={() => setSelectedCategory(category.id)}
-          >
-            <Ionicons
-              name={category.icon as any}
-              size={20}
-              color={
-                selectedCategory === category.id ? colors.primary : colors.textSecondary
-              }
-            />
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === category.id && styles.categoryTextSelected,
-              ]}
-            >
-              {category.label}
-            </Text>
-            {selectedCategory === category.id && (
-              <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-            )}
-          </Pressable>
-        ))}
-      </View>
-
-      <Text style={styles.optionalLabel}>
-        {t('report.additionalInfo', 'Ek bilgi (istege bagli):')}
-      </Text>
-      <TextInput
-        style={styles.textInput}
-        placeholder={t('report.placeholder', 'Detay ekleyin...')}
-        placeholderTextColor={colors.textTertiary}
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        maxLength={500}
-      />
-
-      <Pressable
-        style={[styles.submitButton, !selectedCategory && styles.submitButtonDisabled]}
-        onPress={handleReport}
-        disabled={!selectedCategory || isLoading}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <ScrollView
+        style={styles.reportContainer}
+        contentContainerStyle={styles.reportContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <LinearGradient
-          colors={selectedCategory ? ['#ef4444', '#dc2626'] : ['#666', '#666']}
-          style={styles.submitGradient}
+        <View style={styles.reportHeader}>
+          <Pressable onPress={() => { Keyboard.dismiss(); setMode('menu'); }} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.white} />
+          </Pressable>
+          <Text style={styles.title}>{t('report.title', 'Icerigi Raporla')}</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <Text style={styles.subtitle}>
+          {t('report.selectReason', 'Raporlama sebebini secin:')}
+        </Text>
+
+        <View style={styles.categoriesContainer}>
+          {REPORT_CATEGORIES.map((category) => (
+            <Pressable
+              key={category.id}
+              style={[
+                styles.categoryItem,
+                selectedCategory === category.id && styles.categoryItemSelected,
+              ]}
+              onPress={() => setSelectedCategory(category.id)}
+            >
+              <Ionicons
+                name={category.icon as any}
+                size={20}
+                color={
+                  selectedCategory === category.id ? colors.primary : colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category.id && styles.categoryTextSelected,
+                ]}
+              >
+                {category.label}
+              </Text>
+              {selectedCategory === category.id && (
+                <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+              )}
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.optionalLabel}>
+          {t('report.additionalInfo', 'Ek bilgi (istege bagli):')}
+        </Text>
+        <TextInput
+          style={styles.textInput}
+          placeholder={t('report.placeholder', 'Detay ekleyin...')}
+          placeholderTextColor={colors.textTertiary}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          maxLength={500}
+          returnKeyType="done"
+          onSubmitEditing={Keyboard.dismiss}
+        />
+
+        <Pressable
+          style={[styles.submitButton, !selectedCategory && styles.submitButtonDisabled]}
+          onPress={handleReport}
+          disabled={!selectedCategory || isLoading}
         >
-          {isLoading ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <>
-              <Ionicons name="flag" size={20} color={colors.white} />
-              <Text style={styles.submitText}>{t('report.submit', 'Raporla')}</Text>
-            </>
-          )}
-        </LinearGradient>
-      </Pressable>
-    </View>
+          <LinearGradient
+            colors={selectedCategory ? ['#ef4444', '#dc2626'] : ['#666', '#666']}
+            style={styles.submitGradient}
+          >
+            {isLoading ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Ionicons name="flag" size={20} color={colors.white} />
+                <Text style={styles.submitText}>{t('report.submit', 'Raporla')}</Text>
+              </>
+            )}
+          </LinearGradient>
+        </Pressable>
+      </ScrollView>
+    </TouchableWithoutFeedback>
   );
 
   const renderBlock = () => (
@@ -333,17 +387,22 @@ const ReportBlockModal: React.FC<ReportBlockModalProps> = ({
       statusBarTranslucent
       onRequestClose={handleClose}
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={handleClose} />
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={IS_IOS ? 'padding' : 'height'}
+        keyboardVerticalOffset={IS_IOS ? 0 : 24}
+      >
+        <Pressable style={styles.backdrop} onPress={() => { Keyboard.dismiss(); handleClose(); }} />
         <BlurView intensity={IS_IOS ? 30 : 20} tint="dark" style={styles.blur}>
           <View style={styles.container}>
             <View style={styles.handle} />
-            {mode === 'menu' && renderMenu()}
-            {mode === 'report' && renderReport()}
-            {mode === 'block' && renderBlock()}
+            {!isAuthenticated && renderAuthRequired()}
+            {isAuthenticated && mode === 'menu' && renderMenu()}
+            {isAuthenticated && mode === 'report' && renderReport()}
+            {isAuthenticated && mode === 'block' && renderBlock()}
           </View>
         </BlurView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -435,7 +494,11 @@ const styles = StyleSheet.create({
 
   // Report styles
   reportContainer: {
+    maxHeight: '85%',
+  },
+  reportContent: {
     padding: spacing.lg,
+    flexGrow: 1,
   },
   reportHeader: {
     flexDirection: 'row',
@@ -516,6 +579,54 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   submitText: {
+    fontSize: fontSizes.md,
+    fontFamily: typography.bold,
+    color: colors.white,
+  },
+
+  // Auth required styles
+  authContainer: {
+    padding: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  authIconWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+  },
+  authTitle: {
+    fontSize: fontSizes.xl,
+    fontFamily: typography.bold,
+    color: colors.white,
+    textAlign: 'center',
+  },
+  authDesc: {
+    fontSize: fontSizes.md,
+    fontFamily: typography.regular,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: spacing.sm,
+  },
+  authLoginButton: {
+    width: '100%',
+    borderRadius: radii.lg,
+    overflow: 'hidden',
+  },
+  authLoginGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md + 2,
+  },
+  authLoginText: {
     fontSize: fontSizes.md,
     fontFamily: typography.bold,
     color: colors.white,

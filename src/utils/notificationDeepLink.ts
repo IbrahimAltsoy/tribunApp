@@ -64,6 +64,17 @@ export const getNavigationAction = (
           },
         };
 
+      case NotificationType.FANMOMENT_LIKED:
+        return {
+          screen: "MainTabs",
+          params: {
+            screen: "Home",
+            params: {
+              fanMomentId: data.id,
+            },
+          },
+        };
+
       case NotificationType.GENERAL:
       default:
         return {

@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { APP_METADATA } from '../constants/app';
 
 const { width } = Dimensions.get('window');
 
@@ -175,7 +176,7 @@ const SplashScreen: React.FC = () => {
           <Animated.View style={[styles.dot, styles.dotAccent, { opacity: dot2 }]} />
           <Animated.View style={[styles.dot, { opacity: dot3 }]} />
         </View>
-        <Text style={styles.version}>v1.0.0</Text>
+        <Text style={styles.version}>v{APP_METADATA.VERSION}</Text>
       </Animated.View>
     </Animated.View>
   );

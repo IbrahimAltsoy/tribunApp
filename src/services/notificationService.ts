@@ -27,6 +27,8 @@ export enum NotificationType {
   NEWS_PUBLISHED = 'news_published',
   ANNOUNCEMENT_APPROVED = 'announcement_approved',
   POLL_CREATED = 'poll_created',
+  POLL_COMPLETED = 'poll_completed',
+  FANMOMENT_LIKED = 'fanmomentliked',
   GENERAL = 'general',
 }
 
@@ -53,6 +55,8 @@ export type NotificationPreferences = {
   news: boolean;
   announcements: boolean;
   polls: boolean;
+  pollResults: boolean;
+  fanMomentLikes: boolean;
 };
 
 /**
@@ -66,6 +70,8 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   news: true,
   announcements: true,
   polls: true,
+  pollResults: true,
+  fanMomentLikes: true,
 };
 
 /**
@@ -286,7 +292,12 @@ const registerPushToken = async (token: string): Promise<boolean> => {
  */
 const initialize = async (): Promise<void> => {
   try {
-    const token = await getExpoPushToken();
+    // Try to get a fresh push token; fall back to stored token so we can
+    // re-register with the current JWT even when projectId is unavailable (Expo Go)
+    let token = await getExpoPushToken();
+    if (!token) {
+      token = await getStoredPushToken();
+    }
     if (token) {
       await registerPushToken(token);
     }
@@ -369,6 +380,10 @@ const isNotificationTypeEnabled = (
       return preferences.announcements;
     case NotificationType.POLL_CREATED:
       return preferences.polls;
+    case NotificationType.POLL_COMPLETED:
+      return preferences.pollResults;
+    case NotificationType.FANMOMENT_LIKED:
+      return preferences.fanMomentLikes;
     default:
       return true;
   }
@@ -473,6 +488,8 @@ const syncPreferencesWithBackend = async (
         news: preferences.news,
         announcements: preferences.announcements,
         polls: preferences.polls,
+        pollResults: preferences.pollResults,
+        fanMomentLikes: preferences.fanMomentLikes,
       },
     };
 

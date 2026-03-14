@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import ProfileEditScreen from "../screens/ProfileEditScreen";
+import BlockedUsersScreen from "../screens/BlockedUsersScreen";
 import TermsOfServiceScreen from "../screens/TermsOfServiceScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import ConsentScreen from "../screens/ConsentScreen";
@@ -53,6 +54,11 @@ const ProfileStack: React.FC = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="BlockedUsers"
+          component={BlockedUsersScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="Settings"
           options={({ navigation }) => ({
             title: "",
@@ -72,29 +78,45 @@ const ProfileStack: React.FC = () => {
         </Stack.Screen>
       </Stack.Navigator>
 
-      {modalView === 'terms' && (
+      <Modal
+        visible={modalView === 'terms'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalView('none')}
+      >
         <TermsOfServiceScreen onClose={() => setModalView('none')} showAcceptButton={false} />
-      )}
-      {modalView === 'privacy' && (
+      </Modal>
+
+      <Modal
+        visible={modalView === 'privacy'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalView('none')}
+      >
         <PrivacyPolicyScreen onClose={() => setModalView('none')} showAcceptButton={false} />
-      )}
-      {modalView === 'consent' && (
+      </Modal>
+
+      <Modal
+        visible={modalView === 'consent'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalView('none')}
+      >
         <ConsentScreen
           onComplete={() => setModalView('none')}
           onViewTerms={() => setModalView('terms')}
           onViewPrivacy={() => setModalView('privacy')}
         />
-      )}
-      {modalView === 'notifications' && (
-        <Modal
-          visible={true}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setModalView('none')}
-        >
-          <NotificationPreferencesScreen onClose={() => setModalView('none')} />
-        </Modal>
-      )}
+      </Modal>
+
+      <Modal
+        visible={modalView === 'notifications'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalView('none')}
+      >
+        <NotificationPreferencesScreen onClose={() => setModalView('none')} />
+      </Modal>
     </>
   );
 };

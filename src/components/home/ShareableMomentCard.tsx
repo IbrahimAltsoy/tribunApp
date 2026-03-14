@@ -45,7 +45,8 @@ const ShareableMomentCard = forwardRef<ShareableMomentCardRef, ShareableMomentCa
     }));
 
     const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
+      const utcString = /Z$|[+-]\d{2}:\d{2}$/.test(dateString) ? dateString : dateString + 'Z';
+      const date = new Date(utcString);
       return date.toLocaleDateString("tr-TR", {
         day: "numeric",
         month: "long",

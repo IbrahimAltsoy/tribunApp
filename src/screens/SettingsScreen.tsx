@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { ProfileStackParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 import { spacing, radii } from '../theme/spacing';
 import { fontSizes, typography } from '../theme/typography';
@@ -19,6 +20,7 @@ import { onboardingService } from '../services/onboardingService';
 import { consentService } from '../services/consentService';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/authService';
+import { APP_METADATA } from '../constants/app';
 
 type Props = {
   onViewTerms: () => void;
@@ -36,8 +38,8 @@ const SettingsScreen: React.FC<Props> = ({
   onOpenNotificationTest,
 }) => {
   const { t } = useTranslation();
-  // SettingsScreen is nested inside MarsStack; use getParent() to reach root navigator
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<ProfileStackParamList>>();
+  // SettingsScreen is nested inside ProfileStack; use getParent() to reach root navigator
   const rootNavigation = (navigation as any).getParent?.() ?? navigation;
   const { authState, user, logout } = useAuth();
 
@@ -202,6 +204,29 @@ const SettingsScreen: React.FC<Props> = ({
           )}
         </View>
 
+        {/* Security Section — only for authenticated users */}
+        {authState === 'authenticated' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Güvenlik</Text>
+
+            <Pressable
+              style={({ pressed }) => [styles.settingItem, pressed && styles.settingItemPressed]}
+              onPress={() => navigation.navigate('BlockedUsers')}
+            >
+              <View style={styles.settingIcon}>
+                <Ionicons name="ban" size={22} color={colors.primary} />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Engellenen Kullanıcılar</Text>
+                <Text style={styles.settingDescription}>
+                  Engellediğiniz kullanıcıları görün ve engellerini kaldırın
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+            </Pressable>
+          </View>
+        )}
+
         {/* Legal Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>{t('settings.legal.title')}</Text>
@@ -353,7 +378,7 @@ const SettingsScreen: React.FC<Props> = ({
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {t('settings.footer.version', { version: '1.0.0' })}
+            {t('settings.footer.version', { version: APP_METADATA.VERSION })}
           </Text>
           <Text style={styles.footerText}>
             {t('settings.footer.copyright')}

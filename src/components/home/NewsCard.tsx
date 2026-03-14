@@ -42,8 +42,11 @@ const NewsCard: React.FC<Props> = React.memo(({ item, onPress }) => {
       : item.summary;
 
   // Calculate time ago from publishedAt or createdAt
+  // Append 'Z' so JS treats server UTC strings as UTC (not local time)
+  const toUtc = (s: string) => /Z$|[+-]\d{2}:\d{2}$/.test(s) ? s : s + 'Z';
   const getTimeAgo = () => {
-    const date = new Date(item.publishedAt || item.createdAt);
+    const raw = item.publishedAt || item.createdAt;
+    const date = new Date(toUtc(raw));
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);

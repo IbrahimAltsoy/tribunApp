@@ -255,7 +255,13 @@ const PollCard: React.FC<Props> = React.memo(({ poll, onVoteSuccess, onAuthRequi
   const totalVotes = localPoll.options.reduce((sum, opt) => sum + opt.voteCount, 0);
 
   const closesInText = localPoll.closesAt
-    ? new Date(localPoll.closesAt).toLocaleDateString('tr-TR')
+    ? new Date(localPoll.closesAt).toLocaleString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
     : 'Devam ediyor';
 
   const hasVoted = votedOptionId !== null;

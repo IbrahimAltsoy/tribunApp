@@ -218,7 +218,6 @@ const ProfileScreen: React.FC = () => {
                 </View>
               </LinearGradient>
               <Text style={styles.displayName}>{displayName}</Text>
-              <Text style={styles.username}>@{user?.username}</Text>
               {user?.bio ? <Text style={styles.bio}>{user.bio}</Text> : null}
 
               {/* Edit Profile Button */}

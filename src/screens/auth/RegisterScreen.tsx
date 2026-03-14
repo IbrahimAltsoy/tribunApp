@@ -22,7 +22,7 @@ import { fontSizes, typography } from '../../theme/typography';
 import { useAuth } from '../../contexts/AuthContext';
 
 const validatePassword = (p: string): string | null => {
-  if (p.length < 10) return 'Şifre en az 10 karakter olmalı.';
+  if (p.length < 6) return 'Şifre en az 6 karakter olmalı.';
   if (!/[a-zA-Z]/.test(p)) return 'Şifre en az bir harf içermeli.';
   if (!/[0-9]/.test(p)) return 'Şifre en az bir rakam içermeli.';
   return null;
@@ -205,7 +205,7 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin, onRegistered }) => {
                 <Ionicons name="lock-closed-outline" size={17} color={errors.password ? colors.error : '#666'} style={styles.inputIco} />
                 <TextInput
                   style={styles.input}
-                  placeholder="En az 10 karakter, harf ve rakam"
+                  placeholder="En az 6 karakter, harf ve rakam"
                   placeholderTextColor="#555"
                   value={password}
                   onChangeText={t => { setPassword(t); clearErr('password'); }}
@@ -218,7 +218,7 @@ const RegisterScreen: React.FC<Props> = ({ onNavigateLogin, onRegistered }) => {
               </View>
               {errors.password
                 ? <Text style={styles.errText}>{errors.password}</Text>
-                : <Text style={styles.hint}>Min 10 karakter, en az 1 harf ve 1 rakam</Text>
+                : <Text style={styles.hint}>Min 6 karakter, en az 1 harf ve 1 rakam</Text>
               }
             </View>
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "GS Tribün",
     "slug": "tribunapplication",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -25,7 +25,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.gstribun.app",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "Taraftar anınızı fotoğrafla paylaşabilmeniz için kamera iznine ihtiyacımız var.",
         "NSPhotoLibraryUsageDescription": "Fotoğraf galerinizden seçim yapabilmeniz için izin gerekiyor.",

@@ -26,6 +26,17 @@ export interface BlockedSessionDto {
   createdAt: string;
 }
 
+export interface BlockedUserDetailDto {
+  blockId: string;
+  blockedUserId: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string;
+  context: string;
+  reason?: string;
+  blockedAt: string;
+}
+
 export interface ContentReportDto {
   id: string;
   contentType: string;
@@ -169,6 +180,33 @@ class UserSafetyService {
       return { success: false, error: 'Invalid response format' };
     } catch (error) {
       logger.error('UserSafety: Failed to unblock user', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Get enriched list of blocked users with profile info. Requires authentication.
+   */
+  async getBlockedUsersWithDetails(): Promise<ApiResponse<BlockedUserDetailDto[]>> {
+    try {
+      const response = await fetch(this.buildUrl('/api/UserSafety/blocked/details'), {
+        method: 'GET',
+        headers: await this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to get blocked users: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        return { success: true, data: result.data };
+      }
+
+      return { success: false, error: 'Invalid response format' };
+    } catch (error) {
+      logger.error('UserSafety: Failed to get blocked users with details', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }

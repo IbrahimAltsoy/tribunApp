@@ -33,6 +33,8 @@ const NotificationPreferences: React.FC<Props> = ({ onClose }) => {
     news: true,
     announcements: true,
     polls: true,
+    pollResults: true,
+    fanMomentLikes: true,
   });
 
   useEffect(() => {
@@ -231,6 +233,26 @@ const NotificationPreferences: React.FC<Props> = ({ onClose }) => {
             description={t('settings.notifications.pollsDescription')}
             value={preferences.polls}
             onToggle={() => handleToggle('polls')}
+            disabled={!preferences.enabled}
+          />
+
+          {/* Poll Results */}
+          <PreferenceItem
+            icon="podium"
+            title="Anket Sonuçları"
+            description="Oy verdiğin anket bittiğinde sonuçları bildirim olarak al"
+            value={preferences.pollResults}
+            onToggle={() => handleToggle('pollResults')}
+            disabled={!preferences.enabled}
+          />
+
+          {/* Fan Moment Begeni */}
+          <PreferenceItem
+            icon="heart"
+            title="Fan Moment Beğenileri"
+            description="Biri fan moment'ini beğenince bildirim al"
+            value={preferences.fanMomentLikes}
+            onToggle={() => handleToggle('fanMomentLikes')}
             disabled={!preferences.enabled}
           />
         </View>

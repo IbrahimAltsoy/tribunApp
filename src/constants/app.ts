@@ -118,7 +118,7 @@ export const STORAGE_KEYS = {
  * External links
  */
 export const EXTERNAL_LINKS = {
-  STORE: 'https://store.galatasaray.org',
+  STORE: 'https://www.gsstore.org',
   OFFICIAL_WEBSITE: 'https://galatasaray.org',
   TWITTER: 'https://twitter.com/Galatasaray',
   INSTAGRAM: 'https://instagram.com/galatasaray',
@@ -126,12 +126,14 @@ export const EXTERNAL_LINKS = {
   FACEBOOK: 'https://facebook.com/Galatasaray',
 } as const;
 
+import * as Application from 'expo-application';
+
 /**
- * App metadata
+ * App metadata — version bilgisi app.json'dan otomatik okunur
  */
 export const APP_METADATA = {
   NAME: 'GS Tribün',
-  VERSION: '1.0.0',
-  BUILD_NUMBER: 1,
-  BUNDLE_ID: 'com.gstribun.app',
-} as const;
+  VERSION: Application.nativeApplicationVersion ?? '1.0.2',
+  BUILD_NUMBER: Number(Application.nativeBuildVersion ?? 1),
+  BUNDLE_ID: Application.applicationId ?? 'com.gstribun.app',
+};

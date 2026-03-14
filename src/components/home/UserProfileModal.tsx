@@ -37,10 +37,11 @@ type Props = {
   visible: boolean;
   userId: string | null;
   username: string;
+  initialAvatarUrl?: string;
   onClose: () => void;
 };
 
-const UserProfileModal: React.FC<Props> = ({ visible, userId, username, onClose }) => {
+const UserProfileModal: React.FC<Props> = ({ visible, userId, username, initialAvatarUrl, onClose }) => {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('shared');
   const [loading, setLoading] = useState(false);
@@ -152,8 +153,8 @@ const UserProfileModal: React.FC<Props> = ({ visible, userId, username, onClose 
         style={styles.avatarRing}
       >
         <View style={styles.avatarInner}>
-          {profile?.avatarUrl ? (
-            <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+          {(profile?.avatarUrl ?? initialAvatarUrl) ? (
+            <Image source={{ uri: profile?.avatarUrl ?? initialAvatarUrl }} style={styles.avatarImage} />
           ) : (
             <Ionicons name="person" size={36} color={colors.textSecondary} />
           )}

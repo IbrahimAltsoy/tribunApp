@@ -41,7 +41,7 @@ const BottomTabs: React.FC = () => {
     PanResponder.create({
       // Yalnızca belirgin yatay hareketleri yakala (dikey scroll'u engelleme)
       onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > Math.abs(gs.dy) * 1.8 && Math.abs(gs.dx) > 18,
+        Math.abs(gs.dx) > Math.abs(gs.dy) * 2.8 && Math.abs(gs.dx) > 35,
 
       // Dokunma olayının sahipliğini bırakma (ScrollView'ların çalmasını önler)
       onPanResponderTerminationRequest: () => false,
@@ -50,8 +50,8 @@ const BottomTabs: React.FC = () => {
         const nav = tabNavRef.current;
         if (!nav) return;
 
-        const swipeLeft  = gs.dx < -55 && gs.vx < -0.15;
-        const swipeRight = gs.dx >  55 && gs.vx >  0.15;
+        const swipeLeft  = gs.dx < -110 && gs.vx < -0.40;
+        const swipeRight = gs.dx >  110 && gs.vx >  0.40;
 
         if (swipeLeft) {
           const next = Math.min(currentIdxRef.current + 1, TAB_ORDER.length - 1);
