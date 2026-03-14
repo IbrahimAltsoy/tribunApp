@@ -103,7 +103,7 @@ const FixtureScreen = () => {
   } | null>(null);
 
   // Smart live match polling with automatic notifications
-  const { liveMatch } = useLiveMatchPolling({
+  const { liveMatch, displayMinute, extraTime } = useLiveMatchPolling({
     teamType: "Mens",
     enabled: true,
     onGoalCelebration: (teamName, playerName, minute) => {
@@ -1149,7 +1149,12 @@ const FixtureScreen = () => {
     </View>
   );
 
-  // Render Live Match Section
+  // Format minute display — e.g. "67'" or "45+2'"
+  const formatMinute = (min: number, extra: number | null): string => {
+    if (extra !== null && extra > 0) return `${min}+${extra}'`;
+    return `${min}'`;
+  };
+
   const renderLiveMatchSection = () => {
     if (!liveMatch) {
       return (
@@ -1162,157 +1167,200 @@ const FixtureScreen = () => {
       );
     }
 
-    // Get home and away teams
     const homeTeam = liveMatch.participants.find((p) => p.location === "home");
     const awayTeam = liveMatch.participants.find((p) => p.location === "away");
 
-    // Get latest scores from events (goals)
-    const goalEvents = liveMatch.events
-      .filter((e) => e.typeId === 14) // 14 = goal event
-      .sort((a, b) => (b.minute || 0) - (a.minute || 0));
-
-    let homeScore = 0;
-    let awayScore = 0;
-
-    goalEvents.forEach((goal) => {
-      if (goal.participantId === homeTeam?.id) {
-        homeScore++;
-      } else if (goal.participantId === awayTeam?.id) {
-        awayScore++;
+    // Calculate running score at each moment
+    const calcScoreAt = (upToMinute: number, upToExtra: number | null) => {
+      let home = 0;
+      let away = 0;
+      for (const e of liveMatch.events) {
+        if (e.rescinded) continue;
+        const eMins = e.minute ?? 0;
+        const eExtra = e.extraMinute ?? 0;
+        const eFull = eMins + eExtra * 0.01;
+        const upToFull = upToMinute + (upToExtra ?? 0) * 0.01;
+        if (eFull > upToFull) continue;
+        const isGoal = e.typeId === 14 || e.typeId === 15;
+        const isOwnGoal = e.typeId === 16;
+        if (isGoal || isOwnGoal) {
+          if (e.participantId === homeTeam?.id) {
+            if (isOwnGoal) away++; else home++;
+          } else if (e.participantId === awayTeam?.id) {
+            if (isOwnGoal) home++; else away++;
+          }
+        }
       }
-    });
+      return { home, away };
+    };
 
-    // Get current minute
-    const latestEvent = liveMatch.events.sort(
-      (a, b) => (b.minute || 0) - (a.minute || 0)
-    )[0];
-    const currentMinute = latestEvent?.minute || 0;
+    // Total score
+    const totalScore = calcScoreAt(999, null);
+    const homeScore = totalScore.home;
+    const awayScore = totalScore.away;
 
-    // Get all important events
-    const allEvents = liveMatch.events
-      .filter((e) => {
-        const importantTypes = [14, 17, 18, 10, 80, 81, 82, 1697];
-        return importantTypes.includes(e.typeId || 0) && !e.rescinded;
-      })
-      .sort((a, b) => (a.minute || 0) - (b.minute || 0));
+    // State label
+    const stateId = liveMatch.stateId;
+    const stateLabel =
+      stateId === 2 ? "1. YARI" :
+      stateId === 3 ? "DEVRE ARASI" :
+      stateId === 4 ? "2. YARI" :
+      stateId === 5 ? "MAÇ BİTTİ" : "CANLI";
 
-    const firstHalfEvents = allEvents.filter((e) => (e.minute || 0) <= 45);
-    const secondHalfEvents = allEvents.filter((e) => (e.minute || 0) > 45);
+    // Filter & sort important events
+    const importantTypeIds = [14, 15, 16, 17, 18, 19, 20];
+    const allEvents = (liveMatch.events ?? [])
+      .filter((e) => importantTypeIds.includes(e.typeId ?? 0) && !e.rescinded)
+      .sort((a, b) => {
+        const aFull = (a.minute ?? 0) + (a.extraMinute ?? 0) * 0.01;
+        const bFull = (b.minute ?? 0) + (b.extraMinute ?? 0) * 0.01;
+        return aFull - bFull;
+      });
 
-    // Helper to render individual event
-    const renderEvent = (event: any, key: string) => {
-      // Substitution (typeId 18)
-      if (event.typeId === 18) {
+    const firstHalfEvents = allEvents.filter((e) => (e.minute ?? 0) <= 45 && (e.extraMinute == null || (e.minute ?? 0) < 45));
+    const secondHalfEvents = allEvents.filter((e) => (e.minute ?? 0) > 45 || ((e.minute ?? 0) === 45 && (e.extraMinute ?? 0) > 0));
+
+    const renderEventRow = (event: any, key: string) => {
+      const isHome = event.participantId === homeTeam?.id;
+      const min = event.minute ?? 0;
+      const extra = event.extraMinute ? event.extraMinute : null;
+      const minuteStr = extra ? `${min}+${extra}'` : `${min}'`;
+
+      // Icon
+      let iconName = "swap-horizontal-outline";
+      let iconColor = "#AAAAAA";
+      if (event.typeId === 14 || event.typeId === 15) { iconName = "football"; iconColor = "#FFFFFF"; }
+      else if (event.typeId === 16) { iconName = "football"; iconColor = "#FF6B6B"; }
+      else if (event.typeId === 18 || event.typeId === 19) { iconName = "square"; iconColor = "#F59E0B"; } // yellow card (18) or 2nd yellow (19)
+      else if (event.typeId === 20) { iconName = "square"; iconColor = "#EF4444"; } // direct red card
+      else if (event.typeId === 17) { iconName = "swap-horizontal-outline"; iconColor = "#4ADE80"; } // sub
+
+      const isGoal = event.typeId === 14 || event.typeId === 15 || event.typeId === 16;
+      const isSub = event.typeId === 17;
+
+      // Score at this moment (for goals only)
+      const scoreAtGoal = isGoal ? calcScoreAt(min, extra) : null;
+      const scoreStr = scoreAtGoal ? `${scoreAtGoal.home}-${scoreAtGoal.away}` : null;
+
+      if (isHome) {
         return (
           <View key={key} style={styles.eventRow}>
-            <Text style={styles.eventMinute}>{event.minute}'</Text>
-            <Text style={styles.eventIcon}>🔄</Text>
-            <View style={styles.substitutionContainer}>
-              {/* Player Out (Red) */}
-              <View style={styles.substitutionPlayer}>
-                <Text style={styles.substitutionArrow}>← </Text>
-                <Text
-                  style={[styles.eventText, styles.playerOut]}
-                  numberOfLines={1}
-                >
-                  {event.relatedPlayerName || "Oyuncu"}
-                </Text>
+            <View style={styles.eventHome}>
+              <Text style={styles.eventMinuteLeft}>{minuteStr}</Text>
+              <View style={[styles.eventIconWrap, { backgroundColor: `${iconColor}22` }]}>
+                <Ionicons name={iconName as any} size={13} color={iconColor} />
               </View>
-              {/* Player In (Green) */}
-              <View style={styles.substitutionPlayer}>
-                <Text style={styles.substitutionArrow}>→ </Text>
-                <Text
-                  style={[styles.eventText, styles.playerIn]}
-                  numberOfLines={1}
-                >
+              <View style={styles.eventPlayerWrap}>
+                {isGoal && scoreStr && (
+                  <Text style={styles.eventScore}>{scoreStr}</Text>
+                )}
+                <Text style={styles.eventPlayerName} numberOfLines={1}>
                   {event.playerName || "Oyuncu"}
                 </Text>
+                {isSub && event.relatedPlayerName && (
+                  <Text style={styles.eventSubOut} numberOfLines={1}>
+                    ↑ {event.relatedPlayerName}
+                  </Text>
+                )}
               </View>
+            </View>
+            <View style={styles.eventAway} />
+          </View>
+        );
+      } else {
+        return (
+          <View key={key} style={styles.eventRow}>
+            <View style={styles.eventHome} />
+            <View style={styles.eventAway}>
+              <View style={styles.eventPlayerWrap}>
+                {isGoal && scoreStr && (
+                  <Text style={[styles.eventScore, { textAlign: "right" }]}>{scoreStr}</Text>
+                )}
+                <Text style={[styles.eventPlayerName, { textAlign: "right" }]} numberOfLines={1}>
+                  {event.playerName || "Oyuncu"}
+                </Text>
+                {isSub && event.relatedPlayerName && (
+                  <Text style={[styles.eventSubOut, { textAlign: "right" }]} numberOfLines={1}>
+                    ↑ {event.relatedPlayerName}
+                  </Text>
+                )}
+              </View>
+              <View style={[styles.eventIconWrap, { backgroundColor: `${iconColor}22` }]}>
+                <Ionicons name={iconName as any} size={13} color={iconColor} />
+              </View>
+              <Text style={styles.eventMinuteRight}>{minuteStr}</Text>
             </View>
           </View>
         );
       }
-
-      // Other events (goals, cards, VAR)
-      const icon =
-        event.typeId === 14 ? "⚽" : event.typeId === 17 ? "🟨" : "📹";
-      const text = event.playerName || event.addition || "Olay";
-      return (
-        <View key={key} style={styles.eventRow}>
-          <Text style={styles.eventMinute}>{event.minute}'</Text>
-          <Text style={styles.eventIcon}>{icon}</Text>
-          <Text style={styles.eventText} numberOfLines={1}>
-            {text}
-          </Text>
-        </View>
-      );
     };
+
+    const renderHalfHeader = (label: string, score: { home: number; away: number }) => (
+      <View style={styles.halfHeader}>
+        <Text style={styles.halfLabel}>{label}</Text>
+        <Text style={styles.halfScore}>{score.home} - {score.away}</Text>
+      </View>
+    );
+
+    // Half-time score (score at end of 1st half)
+    const halfTimeScore = calcScoreAt(45, 9);
 
     return (
       <View style={styles.liveMatchCard}>
-        {/* Live Indicator */}
-        <View style={styles.liveIndicator}>
-          <View style={styles.livePulse} />
-          <Text style={styles.liveText}>CANLI</Text>
-          <Text style={styles.liveMinute}>{currentMinute}'</Text>
+        {/* ── Live indicator + minute ── */}
+        <View style={styles.liveIndicatorRow}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveLabel}>
+            {stateId === 5 ? "MAÇ BİTTİ" : stateId === 3 ? "DEVRE ARASI" : "CANLI"}
+          </Text>
+          {(stateId === 2 || stateId === 4) && (
+            <Text style={styles.liveMinuteBadge}>
+              {formatMinute(displayMinute, extraTime)}
+            </Text>
+          )}
         </View>
 
-        {/* Match Details */}
-        <View style={styles.liveMatchContent}>
-          {/* Home Team */}
-          <View style={styles.liveTeamContainer}>
-            {homeTeam?.logo && (
-              <Image
-                source={{ uri: homeTeam.logo }}
-                style={styles.liveTeamLogo}
-              />
+        {/* ── Score header ── */}
+        <View style={styles.liveScoreRow}>
+          <View style={styles.liveTeamBlock}>
+            {homeTeam?.logo ? (
+              <Image source={{ uri: homeTeam.logo }} style={styles.liveLogo} resizeMode="contain" />
+            ) : (
+              <View style={styles.liveLogoFb} />
             )}
-            <Text style={styles.liveTeamName} numberOfLines={1}>
-              {homeTeam?.name || ""}
-            </Text>
+            <Text style={styles.liveTeamName} numberOfLines={2}>{homeTeam?.name ?? ""}</Text>
           </View>
 
-          {/* Score */}
-          <View style={styles.liveScoreContainer}>
-            <Text style={styles.liveScore}>{homeScore}</Text>
-            <Text style={styles.liveScoreSeparator}>-</Text>
-            <Text style={styles.liveScore}>{awayScore}</Text>
+          <View style={styles.liveScoreBlock}>
+            <Text style={styles.liveScoreText}>{homeScore} - {awayScore}</Text>
+            <Text style={styles.liveStateLine}>{stateLabel}</Text>
           </View>
 
-          {/* Away Team */}
-          <View style={styles.liveTeamContainer}>
-            {awayTeam?.logo && (
-              <Image
-                source={{ uri: awayTeam.logo }}
-                style={styles.liveTeamLogo}
-              />
+          <View style={[styles.liveTeamBlock, { alignItems: "flex-end" }]}>
+            {awayTeam?.logo ? (
+              <Image source={{ uri: awayTeam.logo }} style={styles.liveLogo} resizeMode="contain" />
+            ) : (
+              <View style={styles.liveLogoFb} />
             )}
-            <Text style={styles.liveTeamName} numberOfLines={1}>
-              {awayTeam?.name || ""}
+            <Text style={[styles.liveTeamName, { textAlign: "right" }]} numberOfLines={2}>
+              {awayTeam?.name ?? ""}
             </Text>
           </View>
         </View>
 
-        {/* Match Events */}
+        {/* ── Events ── */}
         {allEvents.length > 0 && (
-          <View style={styles.eventsContainer}>
-            {/* First Half */}
+          <View style={styles.eventsWrap}>
             {firstHalfEvents.length > 0 && (
-              <View style={styles.halfSection}>
-                <Text style={styles.halfTitle}>1. YARI</Text>
-                {firstHalfEvents.map((event, idx) =>
-                  renderEvent(event, `first-${idx}`)
-                )}
+              <View>
+                {renderHalfHeader("1. YARI", halfTimeScore)}
+                {firstHalfEvents.map((e, i) => renderEventRow(e, `1h-${i}`))}
               </View>
             )}
-
-            {/* Second Half */}
             {secondHalfEvents.length > 0 && (
-              <View style={styles.halfSection}>
-                <Text style={styles.halfTitle}>2. YARI</Text>
-                {secondHalfEvents.map((event, idx) =>
-                  renderEvent(event, `second-${idx}`)
-                )}
+              <View>
+                {renderHalfHeader("2. YARI", totalScore)}
+                {secondHalfEvents.map((e, i) => renderEventRow(e, `2h-${i}`))}
               </View>
             )}
           </View>
@@ -1344,18 +1392,40 @@ const FixtureScreen = () => {
         )}
         {/* Header */}
         <View style={styles.header}>
-          <Ionicons name="football-outline" size={28} color={colors.primary} />
-          <View style={styles.headerTextBlock}>
+          <View style={styles.headerTitleRow}>
+            <Ionicons name="football-outline" size={22} color={colors.primary} />
             <Text style={styles.headerTitle}>{t("fixture.title")}</Text>
-            <Text style={styles.headerSubtitle}>{t("fixture.subtitle")}</Text>
           </View>
-          <Pressable
-            style={styles.squadBtn}
-            onPress={() => navigation.navigate("Players")}
-          >
-            <Ionicons name="people-outline" size={16} color={colors.primary} />
-            <Text style={styles.squadBtnText}>Kadro</Text>
-          </Pressable>
+          <Text style={styles.headerSubtitle}>{t("fixture.subtitle")}</Text>
+
+          {/* Hızlı erişim kartları */}
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.quickCard}
+              onPress={() => navigation.navigate("Players")}
+            >
+              <View style={styles.quickCardLeft}>
+                <View style={styles.quickCardIcon}>
+                  <Ionicons name="people-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.quickCardText}>Kadro</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={`${colors.primary}70`} />
+            </Pressable>
+
+            <Pressable
+              style={styles.quickCard}
+              onPress={() => navigation.navigate("Kits")}
+            >
+              <View style={styles.quickCardLeft}>
+                <View style={styles.quickCardIcon}>
+                  <Ionicons name="shirt-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.quickCardText}>Formalar</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={`${colors.primary}70`} />
+            </Pressable>
+          </View>
         </View>
 
         {/* Live Match Section - AT THE TOP */}
@@ -1414,43 +1484,62 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+    flexDirection: "column",
+    gap: spacing.sm,
     marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
     marginBottom: spacing.md,
   },
-  headerTextBlock: {
-    flex: 1,
-  },
-  squadBtn: {
+  headerTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: `${colors.primary}50`,
-    backgroundColor: `${colors.primary}12`,
-  },
-  squadBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: colors.primary,
-    letterSpacing: 0.3,
+    gap: 10,
   },
   headerTitle: {
-    fontSize: fontSizes.xxl,
+    fontSize: 24,
     fontFamily: typography.bold,
     color: colors.text,
-    marginBottom: spacing.xs / 2,
   },
   headerSubtitle: {
     fontSize: fontSizes.sm,
     fontFamily: typography.medium,
     color: colors.mutedText,
+    marginBottom: spacing.xs,
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  quickCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: `${colors.primary}0E`,
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
+  quickCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+  },
+  quickCardIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: `${colors.primary}18`,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickCardText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: colors.text,
+    letterSpacing: 0.1,
   },
 
   // Standings Section (RESTORED)
@@ -2159,5 +2248,157 @@ const styles = StyleSheet.create({
   },
   scorerGoalsTextHighlight: {
     color: colors.primary,
+  },
+
+  // ─ Live match new styles ─
+  liveIndicatorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#EF4444",
+  },
+  liveLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#EF4444",
+    letterSpacing: 1.2,
+    flex: 1,
+  },
+  liveMinuteBadge: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.primary,
+    backgroundColor: `${colors.primary}18`,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: `${colors.primary}35`,
+  },
+  liveScoreRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  liveTeamBlock: {
+    flex: 2,
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  liveLogo: {
+    width: 44,
+    height: 44,
+  },
+  liveLogoFb: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.backgroundSubtle,
+  },
+  liveScoreBlock: {
+    flex: 3,
+    alignItems: "center",
+    gap: 4,
+  },
+  liveScoreText: {
+    fontSize: 38,
+    fontWeight: "900",
+    color: colors.text,
+    letterSpacing: 2,
+  },
+  liveStateLine: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: colors.textTertiary,
+    letterSpacing: 1,
+  },
+  eventsWrap: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    marginTop: 4,
+    paddingBottom: 8,
+  },
+  halfHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.backgroundSubtle,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    marginTop: 4,
+  },
+  halfLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.textTertiary,
+    letterSpacing: 1.5,
+  },
+  halfScore: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.textSecondary,
+  },
+  eventHome: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  eventAway: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 6,
+  },
+  eventMinuteLeft: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textTertiary,
+    minWidth: 36,
+  },
+  eventMinuteRight: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textTertiary,
+    minWidth: 36,
+    textAlign: "right",
+  },
+  eventIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eventPlayerWrap: {
+    flex: 1,
+  },
+  eventScore: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  eventPlayerName: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  eventSubOut: {
+    fontSize: 10,
+    color: colors.textTertiary,
   },
 });

@@ -6,7 +6,7 @@ import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
 import type { LiveScoreDto } from "../types/football";
 
-// Match states from API
+// ─── Match States ────────────────────────────────────────────────────────────
 const MATCH_STATES = {
   NOT_STARTED: 1,
   FIRST_HALF: 2,
@@ -15,43 +15,50 @@ const MATCH_STATES = {
   FINISHED: 5,
 } as const;
 
-// Event types from API
+// ─── Event Types (SportMonks) ─────────────────────────────────────────────────
+// typeId 18 & 19 = yellow card variants (confirmed from live data)
+// typeId 20 = direct red card
 const EVENT_TYPES = {
-  GOAL: 14, // Regular goal
-  OWN_GOAL: 16, // Own goal
-  PENALTY_GOAL: 15, // Penalty goal
-  RED_CARD: 19, // Red card
-  YELLOW_CARD: 18, // Yellow card
+  GOAL: 14,
+  PENALTY_GOAL: 15,
+  OWN_GOAL: 16,
+  SUBSTITUTION: 17,
+  YELLOW_CARD: 18,
+  YELLOW_CARD_2: 19, // 2nd yellow or yellow card variant
+  RED_CARD: 20,
 } as const;
 
-// Polling intervals (in milliseconds)
-const POLLING_INTERVALS = {
-  PRE_MATCH: 30000, // 30 seconds before match starts
-  LIVE: 3000, // 3 seconds during live match
-  HALF_TIME: 30000, // 30 seconds during half-time
-  BACKGROUND_CHECK: 300000, // 5 minutes when no match (to check if match started)
-  NO_MATCH: 0, // No polling when no match
+// ─── Polling Intervals ────────────────────────────────────────────────────────
+const POLL = {
+  LIVE: 2000,          // 2s — active play (1st/2nd half)
+  HALF_TIME: 30000,    // 30s — half-time break
+  PRE_MATCH: 60000,    // 60s — within 30 min of match
+  BACKGROUND: 3600000, // 60 min — no match scheduled soon
 } as const;
 
-// Team IDs from SportMonks API
+// ─── Team IDs ────────────────────────────────────────────────────────────────
 const TEAM_IDS = {
   MENS: 34,
   WOMENS: 261209,
 } as const;
 
+// ─── Types ───────────────────────────────────────────────────────────────────
 type MatchEvent = {
   type:
     | "goal"
+    | "own_goal"
     | "red_card"
     | "yellow_card"
     | "half_time"
     | "second_half_start"
     | "match_end"
-    | "match_start";
+    | "match_start"
+    | "pre_match";
   team?: "home" | "away";
   playerName?: string;
   minute?: number;
   score?: { home: number; away: number };
+  minutesUntil?: number;
 };
 
 type UseLiveMatchPollingProps = {
@@ -65,63 +72,77 @@ type UseLiveMatchPollingProps = {
   ) => void;
 };
 
-type UseLiveMatchPollingReturn = {
+export type UseLiveMatchPollingReturn = {
   liveMatch: LiveScoreDto | null;
   isPolling: boolean;
-  pollingInterval: number;
   lastUpdate: Date | null;
   error: string | null;
+  displayMinute: number;
+  extraTime: number | null;
 };
 
-// Helper to get score from participants
-const getScoreFromMatch = (
-  match: LiveScoreDto,
-): { home: number; away: number } => {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const getScoreFromMatch = (match: LiveScoreDto): { home: number; away: number } => {
   const homeTeam = match.participants?.find((p) => p.location === "home");
   const awayTeam = match.participants?.find((p) => p.location === "away");
-
-  // Count goals from events
   let homeScore = 0;
   let awayScore = 0;
-
-  if (match.events) {
-    for (const event of match.events) {
-      const isGoal =
-        event.typeId === EVENT_TYPES.GOAL ||
-        event.typeId === EVENT_TYPES.PENALTY_GOAL;
-      const isOwnGoal = event.typeId === EVENT_TYPES.OWN_GOAL;
-
-      if (isGoal || isOwnGoal) {
-        if (event.participantId === homeTeam?.id) {
-          if (isOwnGoal) awayScore++;
-          else homeScore++;
-        } else if (event.participantId === awayTeam?.id) {
-          if (isOwnGoal) homeScore++;
-          else awayScore++;
-        }
+  for (const event of match.events ?? []) {
+    const isGoal = event.typeId === EVENT_TYPES.GOAL || event.typeId === EVENT_TYPES.PENALTY_GOAL;
+    const isOwnGoal = event.typeId === EVENT_TYPES.OWN_GOAL;
+    if (event.rescinded) continue;
+    if (isGoal || isOwnGoal) {
+      if (event.participantId === homeTeam?.id) {
+        if (isOwnGoal) awayScore++; else homeScore++;
+      } else if (event.participantId === awayTeam?.id) {
+        if (isOwnGoal) homeScore++; else awayScore++;
       }
     }
   }
-
   return { home: homeScore, away: awayScore };
 };
 
-// Helper to get team names
 const getTeamNames = (match: LiveScoreDto): { home: string; away: string } => {
   const homeTeam = match.participants?.find((p) => p.location === "home");
   const awayTeam = match.participants?.find((p) => p.location === "away");
-  return {
-    home: homeTeam?.name || "Home",
-    away: awayTeam?.name || "Away",
-  };
+  return { home: homeTeam?.name || "Ev Sahibi", away: awayTeam?.name || "Deplasman" };
+};
+
+const getPollingInterval = (match: LiveScoreDto): number => {
+  const stateId = match.stateId;
+  if (stateId === MATCH_STATES.FINISHED) return 0;
+  if (stateId === MATCH_STATES.FIRST_HALF || stateId === MATCH_STATES.SECOND_HALF) return POLL.LIVE;
+  if (stateId === MATCH_STATES.HALF_TIME) return POLL.HALF_TIME;
+  if (stateId === MATCH_STATES.NOT_STARTED && match.startTime) {
+    const minutesUntil = (new Date(match.startTime).getTime() - Date.now()) / 60000;
+    if (minutesUntil <= 0) return POLL.LIVE;  // overdue — check fast
+    if (minutesUntil <= 30) return POLL.PRE_MATCH;
+  }
+  return 0; // background handles it
 };
 
 /**
- * Smart polling hook for live match updates
- * - Only polls when there's an upcoming or live match
- * - Adjusts polling interval based on match state
- * - Sends push notifications for important events
+ * Estimate current match minute from start time when clock data unavailable.
+ * 1st half: elapsed since startTime, capped at 45.
+ * 2nd half: elapsed since estimated 2nd half start (startTime + 60min).
  */
+const estimateMinute = (match: LiveScoreDto): number => {
+  if (!match.startTime) return 0;
+  const startMs = new Date(match.startTime).getTime();
+  const nowMs = Date.now();
+  const elapsed = (nowMs - startMs) / 60000;
+  if (match.stateId === MATCH_STATES.FIRST_HALF) {
+    return Math.min(Math.max(1, Math.floor(elapsed)), 45);
+  }
+  if (match.stateId === MATCH_STATES.SECOND_HALF) {
+    const est2ndStart = startMs + 60 * 60000; // startTime + 60 min
+    const elapsed2nd = (nowMs - est2ndStart) / 60000;
+    return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
+  }
+  return 0;
+};
+
+// ─── Hook ────────────────────────────────────────────────────────────────────
 export const useLiveMatchPolling = ({
   teamType,
   enabled = true,
@@ -130,27 +151,98 @@ export const useLiveMatchPolling = ({
 }: UseLiveMatchPollingProps): UseLiveMatchPollingReturn => {
   const [liveMatch, setLiveMatch] = useState<LiveScoreDto | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [displayMinute, setDisplayMinute] = useState(0);
+  const [extraTime, setExtraTime] = useState<number | null>(null);
 
-  // Refs to track previous state for event detection
-  const previousEventIdsRef = useRef<Set<number>>(new Set());
-  const previousStateRef = useRef<number | null>(null);
-  const previousScoreRef = useRef<{ home: number; away: number } | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const checkIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Polling refs
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bgIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const localTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentPollMs = useRef<number>(0);
+
+  // State tracking refs
+  const prevEventIdsRef = useRef<Set<number>>(new Set());
+  const prevStateRef = useRef<number | null>(null);
+  const prevScoreRef = useRef<{ home: number; away: number } | null>(null);
   const isFirstFetchRef = useRef(true);
 
-  // Send push notification for match events
+  // Clock refs
+  const clockSeedRef = useRef<{ minute: number; seedMs: number } | null>(null);
+  const currentStateIdRef = useRef<number | null>(null);
+
+  // Notification dedup refs
+  const preMatchNotifMatchRef = useRef<number | null>(null);
+
+  // ─── Local 1-second timer ──────────────────────────────────────────────────
+  const stopLocalTimer = useCallback(() => {
+    if (localTimerRef.current) {
+      clearInterval(localTimerRef.current);
+      localTimerRef.current = null;
+    }
+  }, []);
+
+  const startLocalTimer = useCallback(
+    (stateId: number) => {
+      stopLocalTimer();
+      if (
+        stateId !== MATCH_STATES.FIRST_HALF &&
+        stateId !== MATCH_STATES.SECOND_HALF
+      )
+        return;
+
+      localTimerRef.current = setInterval(() => {
+        const seed = clockSeedRef.current;
+        const state = currentStateIdRef.current;
+        if (!seed || !state) return;
+
+        const elapsedMin = (Date.now() - seed.seedMs) / 60000;
+        const raw = seed.minute + elapsedMin;
+
+        if (state === MATCH_STATES.FIRST_HALF) {
+          if (raw >= 45) {
+            setDisplayMinute(45);
+            setExtraTime(Math.floor(raw - 45));
+          } else {
+            setDisplayMinute(Math.floor(raw));
+            setExtraTime(null);
+          }
+        } else {
+          // 2nd half — starts at 45, goes to 90+
+          if (raw >= 90) {
+            setDisplayMinute(90);
+            setExtraTime(Math.floor(raw - 90));
+          } else {
+            setDisplayMinute(Math.max(45, Math.floor(raw)));
+            setExtraTime(null);
+          }
+        }
+      }, 1000);
+    },
+    [stopLocalTimer],
+  );
+
+  // ─── Clear intervals ──────────────────────────────────────────────────────
+  const clearPoll = useCallback(() => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  }, []);
+
+  const clearBg = useCallback(() => {
+    if (bgIntervalRef.current) {
+      clearInterval(bgIntervalRef.current);
+      bgIntervalRef.current = null;
+    }
+  }, []);
+
+  // ─── Send push notification ───────────────────────────────────────────────
   const sendEventNotification = useCallback(
     async (event: MatchEvent, match: LiveScoreDto) => {
-      // Check if live match notifications are enabled
       const preferences = await notificationService.getPreferences();
-      if (!preferences.enabled || !preferences.liveMatches) {
-        logger.log("🔕 Live match notifications disabled, skipping");
-        return;
-      }
+      if (!preferences.enabled || !preferences.liveMatches) return;
 
       const teams = getTeamNames(match);
       const score = getScoreFromMatch(match);
@@ -158,46 +250,47 @@ export const useLiveMatchPolling = ({
       let body = "";
 
       switch (event.type) {
+        case "pre_match":
+          title = "⚽ Maç Yakında Başlıyor!";
+          body = `${teams.home} - ${teams.away} maçına ~30 dakika kaldı!`;
+          break;
+        case "match_start":
+          title = "🏟️ Maç Başladı!";
+          body = `${teams.home} vs ${teams.away}`;
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          break;
         case "goal":
           title = "⚽ GOL!";
           body = `${teams.home} ${score.home} - ${score.away} ${teams.away}`;
-          if (event.playerName) {
-            body += ` (${event.playerName} ${event.minute}')`;
+          if (event.playerName && event.minute) {
+            body += `\n${event.playerName} ${event.minute}'`;
           }
-          // Goal celebration handled separately via onGoalCelebration callback
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
           break;
-
+        case "own_goal":
+          title = "⚽ Kendi Kalesine!";
+          body = `${teams.home} ${score.home} - ${score.away} ${teams.away}`;
+          if (event.playerName) body += ` (${event.playerName})`;
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+          break;
         case "red_card":
           title = "🟥 Kırmızı Kart!";
           body = event.playerName
-            ? `${event.playerName} oyundan atıldı!`
+            ? `${event.playerName} oyundan atıldı! (${event.minute}')`
             : "Bir oyuncu kırmızı kart gördü!";
-          await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Warning,
-          );
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
           break;
-
         case "half_time":
-          title = "⏸️ İlk Yarı Bitti";
+          title = "⏸ İlk Yarı Bitti";
           body = `${teams.home} ${score.home} - ${score.away} ${teams.away}`;
           break;
-
         case "second_half_start":
           title = "▶️ İkinci Yarı Başladı";
           body = `${teams.home} vs ${teams.away}`;
           break;
-
-        case "match_start":
-          title = "🏟️ Maç Başladı!";
-          body = `${teams.home} vs ${teams.away}`;
-          await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Success,
-          );
-          break;
-
         case "match_end":
           title = "🏁 Maç Bitti";
-          body = `${teams.home} ${score.home} - ${score.away} ${teams.away}`;
+          body = `${teams.home} ${score.home} - ${score.away} ${teams.away} (Sonuç)`;
           break;
       }
 
@@ -207,391 +300,280 @@ export const useLiveMatchPolling = ({
             content: {
               title,
               body,
-              sound: event.type === "goal" ? "goal.wav" : "default",
+              sound: event.type === "goal" || event.type === "own_goal" ? "goal.wav" : "default",
               priority: Notifications.AndroidNotificationPriority.HIGH,
             },
-            trigger: null, // Immediate
+            trigger: null,
           });
         } catch (err) {
-          logger.warn("Could not send notification:", err);
+          logger.warn("Notification send failed:", err);
         }
       }
 
-      // Call external handler if provided
       onMatchEvent?.(event);
     },
     [onMatchEvent],
   );
 
-  // Detect match events by comparing current and previous state
+  // ─── Detect new events ────────────────────────────────────────────────────
   const detectEvents = useCallback(
     (currentMatch: LiveScoreDto) => {
-      const prevState = previousStateRef.current;
+      const prevState = prevStateRef.current;
       const currentState = currentMatch.stateId;
-      const teams = getTeamNames(currentMatch);
-      const score = getScoreFromMatch(currentMatch);
+      const homeTeam = currentMatch.participants?.find((p) => p.location === "home");
 
-      // Match just started
-      if (
-        prevState === MATCH_STATES.NOT_STARTED &&
-        currentState === MATCH_STATES.FIRST_HALF
-      ) {
+      // State transitions
+      if (prevState === MATCH_STATES.NOT_STARTED && currentState === MATCH_STATES.FIRST_HALF) {
         sendEventNotification({ type: "match_start" }, currentMatch);
       }
-
-      // Half-time started
-      if (
-        prevState === MATCH_STATES.FIRST_HALF &&
-        currentState === MATCH_STATES.HALF_TIME
-      ) {
-        sendEventNotification(
-          {
-            type: "half_time",
-            score,
-          },
-          currentMatch,
-        );
+      if (prevState === MATCH_STATES.FIRST_HALF && currentState === MATCH_STATES.HALF_TIME) {
+        sendEventNotification({ type: "half_time" }, currentMatch);
       }
-
-      // Second half started
-      if (
-        prevState === MATCH_STATES.HALF_TIME &&
-        currentState === MATCH_STATES.SECOND_HALF
-      ) {
+      if (prevState === MATCH_STATES.HALF_TIME && currentState === MATCH_STATES.SECOND_HALF) {
         sendEventNotification({ type: "second_half_start" }, currentMatch);
       }
-
-      // Match finished
-      if (
-        prevState !== MATCH_STATES.FINISHED &&
-        currentState === MATCH_STATES.FINISHED
-      ) {
-        sendEventNotification(
-          {
-            type: "match_end",
-            score,
-          },
-          currentMatch,
-        );
+      if (prevState !== MATCH_STATES.FINISHED && currentState === MATCH_STATES.FINISHED) {
+        sendEventNotification({ type: "match_end" }, currentMatch);
       }
 
-      // Event detection (goals, cards)
-      const prevEventIds = previousEventIdsRef.current;
-      const prevScore = previousScoreRef.current;
-      const homeTeam = currentMatch.participants?.find(
-        (p) => p.location === "home",
-      );
+      // New event detection (goals, cards)
+      const prevEventIds = prevEventIdsRef.current;
+      const score = getScoreFromMatch(currentMatch);
+      const teams = getTeamNames(currentMatch);
 
-      // Method 1: Detect goals via events array
-      if (currentMatch.events && currentMatch.events.length > 0) {
-        for (const event of currentMatch.events) {
-          if (!prevEventIds.has(event.id)) {
-            // New event detected!
-            logger.log("🆕 New event detected:", event.typeId, event.playerName);
+      for (const event of currentMatch.events ?? []) {
+        if (prevEventIds.has(event.id) || event.rescinded) continue;
 
-            const isGoal =
-              event.typeId === EVENT_TYPES.GOAL ||
-              event.typeId === EVENT_TYPES.PENALTY_GOAL ||
-              event.typeId === EVENT_TYPES.OWN_GOAL;
-            const isRedCard = event.typeId === EVENT_TYPES.RED_CARD;
+        const isGoal = event.typeId === EVENT_TYPES.GOAL || event.typeId === EVENT_TYPES.PENALTY_GOAL;
+        const isOwnGoal = event.typeId === EVENT_TYPES.OWN_GOAL;
+        const isRedCard = event.typeId === EVENT_TYPES.RED_CARD;
 
-            if (isGoal) {
-              const isHomeTeam = event.participantId === homeTeam?.id;
-              const teamName = isHomeTeam ? teams.home : teams.away;
+        if (isGoal || isOwnGoal) {
+          const isHomeTeam = event.participantId === homeTeam?.id;
+          const teamName = isHomeTeam ? teams.home : teams.away;
+          const eventType = isOwnGoal ? "own_goal" : "goal";
 
-              logger.log("⚽ Goal detected via event!", teamName, event.playerName);
+          logger.log(`⚽ ${eventType} detected:`, teamName, event.playerName, event.minute);
 
-              sendEventNotification(
-                {
-                  type: "goal",
-                  team: isHomeTeam ? "home" : "away",
-                  playerName: event.playerName || undefined,
-                  minute: event.minute || undefined,
-                  score,
-                },
-                currentMatch,
-              );
-
-              // Trigger goal celebration callback
-              onGoalCelebration?.(
-                teamName,
-                event.playerName || "Unknown",
-                event.minute || 0,
-              );
-            }
-
-            if (isRedCard) {
-              logger.log("🟥 Red card detected!", event.playerName);
-              sendEventNotification(
-                {
-                  type: "red_card",
-                  playerName: event.playerName || undefined,
-                  minute: event.minute || undefined,
-                },
-                currentMatch,
-              );
-            }
-          }
-        }
-
-        // Update previous event IDs
-        previousEventIdsRef.current = new Set(
-          currentMatch.events.map((e: { id: number }) => e.id),
-        );
-      }
-
-      // Method 2: Fallback - detect goals via score change (if events missed)
-      if (prevScore) {
-        const totalPrevGoals = prevScore.home + prevScore.away;
-        const totalCurrentGoals = score.home + score.away;
-
-        if (totalCurrentGoals > totalPrevGoals) {
-          // Score increased but we didn't catch it via events
-          const homeScored = score.home > prevScore.home;
-          const teamName = homeScored ? teams.home : teams.away;
-
-          // Check if we already sent notification via event detection
-          const alreadyNotified = currentMatch.events?.some(
-            (e) =>
-              (e.typeId === EVENT_TYPES.GOAL ||
-                e.typeId === EVENT_TYPES.PENALTY_GOAL ||
-                e.typeId === EVENT_TYPES.OWN_GOAL) &&
-              !prevEventIds.has(e.id),
+          sendEventNotification(
+            {
+              type: eventType,
+              team: isHomeTeam ? "home" : "away",
+              playerName: event.playerName || undefined,
+              minute: event.minute || undefined,
+              score,
+            },
+            currentMatch,
           );
 
-          if (!alreadyNotified) {
-            logger.log("⚽ Goal detected via score change!", teamName);
-            sendEventNotification(
-              {
-                type: "goal",
-                team: homeScored ? "home" : "away",
-                score,
-              },
-              currentMatch,
-            );
+          onGoalCelebration?.(teamName, event.playerName || "", event.minute || 0);
+        }
 
-            onGoalCelebration?.(teamName, "Unknown", 0);
+        if (isRedCard) {
+          logger.log("🟥 Red card:", event.playerName);
+          sendEventNotification(
+            {
+              type: "red_card",
+              playerName: event.playerName || undefined,
+              minute: event.minute || undefined,
+            },
+            currentMatch,
+          );
+        }
+      }
+
+      // Fallback: detect goal via score change (if event was missed)
+      const prevScore = prevScoreRef.current;
+      if (prevScore) {
+        const totalPrev = prevScore.home + prevScore.away;
+        const totalCurrent = score.home + score.away;
+        if (totalCurrent > totalPrev) {
+          const alreadyHandled = (currentMatch.events ?? []).some(
+            (e) =>
+              (e.typeId === EVENT_TYPES.GOAL || e.typeId === EVENT_TYPES.PENALTY_GOAL || e.typeId === EVENT_TYPES.OWN_GOAL) &&
+              !prevEventIds.has(e.id) &&
+              !e.rescinded,
+          );
+          if (!alreadyHandled) {
+            const homeScored = score.home > prevScore.home;
+            const teamName = homeScored ? teams.home : teams.away;
+            logger.log("⚽ Goal via score fallback:", teamName);
+            sendEventNotification({ type: "goal", team: homeScored ? "home" : "away", score }, currentMatch);
+            onGoalCelebration?.(teamName, "", 0);
           }
         }
       }
 
-      // Update previous score
-      previousScoreRef.current = score;
-
-      // Update previous state ref
-      previousStateRef.current = currentState;
+      // Update tracking refs
+      prevEventIdsRef.current = new Set((currentMatch.events ?? []).map((e) => e.id));
+      prevScoreRef.current = score;
+      prevStateRef.current = currentState;
     },
     [sendEventNotification, onGoalCelebration],
   );
 
-  // Calculate appropriate polling interval
-  const calculatePollingInterval = useCallback(
-    (match: LiveScoreDto | null): number => {
-      if (!match) return POLLING_INTERVALS.NO_MATCH;
-
-      const stateId = match.stateId;
-
-      // Match finished - stop polling
-      if (stateId === MATCH_STATES.FINISHED) {
-        return POLLING_INTERVALS.NO_MATCH;
-      }
-
-      // Match not started yet - check if it's about to start
-      if (stateId === MATCH_STATES.NOT_STARTED) {
-        if (match.startTime) {
-          const matchTime = new Date(match.startTime);
-          const now = new Date();
-          const minutesUntilMatch =
-            (matchTime.getTime() - now.getTime()) / (1000 * 60);
-
-          // Start polling 5 minutes before match
-          if (minutesUntilMatch <= 5 && minutesUntilMatch > 0) {
-            return POLLING_INTERVALS.PRE_MATCH;
-          }
-
-          // Match should have started - poll faster to catch the start
-          if (minutesUntilMatch <= 0) {
-            return POLLING_INTERVALS.LIVE;
-          }
-        }
-        return POLLING_INTERVALS.NO_MATCH;
-      }
-
-      // Half-time - poll slower
-      if (stateId === MATCH_STATES.HALF_TIME) {
-        return POLLING_INTERVALS.HALF_TIME;
-      }
-
-      // Live match (first or second half) - poll fast
-      if (
-        stateId === MATCH_STATES.FIRST_HALF ||
-        stateId === MATCH_STATES.SECOND_HALF
-      ) {
-        return POLLING_INTERVALS.LIVE;
-      }
-
-      return POLLING_INTERVALS.NO_MATCH;
-    },
-    [],
-  );
-
-  // Fetch live scores
-  const fetchLiveScores = useCallback(async () => {
+  // ─── Fetch live scores ────────────────────────────────────────────────────
+  const fetchLiveScores = useCallback(async (): Promise<LiveScoreDto | null> => {
     try {
       setError(null);
       const response = await footballService.getLiveScores();
-
-      if (response.success && response.data && Array.isArray(response.data)) {
-
-        // Get the correct team ID based on teamType
-        const targetTeamId = teamType === "Mens" ? TEAM_IDS.MENS : TEAM_IDS.WOMENS;
-
-        // Find match for the specific team (men's or women's)
-        const amedMatch = response.data.find((match: LiveScoreDto) =>
-          match.participants?.some((p) => p.id === targetTeamId),
-        );
-
-        if (amedMatch) {
-
-          // Detect events if we have previous state
-          if (previousStateRef.current !== null) {
-            detectEvents(amedMatch);
-          } else {
-            // First fetch - store the state and existing events
-            previousStateRef.current = amedMatch.stateId;
-            previousScoreRef.current = getScoreFromMatch(amedMatch);
-
-            if (amedMatch.events) {
-              previousEventIdsRef.current = new Set(
-                amedMatch.events.map((e: { id: number }) => e.id),
-              );
-            }
-
-            // If app opened during live match, show current status
-            if (isFirstFetchRef.current) {
-              isFirstFetchRef.current = false;
-              const stateId = amedMatch.stateId;
-
-            }
-          }
-
-          setLiveMatch(amedMatch);
-          setLastUpdate(new Date());
-
-          // Calculate new polling interval
-          const newInterval = calculatePollingInterval(amedMatch);
-          setPollingInterval(newInterval);
-
-          return amedMatch;
-        } else {
-          setLiveMatch(null);
-          setPollingInterval(POLLING_INTERVALS.NO_MATCH);
-        }
-      } else {
+      if (!response.success || !Array.isArray(response.data)) {
         setLiveMatch(null);
+        return null;
       }
+
+      const targetId = teamType === "Mens" ? TEAM_IDS.MENS : TEAM_IDS.WOMENS;
+      const match = response.data.find((m: LiveScoreDto) =>
+        m.participants?.some((p) => p.id === targetId),
+      );
+
+      if (!match) {
+        setLiveMatch(null);
+        stopLocalTimer();
+        setDisplayMinute(0);
+        setExtraTime(null);
+        prevStateRef.current = null;
+        return null;
+      }
+
+      const stateId = match.stateId;
+      currentStateIdRef.current = stateId;
+
+      // ── Update clock seed ──
+      const apiMinute = match.clock?.minutes ?? null;
+      const seedMinute = apiMinute !== null ? apiMinute : estimateMinute(match);
+      clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
+
+      // ── Update display immediately (then 1s timer refines it) ──
+      if (stateId === MATCH_STATES.FIRST_HALF || stateId === MATCH_STATES.SECOND_HALF) {
+        const addedTime = match.clock?.addedTime ?? null;
+        if (seedMinute >= 45 && stateId === MATCH_STATES.FIRST_HALF) {
+          setDisplayMinute(45);
+          setExtraTime(addedTime ?? Math.floor(seedMinute - 45));
+        } else if (seedMinute >= 90 && stateId === MATCH_STATES.SECOND_HALF) {
+          setDisplayMinute(90);
+          setExtraTime(addedTime ?? Math.floor(seedMinute - 90));
+        } else {
+          setDisplayMinute(Math.max(stateId === MATCH_STATES.SECOND_HALF ? 45 : 0, seedMinute));
+          setExtraTime(null);
+        }
+        startLocalTimer(stateId);
+      } else {
+        stopLocalTimer();
+        setDisplayMinute(0);
+        setExtraTime(null);
+      }
+
+      // ── Pre-match notification (30 min before) ──
+      if (stateId === MATCH_STATES.NOT_STARTED && match.startTime) {
+        const minutesUntil = (new Date(match.startTime).getTime() - Date.now()) / 60000;
+        if (
+          minutesUntil > 0 &&
+          minutesUntil <= 31 &&
+          preMatchNotifMatchRef.current !== match.fixtureId
+        ) {
+          preMatchNotifMatchRef.current = match.fixtureId;
+          sendEventNotification({ type: "pre_match", minutesUntil: Math.floor(minutesUntil) }, match);
+        }
+      }
+
+      // ── Event detection ──
+      if (prevStateRef.current !== null) {
+        detectEvents(match);
+      } else {
+        // First fetch — initialize tracking, don't send duplicate notifications
+        prevStateRef.current = stateId;
+        prevScoreRef.current = getScoreFromMatch(match);
+        prevEventIdsRef.current = new Set((match.events ?? []).map((e: { id: number }) => e.id));
+        isFirstFetchRef.current = false;
+      }
+
+      setLiveMatch(match);
+      setLastUpdate(new Date());
+      return match;
     } catch (err) {
       logger.error("Live score fetch error:", err);
-      setError("Network error");
+      setError("Ağ hatası");
+      return null;
     }
-    return null;
-  }, [teamType, detectEvents, calculatePollingInterval]);
+  }, [teamType, detectEvents, sendEventNotification, startLocalTimer, stopLocalTimer]);
 
-  // Start/stop polling based on interval
-  const updatePolling = useCallback(
-    (interval: number) => {
-      // Clear existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+  // ─── Schedule polling based on match state ─────────────────────────────────
+  const schedulePoll = useCallback(
+    (match: LiveScoreDto | null) => {
+      clearPoll();
+      clearBg();
 
-      if (interval > 0) {
-        setIsPolling(true);
-
-        intervalRef.current = setInterval(() => {
-          fetchLiveScores();
-        }, interval);
-      } else {
+      if (!match) {
+        // No match — background check every 30 min
+        bgIntervalRef.current = setInterval(async () => {
+          const m = await fetchLiveScores();
+          schedulePoll(m);
+        }, POLL.BACKGROUND);
         setIsPolling(false);
+        currentPollMs.current = POLL.BACKGROUND;
+        return;
       }
+
+      const interval = getPollingInterval(match);
+
+      if (interval === 0) {
+        // Finished or far pre-match — background check
+        bgIntervalRef.current = setInterval(async () => {
+          const m = await fetchLiveScores();
+          schedulePoll(m);
+        }, POLL.BACKGROUND);
+        setIsPolling(false);
+        currentPollMs.current = POLL.BACKGROUND;
+        return;
+      }
+
+      if (currentPollMs.current === interval) return; // Same interval — no change needed
+
+      currentPollMs.current = interval;
+      pollIntervalRef.current = setInterval(async () => {
+        const m = await fetchLiveScores();
+        if (m && getPollingInterval(m) !== interval) {
+          schedulePoll(m); // State changed — reschedule
+        }
+      }, interval);
+      setIsPolling(interval <= POLL.PRE_MATCH);
     },
-    [fetchLiveScores],
+    [clearPoll, clearBg, fetchLiveScores],
   );
 
-  // Main effect - smart polling based on match state
+  // ─── Main effect ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!enabled) {
+      clearPoll();
+      clearBg();
+      stopLocalTimer();
       setIsPolling(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
-      }
       return;
     }
 
-
-    // Initial fetch and smart interval setup
-    const initializePolling = async () => {
+    const init = async () => {
+      currentPollMs.current = 0; // Force schedule
       const match = await fetchLiveScores();
-
-      // Calculate appropriate interval based on match state
-      const interval = match
-        ? calculatePollingInterval(match)
-        : POLLING_INTERVALS.BACKGROUND_CHECK;
-
-      if (interval > 0) {
-        intervalRef.current = setInterval(() => {
-          fetchLiveScores();
-        }, interval);
-        setIsPolling(true);
-        setPollingInterval(interval);
-      } else {
-        intervalRef.current = setInterval(() => {
-          fetchLiveScores();
-        }, POLLING_INTERVALS.BACKGROUND_CHECK);
-        setIsPolling(false);
-        setPollingInterval(POLLING_INTERVALS.BACKGROUND_CHECK);
-      }
+      schedulePoll(match);
     };
 
-    initializePolling();
+    init();
 
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
-      }
+      clearPoll();
+      clearBg();
+      stopLocalTimer();
     };
-  }, [enabled, teamType, fetchLiveScores, calculatePollingInterval]);
-
-  // React to match state changes - adjust polling dynamically
-  useEffect(() => {
-    if (!enabled) return;
-
-    const newInterval = liveMatch
-      ? calculatePollingInterval(liveMatch)
-      : POLLING_INTERVALS.BACKGROUND_CHECK;
-
-    if (newInterval !== pollingInterval && newInterval > 0) {
-      updatePolling(newInterval);
-      setPollingInterval(newInterval);
-    }
-  }, [liveMatch?.stateId, liveMatch, enabled, calculatePollingInterval, updatePolling, pollingInterval]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, teamType]);
 
   return {
     liveMatch,
     isPolling,
-    pollingInterval,
     lastUpdate,
     error,
+    displayMinute,
+    extraTime,
   };
 };
