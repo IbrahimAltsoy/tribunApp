@@ -6,14 +6,20 @@ import { notificationService } from "../services/notificationService";
 import { logger } from "../utils/logger";
 import type { LiveScoreDto } from "../types/football";
 
-// ─── Match States ────────────────────────────────────────────────────────────
+// ─── Match States (SportMonks v3 state_ids) ───────────────────────────────────
 const MATCH_STATES = {
   NOT_STARTED: 1,
-  FIRST_HALF: 2,
-  HALF_TIME: 3,
-  SECOND_HALF: 4,
-  FINISHED: 5,
+  FIRST_HALF: 2,   // 1H
+  HALF_TIME: 3,    // HT
+  SECOND_HALF: 5,  // 2H
+  LIVE: 22,        // SportMonks generic "LIVE" state (observed during 2nd half)
+  FINISHED: 6,     // FT
 } as const;
+
+// stateId values that represent active in-play (1st or 2nd half)
+const LIVE_PLAY_STATES = new Set([MATCH_STATES.FIRST_HALF, MATCH_STATES.SECOND_HALF, MATCH_STATES.LIVE]);
+// stateId values that are 2nd-half-like (for minute estimation and label)
+const SECOND_HALF_STATES = new Set([MATCH_STATES.SECOND_HALF, MATCH_STATES.LIVE]);
 
 // ─── Event Types (SportMonks) ─────────────────────────────────────────────────
 // typeId 18 & 19 = yellow card variants (confirmed from live data)
@@ -111,7 +117,7 @@ const getTeamNames = (match: LiveScoreDto): { home: string; away: string } => {
 const getPollingInterval = (match: LiveScoreDto): number => {
   const stateId = match.stateId;
   if (stateId === MATCH_STATES.FINISHED) return 0;
-  if (stateId === MATCH_STATES.FIRST_HALF || stateId === MATCH_STATES.SECOND_HALF) return POLL.LIVE;
+  if (LIVE_PLAY_STATES.has(stateId ?? -1)) return POLL.LIVE;
   if (stateId === MATCH_STATES.HALF_TIME) return POLL.HALF_TIME;
   if (stateId === MATCH_STATES.NOT_STARTED && match.startTime) {
     const minutesUntil = (new Date(match.startTime).getTime() - Date.now()) / 60000;
@@ -134,7 +140,7 @@ const estimateMinute = (match: LiveScoreDto): number => {
   if (match.stateId === MATCH_STATES.FIRST_HALF) {
     return Math.min(Math.max(1, Math.floor(elapsed)), 45);
   }
-  if (match.stateId === MATCH_STATES.SECOND_HALF) {
+  if (SECOND_HALF_STATES.has(match.stateId ?? -1)) {
     const est2ndStart = startMs + 60 * 60000; // startTime + 60 min
     const elapsed2nd = (nowMs - est2ndStart) / 60000;
     return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
@@ -186,10 +192,7 @@ export const useLiveMatchPolling = ({
   const startLocalTimer = useCallback(
     (stateId: number) => {
       stopLocalTimer();
-      if (
-        stateId !== MATCH_STATES.FIRST_HALF &&
-        stateId !== MATCH_STATES.SECOND_HALF
-      )
+      if (!LIVE_PLAY_STATES.has(stateId))
         return;
 
       localTimerRef.current = setInterval(() => {
@@ -329,7 +332,7 @@ export const useLiveMatchPolling = ({
       if (prevState === MATCH_STATES.FIRST_HALF && currentState === MATCH_STATES.HALF_TIME) {
         sendEventNotification({ type: "half_time" }, currentMatch);
       }
-      if (prevState === MATCH_STATES.HALF_TIME && currentState === MATCH_STATES.SECOND_HALF) {
+      if (prevState === MATCH_STATES.HALF_TIME && SECOND_HALF_STATES.has(currentState ?? -1)) {
         sendEventNotification({ type: "second_half_start" }, currentMatch);
       }
       if (prevState !== MATCH_STATES.FINISHED && currentState === MATCH_STATES.FINISHED) {
@@ -445,19 +448,20 @@ export const useLiveMatchPolling = ({
       clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
 
       // ── Update display immediately (then 1s timer refines it) ──
-      if (stateId === MATCH_STATES.FIRST_HALF || stateId === MATCH_STATES.SECOND_HALF) {
+      const isSecondHalfLike = SECOND_HALF_STATES.has(stateId ?? -1);
+      if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
         const addedTime = match.clock?.addedTime ?? null;
         if (seedMinute >= 45 && stateId === MATCH_STATES.FIRST_HALF) {
           setDisplayMinute(45);
           setExtraTime(addedTime ?? Math.floor(seedMinute - 45));
-        } else if (seedMinute >= 90 && stateId === MATCH_STATES.SECOND_HALF) {
+        } else if (seedMinute >= 90 && isSecondHalfLike) {
           setDisplayMinute(90);
           setExtraTime(addedTime ?? Math.floor(seedMinute - 90));
         } else {
-          setDisplayMinute(Math.max(stateId === MATCH_STATES.SECOND_HALF ? 45 : 0, seedMinute));
+          setDisplayMinute(Math.max(isSecondHalfLike ? 45 : 0, seedMinute));
           setExtraTime(null);
         }
-        startLocalTimer(stateId);
+        startLocalTimer(stateId ?? 0);
       } else {
         stopLocalTimer();
         setDisplayMinute(0);
