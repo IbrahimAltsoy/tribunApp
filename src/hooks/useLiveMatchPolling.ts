@@ -440,17 +440,29 @@ export const useLiveMatchPolling = ({
       const stateId = match.stateId;
       currentStateIdRef.current = stateId;
 
-      // ── Update clock seed from API clock (minutes + seconds for sub-minute precision) ──
-      // clock.minutes comes from the new endpoint include — most accurate source.
-      // Ratchet: only update seed upward so the 1-second timer never jumps backwards.
-      if (match.clock?.minutes != null) {
-        const apiSeconds = match.clock.seconds ?? 0;
-        const seedMinute = match.clock.minutes + apiSeconds / 60;
-        const currentShown = clockSeedRef.current
-          ? clockSeedRef.current.minute + (Date.now() - clockSeedRef.current.seedMs) / 60000
-          : -1;
-        if (seedMinute > currentShown) {
-          clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
+      // ── Update clock seed (ratchet: only move upward, never backwards) ──
+      // Primary: clock.minutes + seconds from API (sub-minute precision)
+      // Fallback: max event minute (for leagues where clock data is unavailable)
+      {
+        let seedMinute: number | null = null;
+
+        if (match.clock?.minutes != null) {
+          seedMinute = match.clock.minutes + (match.clock.seconds ?? 0) / 60;
+        } else if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
+          // Use the highest event minute seen as a lower-bound anchor
+          const maxEventMin = (match.events ?? [])
+            .filter((e) => !e.rescinded && (e.minute ?? 0) > 0)
+            .reduce((max, e) => Math.max(max, e.minute ?? 0), 0);
+          if (maxEventMin > 0) seedMinute = maxEventMin;
+        }
+
+        if (seedMinute !== null) {
+          const currentShown = clockSeedRef.current
+            ? clockSeedRef.current.minute + (Date.now() - clockSeedRef.current.seedMs) / 60000
+            : -1;
+          if (seedMinute > currentShown) {
+            clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
+          }
         }
       }
       if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
