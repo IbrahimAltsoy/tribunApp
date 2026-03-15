@@ -19,12 +19,12 @@ const MATCH_STATES = {
 } as const;
 
 // stateId values that represent a finished/ended match (FT, AET, Pen, etc.)
-const FINISHED_STATES = new Set([5, 6, 7, 8, 9]);
+const FINISHED_STATES = new Set<number>([5, 6, 7, 8, 9]);
 
 // stateId values that represent active in-play (1st or 2nd half)
-const LIVE_PLAY_STATES = new Set([MATCH_STATES.FIRST_HALF, MATCH_STATES.LIVE]);
+const LIVE_PLAY_STATES = new Set<number>([MATCH_STATES.FIRST_HALF, MATCH_STATES.LIVE]);
 // stateId values that are 2nd-half-like (for minute estimation and label)
-const SECOND_HALF_STATES = new Set([MATCH_STATES.LIVE]);
+const SECOND_HALF_STATES = new Set<number>([MATCH_STATES.LIVE]);
 
 // ─── Event Types (SportMonks) — confirmed from live match data ────────────────
 // 14=Goal, 15=PenaltyGoal, 16=OwnGoal
@@ -137,36 +137,6 @@ const getPollingInterval = (match: LiveScoreDto): number => {
   return 0; // background handles it
 };
 
-/**
- * Estimate current match minute from start time when clock data unavailable.
- * 1st half : elapsed since startTime, capped at 45.
- * 2nd half : use secondHalfDetectedAt timestamp if available (most accurate),
- *            otherwise fall back to startTime + 63 min constant.
- */
-const estimateMinute = (
-  match: LiveScoreDto,
-  secondHalfDetectedAt: number | null,
-): number => {
-  if (!match.startTime) return 0;
-  const startMs = new Date(match.startTime).getTime();
-  const nowMs = Date.now();
-  const elapsed = (nowMs - startMs) / 60000;
-  if (match.stateId === MATCH_STATES.FIRST_HALF) {
-    return Math.min(Math.max(1, Math.floor(elapsed)), 45);
-  }
-  if (SECOND_HALF_STATES.has(match.stateId ?? -1)) {
-    if (secondHalfDetectedAt !== null) {
-      // Most accurate: count from when we first saw 2nd half start
-      const elapsed2nd = (nowMs - secondHalfDetectedAt) / 60000;
-      return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
-    }
-    // Fallback: startTime + 63 min (45 min 1H + ~3 min stoppage + 15 min HT)
-    const est2ndStart = startMs + 63 * 60000;
-    const elapsed2nd = (nowMs - est2ndStart) / 60000;
-    return Math.min(Math.max(45, 45 + Math.floor(elapsed2nd)), 90);
-  }
-  return 0;
-};
 
 // ─── Hook ────────────────────────────────────────────────────────────────────
 export const useLiveMatchPolling = ({
@@ -197,8 +167,6 @@ export const useLiveMatchPolling = ({
   // Clock refs
   const clockSeedRef = useRef<{ minute: number; seedMs: number } | null>(null);
   const currentStateIdRef = useRef<number | null>(null);
-  // Timestamp of when we first detected 2nd half — used for accurate minute estimation
-  const secondHalfDetectedAtRef = useRef<number | null>(null);
 
   // Last known match — used to send match_end when match disappears from inplay
   const lastKnownMatchRef = useRef<LiveScoreDto | null>(null);
@@ -358,12 +326,7 @@ export const useLiveMatchPolling = ({
         sendEventNotification({ type: "half_time" }, currentMatch);
       }
       if (prevState === MATCH_STATES.HALF_TIME && SECOND_HALF_STATES.has(currentState ?? -1)) {
-        secondHalfDetectedAtRef.current = Date.now(); // Record 2nd half start for accurate minute
         sendEventNotification({ type: "second_half_start" }, currentMatch);
-      }
-      // Also set if first time we see 2nd half (app opened mid-game after halftime)
-      if (SECOND_HALF_STATES.has(currentState ?? -1) && secondHalfDetectedAtRef.current === null) {
-        secondHalfDetectedAtRef.current = null; // stays null → fallback estimation will be used
       }
       if (!FINISHED_STATES.has(prevState ?? -1) && FINISHED_STATES.has(currentState ?? -1)) {
         sendEventNotification({ type: "match_end" }, currentMatch);
@@ -471,47 +434,25 @@ export const useLiveMatchPolling = ({
         setDisplayMinute(0);
         setExtraTime(null);
         prevStateRef.current = null;
-        secondHalfDetectedAtRef.current = null;
         return null;
       }
 
       const stateId = match.stateId;
       currentStateIdRef.current = stateId;
 
-      // ── Update clock seed ──
-      const apiMinute = match.clock?.minutes ?? null;
-      let seedMinute: number;
-      if (apiMinute !== null) {
-        seedMinute = apiMinute;
-      } else if (SECOND_HALF_STATES.has(stateId ?? -1)) {
-        // Best available proxy: max event minute in 2nd half (e.g. last goal/card at 70' → seed=70)
-        const maxEventMin = (match.events ?? [])
-          .filter((e) => !e.rescinded && (e.minute ?? 0) > 45)
-          .reduce((max, e) => Math.max(max, e.minute ?? 0), 0);
-        if (maxEventMin > 45) {
-          seedMinute = maxEventMin;
-        } else {
-          // No 2nd-half events yet — count from detection timestamp
-          if (secondHalfDetectedAtRef.current === null) {
-            secondHalfDetectedAtRef.current = Date.now();
-          }
-          const elapsed2nd = (Date.now() - secondHalfDetectedAtRef.current) / 60000;
-          seedMinute = Math.min(45 + Math.floor(elapsed2nd), 90);
+      // ── Update clock seed from API clock (minutes + seconds for sub-minute precision) ──
+      // clock.minutes comes from the new endpoint include — most accurate source.
+      // Ratchet: only update seed upward so the 1-second timer never jumps backwards.
+      if (match.clock?.minutes != null) {
+        const apiSeconds = match.clock.seconds ?? 0;
+        const seedMinute = match.clock.minutes + apiSeconds / 60;
+        const currentShown = clockSeedRef.current
+          ? clockSeedRef.current.minute + (Date.now() - clockSeedRef.current.seedMs) / 60000
+          : -1;
+        if (seedMinute > currentShown) {
+          clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
         }
-      } else {
-        seedMinute = estimateMinute(match, secondHalfDetectedAtRef.current);
       }
-      // Only update seed if new value is HIGHER than what timer is currently showing.
-      // This lets the 1-second timer count up naturally between events (ratchet effect).
-      const currentShown = clockSeedRef.current
-        ? clockSeedRef.current.minute + (Date.now() - clockSeedRef.current.seedMs) / 60000
-        : -1;
-      if (seedMinute > currentShown) {
-        clockSeedRef.current = { minute: seedMinute, seedMs: Date.now() };
-      }
-
-      // ── Update display immediately (then 1s timer refines it) ──
-      const isSecondHalfLike = SECOND_HALF_STATES.has(stateId ?? -1);
       if (LIVE_PLAY_STATES.has(stateId ?? -1)) {
         const addedTime = match.clock?.addedTime ?? null;
         // Extra time display is driven by clock data only (no clock = null)

@@ -1359,7 +1359,7 @@ const FixtureScreen = () => {
             )}
             {secondHalfEvents.length > 0 && (
               <View>
-                {renderHalfHeader("2. YARI", totalScore)}
+                {renderHalfHeader("2. YARI", { home: homeScore, away: awayScore })}
                 {secondHalfEvents.map((e, i) => renderEventRow(e, `2h-${i}`))}
               </View>
             )}
