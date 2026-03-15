@@ -96,7 +96,7 @@ export interface LiveScoreDto {
   awayTeamId: number | null;
   participants: LiveParticipantDto[];
   events: LiveEventDto[];
-  clock?: MatchClockDto;
+  clock: MatchClockDto;   // always present; fields null when clock data unavailable
   // Direct scores from Sportmonks scores include
   homeScore?: number | null;
   awayScore?: number | null;
