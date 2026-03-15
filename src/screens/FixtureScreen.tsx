@@ -1194,10 +1194,9 @@ const FixtureScreen = () => {
       return { home, away };
     };
 
-    // Total score
-    const totalScore = calcScoreAt(999, null);
-    const homeScore = totalScore.home;
-    const awayScore = totalScore.away;
+    // Total score — prefer direct API scores (scores include), fall back to event calculation
+    const homeScore = liveMatch.homeScore ?? calcScoreAt(999, null).home;
+    const awayScore = liveMatch.awayScore ?? calcScoreAt(999, null).away;
 
     // State label
     const stateId = liveMatch.stateId;

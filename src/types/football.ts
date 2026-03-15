@@ -72,6 +72,12 @@ export interface ScoreDto {
   away: number | null;
 }
 
+export interface MatchClockDto {
+  minutes: number | null;
+  seconds: number | null;
+  addedTime: number | null;
+}
+
 // Backend'den gelen LiveScoreDto - exactly matches C# LiveScoreDto
 export interface LiveScoreDto {
   fixtureId: number;
@@ -90,6 +96,10 @@ export interface LiveScoreDto {
   awayTeamId: number | null;
   participants: LiveParticipantDto[];
   events: LiveEventDto[];
+  clock?: MatchClockDto;
+  // Direct scores from Sportmonks scores include
+  homeScore?: number | null;
+  awayScore?: number | null;
 }
 
 // Backend'den gelen LiveParticipantDto - exactly matches C# LiveParticipantDto

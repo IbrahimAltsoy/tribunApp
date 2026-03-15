@@ -94,6 +94,11 @@ export type UseLiveMatchPollingReturn = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const getScoreFromMatch = (match: LiveScoreDto): { home: number; away: number } => {
+  // Prefer direct API scores from the scores include (most accurate)
+  if (match.homeScore != null && match.awayScore != null) {
+    return { home: match.homeScore, away: match.awayScore };
+  }
+  // Fallback: compute from events
   const homeTeam = match.participants?.find((p) => p.location === "home");
   const awayTeam = match.participants?.find((p) => p.location === "away");
   let homeScore = 0;
